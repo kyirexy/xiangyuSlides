@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xiangyu Slides - AI 演示文稿生成器</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/css/theme.css">
+    <style>
+        /* 首页特定样式 */
+        .hero {
+            padding: 120px 24px 40px;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 7vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 .line1 {
+            display: block;
+            color: var(--text-primary);
+        }
+
+        .hero h1 .line2 {
+            display: block;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        .hero-btns {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 36px;
+        }
+
+        .btn-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-large-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.35);
+        }
+
+        .btn-large-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.45);
+        }
+
+        .btn-large-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-large-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* 演示区域 */
+        .demo-container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .demo-box {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.15);
+            position: relative;
+            border: 1px solid rgba(14, 165, 233, 0.15);
+        }
+
+        .demo-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.4), transparent);
+        }
+
+        .demo-box i {
+            font-size: 5rem;
+        }
+
+        /* 功能区 */
+        .features {
+            padding: 60px 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .section-title h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .section-title p {
+            color: var(--text-secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 26px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-card i {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 14px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* 价格区 */
+        .pricing {
+            padding: 60px 24px 80px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            padding: 32px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .pricing-price span {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--text-tertiary);
+        }
+
+        .pricing-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .pricing-features {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .pricing-features li {
+            list-style: none;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pricing-features li i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .btn-pricing {
+            display: block;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-pricing-outline {
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-pricing-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-pricing-fill {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-pricing-fill:hover {
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 24px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 14px 24px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-radius: 10px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 3000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: #22c55e; }
+        .toast.error { background: #ef4444; }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .hero { padding: 100px 16px 30px; }
+            .features, .pricing { padding: 40px 16px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .hero-btns { flex-direction: column; align-items: center; }
+            .btn-large { width: 100%; max-width: 280px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="/" class="logo">
+                <div class="logo-icon">X</div>
+                <div class="logo-text">Xiangyu<span>Slides</span></div>
+            </a>
+            <div class="nav-pills">
+                <a href="/" class="nav-pill active">
+                    <i class="ph ph-house"></i>
+                    首页
+                </a>
+                <a href="/create.html" class="nav-pill">
+                    <i class="ph ph-plus-circle"></i>
+                    创建
+                </a>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" title="切换主题">
+                <i class="ph ph-moon"></i>
+                <i class="ph ph-sun"></i>
+            </button>
+            <a href="https://github.com/kyirexy/xiangyu-skill" target="_blank" class="nav-pill nav-pill-github">
+                <i class="ph ph-github-logo"></i>
+            </a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>
+                <span class="line1">AI 演示文稿</span>
+                <span class="line2">一键生成</span>
+            </h1>
+            <p class="hero-subtitle">输入主题，AI 自动创建精美演示文稿</p>
+            <div class="hero-btns">
+                <a href="/create.html" class="btn-large btn-large-primary">
+                    <i class="ph ph-sparkle"></i>
+                    开始创建
+                </a>
+                <a href="https://github.com/kyirexy/xiangyu-skill" target="_blank" class="btn-large btn-large-secondary">
+                    <i class="ph ph-github-logo"></i>
+                    查看文档
+                </a>
+            </div>
+            <div class="demo-container">
+                <div class="demo-box">
+                    <i class="ph ph-presentation-chart"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="section-title">
+            <h2>核心功能</h2>
+            <p>强大功能，简单高效</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="ph ph-lightning"></i>
+                <h3>AI 智能生成</h3>
+                <p>输入主题，AI 自动创建完整大纲和内容</p>
+            </div>
+            <div class="feature-card">
+                <i class="ph ph-palette"></i>
+                <h3>12+ 精美风格</h3>
+                <p>多种预设风格，满足不同场景需求</p>
+            </div>
+            <div class="feature-card">
+                <i class="ph ph-device-mobile"></i>
+                <h3>响应式设计</h3>
+                <p>完美适配桌面、平板、手机设备</p>
+            </div>
+            <div class="feature-card">
+                <i class="ph ph-arrows-clockwise"></i>
+                <h3>内联编辑</h3>
+                <p>直接在浏览器中编辑，所见即所得</p>
+            </div>
+            <div class="feature-card">
+                <i class="ph ph-terminal"></i>
+                <h3>AI 调用</h3>
+                <p>支持 Claude Code 等工具调用</p>
+            </div>
+            <div class="feature-card">
+                <i class="ph ph-export"></i>
+                <h3>一键导出</h3>
+                <p>生成单个 HTML 文件，方便分享</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing">
+        <div class="section-title">
+            <h2>价格方案</h2>
+            <p>选择适合你的方案</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>免费版</h3>
+                <div class="pricing-price">¥0<span>/月</span></div>
+                <p class="pricing-desc">适合体验和轻量使用</p>
+                <ul class="pricing-features">
+                    <li><i class="ph ph-check-circle"></i> 每月 10 次生成</li>
+                    <li><i class="ph ph-check-circle"></i> 12 种风格选择</li>
+                    <li><i class="ph ph-check-circle"></i> HTML 文件导出</li>
+                </ul>
+                <a href="#" class="btn-pricing btn-pricing-outline">当前方案</a>
+            </div>
+            <div class="pricing-card featured">
+                <h3>专业版</h3>
+                <div class="pricing-price">¥9.9<span>/月</span></div>
+                <p class="pricing-desc">适合频繁使用和商业场景</p>
+                <ul class="pricing-features">
+                    <li><i class="ph ph-check-circle"></i> 无限次生成</li>
+                    <li><i class="ph ph-check-circle"></i> 12 种风格选择</li>
+                    <li><i class="ph ph-check-circle"></i> 优先技术支持</li>
+                </ul>
+                <a href="#" class="btn-pricing btn-pricing-fill">立即升级</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2024 Xiangyu Slides. Built with MiniMax AI.</p>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 主题切换
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = "toast " + type;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+    </script>
+</body>
+</html>
