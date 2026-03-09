@@ -385,16 +385,80 @@ ${purposeDesc}
 });
 
 app.post('/api/generate-outline', authenticateApiKey, async (req, res) => {
-    const { purpose, length, content, topic } = req.body;
+    let { purpose, length, content, topic } = req.body;
+
+    // 如果主题太短或不清楚，询问用户
+    if (!topic || topic.trim().length < 3) {
+        return res.json({
+            clarification: true,
+            message: "请告诉我您想要创建什么主题的演示文稿？例如：AI发展趋势、产品介绍、培训课程等"
+        });
+    }
+
+    // 如果信息不完整，尝试从主题推断或询问
+    const needsClarification = [];
+
+    // 检查用途
+    if (!purpose || purpose === 'teaching') {
+        // 从主题推断用途
+        const topicLower = topic.toLowerCase();
+        if (topicLower.includes('融资') || topicLower.includes('商业') || topicLower.includes('pitch')) {
+            purpose = 'pitch';
+        } else if (topicLower.includes('产品') || topicLower.includes('发布') || topicLower.includes('发布会')) {
+            purpose = 'product';
+        } else if (topicLower.includes('会议') || topicLower.includes('汇报') || topicLower.includes('总结')) {
+            purpose = 'meeting';
+        } else if (topicLower.includes('公司') || topicLower.includes('企业') || topicLower.includes('团队')) {
+            purpose = 'company';
+        } else if (topicLower.includes('技术') || topicLower.includes('架构') || topicLower.includes('代码')) {
+            purpose = 'tech';
+        } else if (topicLower.includes('简历') || topicLower.includes('个人') || topicLower.includes('自我介绍')) {
+            purpose = 'personal';
+        } else if (topicLower.includes('故事') || topicLower.includes('传说') || topicLower.includes('分享')) {
+            purpose = 'story';
+        }
+    }
+
+    // 默认长度
+    if (!length) {
+        length = 'medium';
+    }
+
+    // 用途描述
+    const purposeDescriptions = {
+        'teaching': '这是一个教学培训演示文稿，应该包含：课程目标、知识点讲解、案例分析、实践操作、总结回顾等环节。',
+        'pitch': '这是一个融资演讲演示文稿，应该包含：项目简介、市场分析、竞争优势、商业模式、团队介绍、融资需求等。',
+        'product': '这是一个产品发布会演示文稿，应该包含：产品背景、核心功能、用户体验、市场定位、发布计划等。',
+        'meeting': '这是一个会议汇报演示文稿，应该包含：工作回顾、成果展示、问题分析、下一步计划等。',
+        'company': '这是一个公司介绍演示文稿，应该包含：公司概况、核心业务、团队介绍、发展历程、愿景使命等。',
+        'tech': '这是一个技术分享演示文稿，应该包含：技术背景、架构设计、核心原理、实战案例、总结展望等。',
+        'personal': '这是一个个人简历演示文稿，应该包含：个人简介、教育背景、工作经历、项目经验、技能特长等。',
+        'story': '这是一个故事讲解演示文稿，应该包含：故事背景、情节发展、人物介绍、高潮转折、寓意总结等。',
+        'marketing': '这是一个营销推广演示文稿，应该包含：产品亮点、目标用户、推广策略、案例展示、行动号召等。',
+        'event': '这是一个活动策划演示文稿，应该包含：活动背景、活动主题、日程安排、嘉宾介绍、宣传推广等。'
+    };
+    const purposeDesc = purposeDescriptions[purpose] || purposeDescriptions['teaching'];
 
     const prompt = `你是一个专业的演示文稿策划专家。根据以下信息创建一个详细的演示文稿大纲：
 
-用途: ${purpose}
+${purposeDesc}
 长度: ${length}
 主题: ${topic}
-内容概要: ${content}
+内容概要: ${content || '无'}
 
-请生成一个完整的演示文稿大纲，以JSON格式返回。`;
+请严格按照以下JSON格式返回，不要包含任何其他文字：
+{
+    "title": "演示文稿标题",
+    "subtitle": "副标题",
+    "slides": [
+        {"type": "title", "title": "幻灯片标题", "content": ["要点1", "要点2"]},
+        {"type": "content", "title": "幻灯片标题", "content": ["要点1", "要点2", "要点3"]},
+        {"type": "features", "title": "幻灯片标题", "content": ["特性1", "特性2", "特性3"]},
+        {"type": "end", "title": "结束页标题", "content": ["感谢语"]}
+    ]
+}
+
+${length === 'short' ? '确保slides数组有5-8个幻灯片。' : length === 'long' ? '确保slides数组有15-25个幻灯片。' : '确保slides数组有8-15个幻灯片。'}`;
 
     try {
         const result = await callMiniMax([

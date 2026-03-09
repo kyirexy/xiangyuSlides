@@ -7,65 +7,61 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <style>
-        /* 页面特定样式 */
         .main {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 100px 20px 180px;
-            max-width: 800px;
+            padding: 60px 20px 220px;
+            max-width: 900px;
             margin: 0 auto;
             width: 100%;
         }
 
-        /* Hero */
         .hero {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
         }
 
         .hero h1 {
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: var(--text-primary);
         }
 
         .hero p {
             color: var(--text-secondary);
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         /* 快捷分类 */
         .quick-actions {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
             max-width: 600px;
         }
 
         .quick-action {
-            padding: 10px 18px;
+            padding: 8px 14px;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            font-size: 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
         .quick-action:hover {
             background: var(--bg-tertiary);
             color: var(--text-primary);
-            border-color: var(--text-tertiary);
         }
 
         .quick-action.active {
@@ -74,18 +70,105 @@
             color: white;
         }
 
-        .quick-action i {
-            font-size: 1rem;
+        .quick-action i { font-size: 0.9rem; }
+        .length-area { width: 100%; margin-bottom: 16px; }
+        .length-title { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .length-title i { color: var(--primary); }
+        .length-options { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .length-btn { padding: 10px 20px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
+        .length-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .length-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .length-btn i { font-size: 1rem; }
+
+
+        /* 风格预览区域 */
+        .style-preview-area {
+            width: 100%;
+            margin-bottom: 16px;
         }
 
-        /* 底部输入框 - Chat 风格 */
+        .style-preview-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .style-preview-title i { color: var(--primary); }
+
+        .style-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .style-preview-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .style-preview-card:hover {
+            border-color: var(--text-tertiary);
+            transform: translateY(-2px);
+        }
+
+        .style-preview-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+
+        .style-preview-thumb {
+            width: 100%;
+            height: 40px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            overflow: hidden;
+        }
+
+        .style-preview-name {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .style-preview-card.active .style-preview-name {
+            color: var(--primary);
+        }
+
+        /* 风格颜色 - 参考 frontend-slides SKILL.md */
+        .style-bold .style-preview-thumb { background: linear-gradient(135deg, #1a1a1a 0%, #FF5722 100%); color: #fff; }
+        .style-electric .style-preview-thumb { background: linear-gradient(180deg, #ffffff 50%, #4361ee 50%); color: #0a0a0a; }
+        .style-creative .style-preview-thumb { background: linear-gradient(135deg, #0066ff 0%, #d4ff00 100%); color: #fff; }
+        .style-botanical .style-preview-thumb { background: linear-gradient(135deg, #0f0f0f 0%, #d4a574 100%); color: #fff; }
+        .style-notebook .style-preview-thumb { background: linear-gradient(135deg, #f8f6f1 0%, #e8e4dc 100%); color: #333; }
+        .style-pastel .style-preview-thumb { background: linear-gradient(135deg, #c8d9e6 0%, #f5c6cb 100%); color: #333; }
+        .style-split .style-preview-thumb { background: linear-gradient(135deg, #f5e6dc 0%, #e4dff0 100%); color: #333; }
+        .style-vintage .style-preview-thumb { background: linear-gradient(135deg, #f5f3ee 0%, #d4c4a8 100%); color: #333; }
+        .style-neon .style-preview-thumb { background: linear-gradient(135deg, #0a0a1a 0%, #00ff88 100%); color: #fff; }
+        .style-terminal .style-preview-thumb { background: linear-gradient(135deg, #0d1117 0%, #00ff00 100%); color: #fff; }
+        .style-swiss .style-preview-thumb { background: linear-gradient(135deg, #ffffff 0%, #ff0000 30%, #0000ff 60%, #ffff00 100%); color: #333; }
+        .style-paper .style-preview-thumb { background: linear-gradient(135deg, #f5f5dc 0%, #2c2c2c 100%); color: #333; }
+
+        /* 底部输入框 */
         .input-container {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             padding: 16px 24px 24px;
-            background: linear-gradient(transparent, var(--bg-primary) 30%);
+            background: linear-gradient(transparent, var(--bg-primary) 40%);
             display: flex;
             justify-content: center;
             z-index: 100;
@@ -93,10 +176,10 @@
 
         .input-wrapper {
             width: 100%;
-            max-width: 720px;
+            max-width: 800px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             box-shadow: var(--shadow-lg);
             overflow: hidden;
             transition: all 0.2s ease;
@@ -107,9 +190,7 @@
             box-shadow: var(--shadow-lg), 0 0 0 2px rgba(14, 165, 233, 0.15);
         }
 
-        .input-inner {
-            padding: 14px 16px;
-        }
+        .input-inner { padding: 16px 20px; }
 
         .input-inner textarea {
             width: 100%;
@@ -117,106 +198,55 @@
             border: none;
             background: transparent;
             color: var(--text-primary);
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-family: inherit;
             resize: none;
             outline: none;
-            min-height: 24px;
-            max-height: 150px;
-            line-height: 1.5;
+            min-height: 32px;
+            max-height: 180px;
+            line-height: 1.6;
         }
 
-        .input-inner textarea::placeholder {
-            color: var(--text-tertiary);
-        }
+        .input-inner textarea::placeholder { color: var(--text-tertiary); }
 
         .input-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 14px;
+            padding: 10px 16px;
             border-top: 1px solid var(--border);
-            gap: 12px;
         }
 
         .input-hint {
             font-size: 0.75rem;
             color: var(--text-tertiary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
-        .input-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .input-actions { display: flex; align-items: center; gap: 12px; }
 
-        /* 风格选择器 */
-        .style-selector {
-            display: flex;
-            gap: 6px;
-        }
-
-        .style-btn {
-            padding: 6px 12px;
-            background: var(--bg-secondary);
-            border: 1px solid transparent;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .style-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .style-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* 发送按钮 */
         .send-btn {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             background: var(--primary);
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
-            flex-shrink: 0;
         }
 
-        .send-btn:hover:not(:disabled) {
-            background: var(--primary-dark);
-            transform: scale(1.05);
-        }
-
-        .send-btn:disabled {
-            background: var(--bg-tertiary);
-            color: var(--text-tertiary);
-            cursor: not-allowed;
-        }
-
-        .send-btn i {
-            font-size: 1.1rem;
-        }
+        .send-btn:hover:not(:disabled) { background: var(--primary-dark); transform: scale(1.05); }
+        .send-btn:disabled { background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; }
+        .send-btn i { font-size: 1.2rem; }
 
         /* 结果区域 */
         .result-area {
-            margin-bottom: 80px;
+            margin-bottom: 60px;
             width: 100%;
-            max-width: 720px;
+            max-width: 800px;
         }
 
         .result-card {
@@ -236,7 +266,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 20px;
+            padding: 14px 18px;
             border-bottom: 1px solid var(--border);
         }
 
@@ -244,85 +274,256 @@
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-size: 0.95rem;
         }
 
-        .result-title i {
-            color: var(--primary);
-            font-size: 1.2rem;
-        }
+        .result-title i { color: var(--primary); }
 
-        .result-btns {
-            display: flex;
-            gap: 8px;
-        }
+        .result-btns { display: flex; gap: 8px; }
 
         .result-btn {
-            padding: 8px 16px;
+            padding: 8px 14px;
             background: var(--bg-secondary);
             border: none;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             transition: all 0.2s ease;
         }
 
-        .result-btn:hover {
+        .result-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .result-btn.primary { background: var(--primary); color: white; }
+        .result-btn.primary:hover { background: var(--primary-dark); }
+
+        .outline-content { padding: 12px 18px; max-height: 350px; overflow-y: auto; }
+
+        .outline-slide-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .outline-slide-item:last-child { border-bottom: none; }
+
+        .slide-num {
+            width: 24px;
+            height: 24px;
             background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .slide-info { flex: 1; min-width: 0; }
+
+        .slide-title {
+            font-weight: 600;
+            font-size: 0.9rem;
             color: var(--text-primary);
+            margin-bottom: 3px;
         }
 
-        .result-btn.primary {
-            background: var(--primary);
-            color: white;
+        .slide-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        .result-btn.primary:hover {
-            background: var(--primary-dark);
+        .slide-edit-btn {
+            width: 26px;
+            height: 26px;
+            border: none;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
-        /* 加载状态 */
-        .loading {
-            padding: 48px;
-            text-align: center;
-        }
+        .slide-edit-btn:hover { background: var(--primary); color: white; }
+
+        .loading { padding: 40px; text-align: center; }
 
         .loading-spinner {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border: 3px solid var(--border);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
+            margin: 0 auto 14px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading p { color: var(--text-secondary); }
+        .error-msg { padding: 40px; text-align: center; color: #f87171; }
+
+        /* 弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
         }
 
-        .loading p {
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 { font-size: 0.95rem; font-weight: 600; }
+
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: var(--text-secondary);
         }
 
-        .error-msg {
-            padding: 40px;
-            text-align: center;
-            color: #f87171;
+        .modal-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
+
+        .modal-body textarea {
+            width: 100%;
+            min-height: 140px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            resize: vertical;
+            line-height: 1.5;
         }
 
-        /* 移动端适配 */
+        .modal-body textarea:focus { outline: none; border-color: var(--primary); }
+
+        .modal-footer {
+            padding: 10px 18px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+
+        /* 演示模式 */
+        .presentation-mode .header, .presentation-mode .input-container { display: none !important; }
+        .presentation-mode .main { padding: 0; max-width: 100%; }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .presentation-mode .fullscreen-btn { display: flex; }
+        .fullscreen-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .exit-pres-btn {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .presentation-mode .exit-pres-btn { display: flex; }
+        .exit-pres-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+
+        /* 移动端 */
         @media (max-width: 640px) {
-            .hero h1 { font-size: 1.8rem; }
+            .hero h1 { font-size: 1.5rem; }
             .input-container { padding: 12px 16px 20px; }
-            .quick-actions { gap: 8px; }
-            .quick-action { padding: 8px 14px; font-size: 0.8rem; }
-            .style-selector { display: none; }
+            .quick-actions { gap: 6px; }
+            .quick-action { padding: 6px 10px; font-size: 0.75rem; }
+            .style-preview-grid { grid-template-columns: repeat(3, 1fr); }
             .input-hint { display: none; }
         }
     </style>
@@ -335,22 +536,15 @@
                 <div class="logo-text">Xiangyu<span>Slides</span></div>
             </a>
             <div class="nav-pills">
-                <a href="/" class="nav-pill">
-                    <i class="ph ph-house"></i>
-                    首页
-                </a>
-                <a href="/create.html" class="nav-pill active">
-                    <i class="ph ph-plus-circle"></i>
-                    创建
-                </a>
+                <a href="/" class="nav-pill"><i class="ph ph-house"></i> 首页</a>
+                <a href="/create.html" class="nav-pill active"><i class="ph ph-plus-circle"></i> 创建</a>
             </div>
         </div>
         <div class="header-right">
             <button class="theme-toggle" id="themeToggle" title="切换主题">
-                <i class="ph ph-moon"></i>
-                <i class="ph ph-sun"></i>
+                <i class="ph ph-moon"></i><i class="ph ph-sun"></i>
             </button>
-            <a href="https://github.com/kyirexy/xiangyu-skill" target="_blank" class="nav-pill nav-pill-github">
+            <a href="https://github.com/kyirexy/xiangyuSlides" target="_blank" class="nav-pill nav-pill-github">
                 <i class="ph ph-github-logo"></i>
             </a>
         </div>
@@ -363,30 +557,82 @@
         </div>
 
         <div class="quick-actions" id="purposeArea">
-            <button class="quick-action active" data-val="teaching">
-                <i class="ph ph-graduation-cap"></i> 教学培训
-            </button>
-            <button class="quick-action" data-val="pitch">
-                <i class="ph ph-currency-dollar"></i> 融资演讲
-            </button>
-            <button class="quick-action" data-val="product">
-                <i class="ph ph-rocket-launch"></i> 产品发布
-            </button>
-            <button class="quick-action" data-val="meeting">
-                <i class="ph ph-chart-bar"></i> 会议汇报
-            </button>
-            <button class="quick-action" data-val="company">
-                <i class="ph ph-buildings"></i> 公司介绍
-            </button>
-            <button class="quick-action" data-val="tech">
-                <i class="ph ph-code"></i> 技术分享
-            </button>
-            <button class="quick-action" data-val="personal">
-                <i class="ph ph-user"></i> 个人简历
-            </button>
-            <button class="quick-action" data-val="story">
-                <i class="ph ph-book-open"></i> 故事讲解
-            </button>
+            <button class="quick-action" data-val="teaching"><i class="ph ph-graduation-cap"></i> 教学培训</button>
+            <button class="quick-action" data-val="pitch"><i class="ph ph-currency-dollar"></i> 融资演讲</button>
+            <button class="quick-action" data-val="product"><i class="ph ph-rocket-launch"></i> 产品发布</button>
+            <button class="quick-action" data-val="meeting"><i class="ph ph-chart-bar"></i> 会议汇报</button>
+            <button class="quick-action" data-val="company"><i class="ph ph-buildings"></i> 公司介绍</button>
+            <button class="quick-action" data-val="tech"><i class="ph ph-code"></i> 技术分享</button>
+            <button class="quick-action" data-val="personal"><i class="ph ph-user"></i> 个人简历</button>
+            <button class="quick-action" data-val="story"><i class="ph ph-book-open"></i> 故事讲解</button>
+            <button class="quick-action" data-val="marketing"><i class="ph ph-megaphone"></i> 营销推广</button>
+            <button class="quick-action" data-val="event"><i class="ph ph-calendar"></i> 活动策划</button>
+        </div>
+        <!-- 页数选择 -->
+        <div class="length-area">
+            <div class="length-title">
+                <i class="ph ph-files"></i> 演示文稿长度
+            </div>
+            <div class="length-options" id="lengthArea">
+                <button class="length-btn" data-val="short">
+                    <i class="ph ph-file"></i> 简短 (5-8页)
+                </button>
+                <button class="length-btn" data-val="medium">
+                    <i class="ph ph-files"></i> 中等 (8-15页)
+                </button>
+                <button class="length-btn" data-val="long">
+                    <i class="ph ph-folder-open"></i> 完整 (15-25页)
+                </button>
+            </div>
+        </div>
+
+
+        <div class="style-preview-area">
+            <div class="style-preview-title">
+                <i class="ph ph-palette"></i> 选择风格
+            </div>
+            <div class="style-preview-grid" id="styleArea">
+                <div class="style-preview-card style-bold" data-val="bold-signal">
+                    <div class="style-preview-thumb"><i class="ph ph-lightning"></i></div>
+                    <div class="style-preview-name">大胆</div>
+                </div>
+                <div class="style-preview-card style-electric" data-val="electric-studio">
+                    <div class="style-preview-thumb"><i class="ph ph-lightning"></i></div>
+                    <div class="style-preview-name">电光</div>
+                </div>
+                <div class="style-preview-card style-creative" data-val="creative-voltage">
+                    <div class="style-preview-thumb"><i class="ph ph-sparkle"></i></div>
+                    <div class="style-preview-name">创意</div>
+                </div>
+                <div class="style-preview-card style-botanical" data-val="dark-botanical">
+                    <div class="style-preview-thumb"><i class="ph ph-tree"></i></div>
+                    <div class="style-preview-name">森系</div>
+                </div>
+                <div class="style-preview-card style-notebook" data-val="notebook-tabs">
+                    <div class="style-preview-thumb"><i class="ph ph-notebook"></i></div>
+                    <div class="style-preview-name">笔记</div>
+                </div>
+                <div class="style-preview-card style-pastel" data-val="pastel-geometry">
+                    <div class="style-preview-thumb"><i class="ph ph-shapes"></i></div>
+                    <div class="style-preview-name">粉彩</div>
+                </div>
+                <div class="style-preview-card style-split" data-val="split-pastel">
+                    <div class="style-preview-thumb"><i class="ph ph-columns"></i></div>
+                    <div class="style-preview-name">分割</div>
+                </div>
+                <div class="style-preview-card style-vintage" data-val="vintage-editorial">
+                    <div class="style-preview-thumb"><i class="ph ph-book-open"></i></div>
+                    <div class="style-preview-name">复古</div>
+                </div>
+                <div class="style-preview-card style-neon" data-val="neon-cyber">
+                    <div class="style-preview-thumb"><i class="ph ph-atom"></i></div>
+                    <div class="style-preview-name">赛博</div>
+                </div>
+                <div class="style-preview-card style-terminal" data-val="terminal-green">
+                    <div class="style-preview-thumb"><i class="ph ph-terminal"></i></div>
+                    <div class="style-preview-name">终端</div>
+                </div>
+            </div>
         </div>
 
         <div class="result-area" id="resultArea"></div>
@@ -395,19 +641,11 @@
     <div class="input-container">
         <div class="input-wrapper">
             <div class="input-inner">
-                <textarea id="userInput" placeholder="描述你想要创建的演示文稿..." rows="1"></textarea>
+                <textarea id="userInput" placeholder="描述你想要创建的演示文稿...&#10;例如：帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例" rows="2"></textarea>
             </div>
             <div class="input-footer">
-                <span class="input-hint">
-                    <i class="ph ph-enter"></i> Enter 发送 · Shift+Enter 换行
-                </span>
+                <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
                 <div class="input-actions">
-                    <div class="style-selector" id="styleArea">
-                        <button class="style-btn active" data-val="bold-signal">大胆</button>
-                        <button class="style-btn" data-val="electric-studio">炫彩</button>
-                        <button class="style-btn" data-val="dark-botanical">森系</button>
-                        <button class="style-btn" data-val="neon-cyber">赛博</button>
-                    </div>
                     <button class="send-btn" id="btnSend" disabled>
                         <i class="ph ph-paper-plane-tilt"></i>
                     </button>
@@ -416,15 +654,37 @@
         </div>
     </div>
 
+    <button class="fullscreen-btn" id="fullscreenBtn" title="全屏"><i class="ph ph-arrows-out"></i></button>
+    <button class="exit-pres-btn" id="exitPresBtn"><i class="ph ph-x"></i> 退出</button>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>编辑幻灯片</h3>
+                <button class="modal-close" id="closeModal"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="slideEditText"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelEdit">取消</button>
+                <button class="btn btn-primary" id="saveEdit">保存</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let config = { purpose: null, length: null, style: null };
+        let currentOutline = null;
+        let currentSlides = [];
+        let editingSlideIndex = null;
+        let generatedHtml = null;
+
         // 主题切换
         const themeToggle = document.getElementById('themeToggle');
         const html = document.documentElement;
-
-        // 读取主题设置
         const savedTheme = localStorage.getItem('theme') || 'light';
         html.setAttribute('data-theme', savedTheme);
-
         themeToggle.addEventListener('click', () => {
             const current = html.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
@@ -432,43 +692,67 @@
             localStorage.setItem('theme', next);
         });
 
-        // 输入逻辑
+        // 输入
         const userInput = document.getElementById('userInput');
         const btnSend = document.getElementById('btnSend');
         const resultArea = document.getElementById('resultArea');
 
-        let config = { purpose: 'teaching', style: 'bold-signal' };
-
-        // 输入框自适应
         userInput.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 180) + 'px';
             btnSend.disabled = !this.value.trim();
         });
 
-        // 选择类型
+        // 选择用途
         document.getElementById('purposeArea').addEventListener('click', function(e) {
             if (e.target.closest('.quick-action')) {
                 const btn = e.target.closest('.quick-action');
-                this.querySelectorAll('.quick-action').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                config.purpose = btn.dataset.val;
+                if (btn.classList.contains('active')) {
+                    btn.classList.remove('active');
+                    config.purpose = null;
+                } else {
+                    this.querySelectorAll('.quick-action').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    config.purpose = btn.dataset.val;
+                }
             }
         });
 
         // 选择风格
         document.getElementById('styleArea').addEventListener('click', function(e) {
-            if (e.target.classList.contains('style-btn')) {
-                this.querySelectorAll('.style-btn').forEach(c => c.classList.remove('active'));
-                e.target.classList.add('active');
-                config.style = e.target.dataset.val;
+            if (e.target.closest('.style-preview-card')) {
+                const btn = e.target.closest('.style-preview-card');
+                if (btn.classList.contains('active')) {
+                    btn.classList.remove('active');
+                    config.style = null;
+                } else {
+                    this.querySelectorAll('.style-preview-card').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    config.style = btn.dataset.val;
+                }
+            }
+        });
+
+        
+        // 选择页数 - toggle 行为
+        document.getElementById('lengthArea').addEventListener('click', function(e) {
+            if (e.target.closest('.length-btn')) {
+                const btn = e.target.closest('.length-btn');
+                if (btn.classList.contains('active')) {
+                    btn.classList.remove('active');
+                    config.length = null;
+                } else {
+                    this.querySelectorAll('.length-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    config.length = btn.dataset.val;
+                }
             }
         });
 
         // 发送
         async function send() {
-            const topic = userInput.value.trim();
-            if (!topic) return;
+            const message = userInput.value.trim();
+            if (!message) return;
 
             userInput.value = '';
             userInput.style.height = 'auto';
@@ -478,75 +762,215 @@
                 <div class="result-card">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>正在生成演示文稿...</p>
+                        <p>正在思考...</p>
                     </div>
                 </div>
             `;
 
-            setTimeout(() => {
-                resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            setTimeout(() => resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
             try {
-                const res = await fetch('/api/generate', {
+                const outlineRes = await fetch('/api/generate-outline', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, ...config })
+                    body: JSON.stringify({
+                        purpose: config.purpose || 'teaching',
+                        length: config.length || 'medium',
+                        topic: message,
+                        content: ''
+                    })
                 });
-                const data = await res.json();
 
-                if (data.success) {
-                    showResult(data);
-                } else {
-                    resultArea.innerHTML = `<div class="result-card"><div class="error-msg">生成失败: ${data.error}</div></div>`;
+                const outlineData = await outlineRes.json();
+
+                // 处理需要澄清的情况
+                if (outlineData.clarification) {
+                    resultArea.innerHTML = `
+                        <div class="result-card">
+                            <div class="result-header">
+                                <div class="result-title">
+                                    <i class="ph ph-chat-circle-dots"></i>
+                                    需要更多信息
+                                </div>
+                            </div>
+                            <div class="outline-content">
+                                <p style="color: var(--text-secondary); padding: 12px 0;">
+                                    ${outlineData.message}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    btnSend.disabled = false;
+                    return;
                 }
+
+                if (!outlineData.slides) {
+                    throw new Error(outlineData.error || '生成大纲失败');
+                }
+
+                currentOutline = outlineData;
+                currentSlides = outlineData.slides.map((s, i) => ({...s, index: i + 1}));
+                renderOutline();
+
             } catch (e) {
-                resultArea.innerHTML = `<div class="result-card"><div class="error-msg">请求失败，请稍后重试</div></div>`;
+                resultArea.innerHTML = `<div class="result-card"><div class="error-msg">生成失败: ${e.message}</div></div>`;
+                btnSend.disabled = false;
             }
         }
 
-        function showResult(data) {
-            window.generatedHTML = data.html;
+        // 渲染大纲
+        function renderOutline() {
             resultArea.innerHTML = `
                 <div class="result-card">
                     <div class="result-header">
                         <div class="result-title">
-                            <i class="ph ph-file-html"></i>
-                            ${data.outline.title}
+                            <i class="ph ph-list-checks"></i>
+                            ${currentOutline.title}
                         </div>
                         <div class="result-btns">
-                            <button class="result-btn" onclick="preview()">
-                                <i class="ph ph-eye"></i> 预览
+                            <button class="result-btn" onclick="generateHTML()">
+                                <i class="ph ph-play"></i> 生成演示
                             </button>
-                            <button class="result-btn primary" onclick="download()">
+                            <button class="result-btn primary" onclick="downloadHTML()">
                                 <i class="ph ph-download-simple"></i> 下载
                             </button>
                         </div>
                     </div>
+                    <div class="outline-content">
+                        ${currentSlides.map((slide, i) => `
+                            <div class="outline-slide-item">
+                                <div class="slide-num">${slide.index}</div>
+                                <div class="slide-info">
+                                    <div class="slide-title">${slide.title}</div>
+                                    <div class="slide-desc">${Array.isArray(slide.content) ? slide.content.join('、 ') : slide.content}</div>
+                                </div>
+                                <button class="slide-edit-btn" onclick="editSlide(${i})" title="编辑">
+                                    <i class="ph ph-pencil-simple"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
+            btnSend.disabled = false;
         }
 
-        function download() {
-            const blob = new Blob([window.generatedHTML], { type: 'text/html' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'presentation.html';
-            a.click();
-        }
+        // 生成 HTML
+        window.generateHTML = async function() {
+            const btn = resultArea.querySelector('.result-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="ph ph-spinner spinner"></i> 生成中...';
 
-        function preview() {
-            const blob = new Blob([window.generatedHTML], { type: 'text/html' });
-            window.open(URL.createObjectURL(blob), '_blank');
-        }
+            try {
+                const res = await fetch('/api/generate-html', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        outline: { title: currentOutline.title, subtitle: currentOutline.subtitle, slides: currentSlides },
+                        style: config.style,
+                        editing: true
+                    })
+                });
 
-        btnSend.addEventListener('click', send);
-        userInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                send();
+                const data = await res.json();
+                if (data.html) {
+                    generatedHtml = data.html;
+                    startPresentation();
+                } else {
+                    alert('生成失败: ' + data.error);
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+
+            btn.innerHTML = originalText;
+        };
+
+        // 下载
+        window.downloadHTML = function() {
+            if (generatedHtml) {
+                const blob = new Blob([generatedHtml], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'presentation.html';
+                a.click();
+            } else {
+                alert('请先生成演示文稿');
+            }
+        };
+
+        // 编辑
+        window.editSlide = function(index) {
+            editingSlideIndex = index;
+            const slide = currentSlides[index];
+            document.getElementById('slideEditText').value = JSON.stringify({
+                type: slide.type,
+                title: slide.title,
+                content: slide.content
+            }, null, 2);
+            document.getElementById('editModal').classList.add('active');
+        };
+
+        document.getElementById('saveEdit').addEventListener('click', () => {
+            try {
+                const data = JSON.parse(document.getElementById('slideEditText').value);
+                currentSlides[editingSlideIndex] = {...currentSlides[editingSlideIndex], ...data};
+                renderOutline();
+                document.getElementById('editModal').classList.remove('active');
+            } catch (e) {
+                alert('JSON 格式错误');
             }
         });
+
+        document.getElementById('closeModal').addEventListener('click', () => document.getElementById('editModal').classList.remove('active'));
+        document.getElementById('cancelEdit').addEventListener('click', () => document.getElementById('editModal').classList.remove('active'));
+
+        // 演示
+        function startPresentation() {
+            document.body.classList.add('presentation-mode');
+            resultArea.innerHTML = generatedHtml;
+
+            const script = document.createElement('script');
+            script.textContent = `
+                let currentSlide = 0;
+                const slides = document.querySelectorAll('.slide');
+                const totalSlides = slides.length;
+                function showSlide(index) { slides.forEach((s, i) => { s.style.display = i === index ? 'flex' : 'none'; }); currentSlide = index; }
+                function nextSlide() { if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
+                function prevSlide() { if (currentSlide > 0) showSlide(currentSlide - 1); }
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+                    if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+                    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); document.documentElement.requestFullscreen(); }
+                    if (e.key === 'Escape' && document.fullscreenElement) { document.exitFullscreen(); }
+                });
+                slides.forEach((slide) => { slide.addEventListener('click', (e) => { if (e.clientX > window.innerWidth / 2) nextSlide(); else prevSlide(); }); });
+                if (totalSlides > 0) showSlide(0);
+            `;
+            resultArea.appendChild(script);
+        }
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => document.documentElement.requestFullscreen());
+
+        document.getElementById('exitPresBtn').addEventListener('click', () => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            document.body.classList.remove('presentation-mode');
+            renderOutline();
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && document.body.classList.contains('presentation-mode')) {
+                document.body.classList.remove('presentation-mode');
+                renderOutline();
+            }
+        });
+
+        btnSend.addEventListener('click', send);
+        userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spinner { to { transform: rotate(360deg); } } .spinner { animation: spinner 1s linear infinite; }';
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
