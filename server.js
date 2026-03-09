@@ -483,32 +483,412 @@ app.post('/api/generate-html', authenticateApiKey, async (req, res) => {
 
     const styleInfo = STYLE_PRESETS.find(s => s.id === style) || STYLE_PRESETS[0];
 
+    // Get style-specific CSS
+    const styleCSS = getFullStyleCSS(style, styleInfo);
+
     const prompt = `生成一个完整的HTML演示文稿：
 
 演示文稿大纲: ${JSON.stringify(outline)}
-风格: ${styleInfo.name}
+风格: ${styleInfo.name} - ${styleInfo.vibe}
 
 要求：
-1. 使用CSS变量定义颜色
-2. 每个.slide使用height: 100vh; overflow: hidden
-3. 包含键盘导航和动画
+1. 每个幻灯片使用 <section class="slide"> 包裹
+2. 内容放在 <div class="slide-content"> 中
+3. 使用CSS变量定义颜色，标题使用clamp()响应式字体
+4. 使用reveal类实现滚动动画
+5. 包含键盘导航（左右箭头、空格）、触摸滑动、进度条、导航点
 
-风格CSS: ${getStyleCSS(style)}
+风格CSS: ${styleCSS}
 
-直接返回完整HTML，不要解释。`;
+请直接返回完整HTML代码，不要包含任何解释文字。HTML应该是一个完整的、可以独立运行的演示文稿。`;
 
     try {
         const result = await callMiniMax([
             { role: 'user', content: prompt }
         ]);
 
+        // Extract just the HTML part
         const htmlMatch = result.match(/<html[\s\S]*<\/html>/i);
-        res.json({ html: htmlMatch ? htmlMatch[0] : result });
+        let html = htmlMatch ? htmlMatch[0] : result;
+
+        // Ensure the HTML has proper structure - if not, we'll wrap it
+        if (!html.includes('.slide') && html.includes('<!DOCTYPE html>')) {
+            // The API returned good HTML, use it as-is
+        } else if (!html.includes('<!DOCTYPE html>')) {
+            // Need to wrap the content in a proper HTML structure
+            html = wrapInHTMLTemplate(html, outline, style, styleInfo);
+        }
+
+        res.json({ html: html });
     } catch (error) {
         console.error('Error generating HTML:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+function wrapInHTMLTemplate(content, outline, style, styleInfo) {
+    const styleCSS = getFullStyleCSS(style, styleInfo);
+
+    return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${outline.title || '演示文稿'}</title>
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=clash-display@400,500,600,700&display=swap">
+    <style>
+        /* === BASE STYLES === */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+        body { height: 100%; overflow-x: hidden; }
+
+        /* === VIEWPORT FITTING (MANDATORY) === */
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+        }
+
+        /* === TYPOGRAPHY === */
+        :root {
+            --title-size: clamp(2rem, 6vw, 4.5rem);
+            --h2-size: clamp(1.5rem, 4vw, 3rem);
+            --body-size: clamp(0.9rem, 1.5vw, 1.25rem);
+            --slide-padding: clamp(1.5rem, 4vw, 4rem);
+            --content-gap: clamp(1rem, 2vw, 2rem);
+            ${styleCSS}
+        }
+
+        /* === ANIMATIONS === */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal:nth-child(1) { transition-delay: 0.1s; }
+        .reveal:nth-child(2) { transition-delay: 0.2s; }
+        .reveal:nth-child(3) { transition-delay: 0.3s; }
+        .reveal:nth-child(4) { transition-delay: 0.4s; }
+        .reveal:nth-child(5) { transition-delay: 0.5s; }
+
+        /* === NAVIGATION === */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+        .nav-dots {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-dot.active {
+            background: var(--accent);
+            transform: scale(1.3);
+        }
+        .slide-number {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+            z-index: 1000;
+        }
+
+        /* === CONTENT STYLES === */
+        h1 { font-size: var(--title-size); font-weight: 700; line-height: 1.1; margin-bottom: var(--content-gap); }
+        h2 { font-size: var(--h2-size); font-weight: 600; margin-bottom: var(--content-gap); }
+        p, li { font-size: var(--body-size); line-height: 1.6; }
+        ul { list-style: none; }
+        ul li { padding: 0.5rem 0; padding-left: 1.5rem; position: relative; }
+        ul li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+
+        /* === RESPONSIVE === */
+        @media (max-height: 700px) {
+            :root { --slide-padding: clamp(1rem, 3vw, 2rem); --title-size: clamp(1.5rem, 5vw, 3rem); }
+        }
+        @media (max-width: 600px) {
+            .nav-dots { right: 10px; }
+            :root { --title-size: clamp(1.5rem, 8vw, 2.5rem); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+            html { scroll-behavior: auto; }
+        }
+
+        /* === USER CONTENT === */
+        ${content}
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="nav-dots" id="navDots"></div>
+    <div class="slide-number"><span id="currentSlideNum">1</span> / <span id="totalSlides">${outline.slides?.length || 0}</span></div>
+
+    ${generateSlidesHTML(outline)}
+
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.totalSlides = this.slides.length;
+                this.currentSlide = 0;
+                this.setupIntersectionObserver();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupProgressBar();
+                this.setupNavDots();
+                this.updateSlideNumber();
+
+                if (this.slides.length > 0) {
+                    this.slides[0].classList.add('visible');
+                }
+            }
+
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            const index = Array.from(this.slides).indexOf(entry.target);
+                            this.currentSlide = index;
+                            this.updateSlideNumber();
+                            this.updateNavDots();
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                        e.preventDefault();
+                        this.next();
+                    }
+                    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                        e.preventDefault();
+                        this.prev();
+                    }
+                    if (e.key === 'Home') {
+                        e.preventDefault();
+                        this.goTo(0);
+                    }
+                    if (e.key === 'End') {
+                        e.preventDefault();
+                        this.goTo(this.totalSlides - 1);
+                    }
+                });
+            }
+
+            setupTouchNav() {
+                let startX = 0;
+                let startY = 0;
+
+                document.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                });
+
+                document.addEventListener('touchend', (e) => {
+                    const endX = e.changedTouches[0].clientX;
+                    const endY = e.changedTouches[0].clientY;
+                    const diffX = endX - startX;
+                    const diffY = endY - startY;
+
+                    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                        if (diffX > 0) this.prev();
+                        else this.next();
+                    }
+                });
+            }
+
+            setupProgressBar() {
+                const progressBar = document.getElementById('progressBar');
+                const update = () => {
+                    const progress = ((this.currentSlide + 1) / this.totalSlides) * 100;
+                    progressBar.style.width = progress + '%';
+                };
+                this.slides.forEach((_, i) => {
+                    this.slides[i].addEventListener('click', (e) => {
+                        if (e.clientX > window.innerWidth / 2) this.next();
+                        else this.prev();
+                    });
+                });
+                update();
+                this._updateProgress = update;
+            }
+
+            setupNavDots() {
+                const dotsContainer = document.getElementById('navDots');
+                for (let i = 0; i < this.totalSlides; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                    dot.addEventListener('click', () => this.goTo(i));
+                    dotsContainer.appendChild(dot);
+                }
+            }
+
+            updateSlideNumber() {
+                document.getElementById('currentSlideNum').textContent = this.currentSlide + 1;
+                document.getElementById('totalSlides').textContent = this.totalSlides;
+                if (this._updateProgress) this._updateProgress();
+            }
+
+            updateNavDots() {
+                document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+                    dot.classList.toggle('active', i === this.currentSlide);
+                });
+            }
+
+            next() {
+                if (this.currentSlide < this.totalSlides - 1) {
+                    this.goTo(this.currentSlide + 1);
+                }
+            }
+
+            prev() {
+                if (this.currentSlide > 0) {
+                    this.goTo(this.currentSlide - 1);
+                }
+            }
+
+            goTo(index) {
+                this.slides[index].scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        new SlidePresentation();
+    <\/script>
+</body>
+</html>`;
+}
+
+function generateSlidesHTML(outline) {
+    if (!outline || !outline.slides) return '';
+
+    return outline.slides.map((slide, index) => {
+        const contentHTML = generateSlideContent(slide);
+
+        return `    <section class="slide">
+        <div class="slide-content">
+            ${contentHTML}
+        </div>
+    </section>`;
+    }).join('\n');
+}
+
+function generateSlideContent(slide) {
+    const type = slide.type || 'content';
+    const title = slide.title || '';
+    const content = slide.content || [];
+
+    let html = '';
+
+    switch (type) {
+        case 'title':
+            html = `
+                <h1 class="reveal">${title}</h1>
+                ${content[0] ? `<p class="reveal" style="font-size: 1.2em; opacity: 0.7;">${content[0]}</p>` : ''}
+            `;
+            break;
+
+        case 'end':
+            html = `
+                <h1 class="reveal">${title}</h1>
+                ${content.map(c => `<p class="reveal" style="margin-top: 1rem;">${c}</p>`).join('')}
+            `;
+            break;
+
+        default:
+            html = `
+                <h2 class="reveal">${title}</h2>
+                <ul class="reveal">
+                    ${content.map(c => `<li>${c}</li>`).join('')}
+                </ul>
+            `;
+    }
+
+    return html;
+}
+
+function getFullStyleCSS(styleId, styleInfo) {
+    const styles = {
+        'bold-signal': `--bg-primary: #1a1a1a; --bg-secondary: #252525; --text-primary: #ffffff; --text-secondary: #b0b0b0; --accent: #FF5722; --accent-glow: rgba(255, 87, 34, 0.4); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'electric-studio': `--bg-primary: #0a0a0a; --bg-secondary: #151515; --text-primary: #ffffff; --text-secondary: #a0a0a0; --accent: #4361ee; --accent-glow: rgba(67, 97, 238, 0.4); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'creative-voltage': `--bg-primary: #001a2d; --bg-secondary: #002a45; --text-primary: #ffffff; --text-secondary: #b0c4d8; --accent: #00d4ff; --accent-glow: rgba(0, 212, 255, 0.4); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'dark-botanical': `--bg-primary: #0f0f0f; --bg-secondary: #1a1a1a; --text-primary: #f5f5f5; --text-secondary: #a0a0a0; --accent: #d4a574; --accent-glow: rgba(212, 165, 116, 0.3); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'notebook-tabs': `--bg-primary: #f8f6f1; --bg-secondary: #f0ede5; --text-primary: #1a1a1a; --text-secondary: #666666; --accent: #e85d04; --accent-glow: rgba(232, 93, 4, 0.2); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'pastel-geometry': `--bg-primary: #c8d9e6; --bg-secondary: #b5cad6; --text-primary: #1a1a1a; --text-secondary: #4a5568; --accent: #7c3aed; --accent-glow: rgba(124, 58, 237, 0.2); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'split-pastel': `--bg-primary: #fefcfb; --bg-secondary: #f5f0eb; --text-primary: #1a1a1a; --text-secondary: #5a5a5a; --accent: #ec4899; --accent-glow: rgba(236, 72, 153, 0.2); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'vintage-editorial': `--bg-primary: #f5f3ee; --bg-secondary: #eae7de; --text-primary: #1a1a1a; --text-secondary: #5a5a5a; --accent: #b45309; --accent-glow: rgba(180, 83, 9, 0.2); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'neon-cyber': `--bg-primary: #0a0a1a; --bg-secondary: #12122a; --text-primary: #00ff88; --text-secondary: #8888aa; --accent: #00ff88; --accent-glow: rgba(0, 255, 136, 0.5); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'terminal-green': `--bg-primary: #0d1117; --bg-secondary: #161b22; --text-primary: #00ff00; --text-secondary: #8b949e; --accent: #00ff00; --accent-glow: rgba(0, 255, 0, 0.3); --font-display: 'JetBrains Mono', monospace; --font-body: 'JetBrains Mono', monospace;`,
+        'swiss-modern': `--bg-primary: #ffffff; --bg-secondary: #f5f5f5; --text-primary: #000000; --text-secondary: #666666; --accent: #ff0000; --accent-glow: rgba(255, 0, 0, 0.2); --font-display: 'Clash Display', sans-serif; --font-body: 'Satoshi', sans-serif;`,
+        'paper-ink': `--bg-primary: #f5f5dc; --bg-secondary: #ebebd3; --text-primary: #2c2c2c; --text-secondary: #5a5a5a; --accent: #8b4513; --accent-glow: rgba(139, 69, 19, 0.2); --font-display: 'Clash Display', serif; --font-body: 'Satoshi', serif;`
+    };
+
+    const css = styles[styleId] || styles['bold-signal'];
+
+    // Add background styles based on the preset
+    const bgStyles = {
+        'bold-signal': 'background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1a2e 100%);',
+        'electric-studio': 'background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);',
+        'creative-voltage': 'background: linear-gradient(180deg, #001a2d 0%, #003354 50%, #001a2d 100%);',
+        'dark-botanical': 'background: radial-gradient(ellipse at top, #1a1a1a 0%, #0a0a0a 100%);',
+        'notebook-tabs': 'background: var(--bg-primary);',
+        'pastel-geometry': 'background: linear-gradient(135deg, #c8d9e6 0%, #a8c5d6 100%);',
+        'split-pastel': 'background: linear-gradient(135deg, #f5e6dc 0%, #e4dff0 50%, #f5e6dc 100%);',
+        'vintage-editorial': 'background: var(--bg-primary);',
+        'neon-cyber': 'background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);',
+        'terminal-green': 'background: #0d1117;',
+        'swiss-modern': 'background: #ffffff;',
+        'paper-ink': 'background: var(--bg-primary);'
+    };
+
+    const bgStyle = bgStyles[styleId] || bgStyles['bold-signal'];
+
+    return `${css}
+        body { ${bgStyle} color: var(--text-primary); font-family: var(--font-body); }
+        .slide { ${bgStyle} }`;
+}
 
 function getStyleCSS(styleId) {
     const styles = {

@@ -71,6 +71,29 @@
         }
 
         .quick-action i { font-size: 0.9rem; }
+        /* 快速开始 */
+        .quick-start { width: 100%; margin-top: 20px; }
+        .quick-start-btns { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 600px; }
+        .quick-start-btn {
+            width: 100%;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .quick-start-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
         .length-area { width: 100%; margin-bottom: 16px; }
         .length-title { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
         .length-title i { color: var(--primary); }
@@ -163,15 +186,14 @@
 
         /* 底部输入框 */
         .input-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 16px 24px 24px;
-            background: linear-gradient(transparent, var(--bg-primary) 40%);
-            display: flex;
-            justify-content: center;
-            z-index: 100;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
         }
 
         .input-wrapper {
@@ -551,10 +573,7 @@
     </header>
 
     <main class="main">
-        <div class="hero">
-            <h1>AI 演示文稿生成器</h1>
-            <p>描述你想要的内容，AI 帮你快速创建专业演示文稿</p>
-        </div>
+        
 
         <div class="quick-actions" id="purposeArea">
             <button class="quick-action" data-val="teaching"><i class="ph ph-graduation-cap"></i> 教学培训</button>
@@ -635,25 +654,16 @@
             </div>
         </div>
 
-        <div class="result-area" id="resultArea"></div>
-    </main>
-
-    <div class="input-container">
-        <div class="input-wrapper">
-            <div class="input-inner">
-                <textarea id="userInput" placeholder="描述你想要创建的演示文稿...&#10;例如：帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例" rows="2"></textarea>
-            </div>
-            <div class="input-footer">
-                <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
-                <div class="input-actions">
-                    <button class="send-btn" id="btnSend" disabled>
-                        <i class="ph ph-paper-plane-tilt"></i>
-                    </button>
-                </div>
+<div class="input-container">            <div class="input-wrapper">                <div class="input-inner"><textarea id="userInput" placeholder="描述你想要创建的演示文稿..." rows="2"></textarea></div>                <div class="input-footer">                    <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>                    <div class="input-actions"><button class="send-btn" id="btnSend" disabled><i class="ph ph-paper-plane-tilt"></i></button></div>                </div>            </div>        </div>        <div class="quick-start">
+            <div class="quick-start-btns">
+                <button class="quick-start-btn" onclick="quickGenerate('教学培训')">教学培训 - 帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例</button>
+                <button class="quick-start-btn" onclick="quickGenerate('产品发布')">产品发布 - 帮我做一个新产品的发布会演示文稿，包含产品背景、核心功能、用户体验、市场定价</button>
+                <button class="quick-start-btn" onclick="quickGenerate('融资演讲')">融资演讲 - 帮我做一个商业融资演讲，包含项目简介、市场分析、竞争优势、商业模式、融资需求</button>
             </div>
         </div>
-    </div>
-
+        <div class="result-area" id="resultArea"></div>
+        
+        
     <button class="fullscreen-btn" id="fullscreenBtn" title="全屏"><i class="ph ph-arrows-out"></i></button>
     <button class="exit-pres-btn" id="exitPresBtn"><i class="ph ph-x"></i> 退出</button>
 
@@ -928,45 +938,102 @@
         // 演示
         function startPresentation() {
             document.body.classList.add('presentation-mode');
-            resultArea.innerHTML = generatedHtml;
 
-            const script = document.createElement('script');
-            script.textContent = `
-                let currentSlide = 0;
-                const slides = document.querySelectorAll('.slide');
-                const totalSlides = slides.length;
-                function showSlide(index) { slides.forEach((s, i) => { s.style.display = i === index ? 'flex' : 'none'; }); currentSlide = index; }
-                function nextSlide() { if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1); }
-                function prevSlide() { if (currentSlide > 0) showSlide(currentSlide - 1); }
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
-                    if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
-                    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); document.documentElement.requestFullscreen(); }
-                    if (e.key === 'Escape' && document.fullscreenElement) { document.exitFullscreen(); }
-                });
-                slides.forEach((slide) => { slide.addEventListener('click', (e) => { if (e.clientX > window.innerWidth / 2) nextSlide(); else prevSlide(); }); });
-                if (totalSlides > 0) showSlide(0);
-            `;
-            resultArea.appendChild(script);
+            // Create a container for the presentation
+            const container = document.createElement('div');
+            container.id = 'presentation-container';
+            container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;overflow:hidden;z-index:9999;background:#000;';
+
+            // Parse the HTML and extract scripts
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(generatedHtml, 'text/html');
+
+            // Get all styles and append to head
+            const styles = doc.querySelectorAll('style');
+            styles.forEach(style => {
+                document.head.appendChild(style.cloneNode(true));
+            });
+
+            // Get body content
+            const bodyContent = doc.body.innerHTML;
+            container.innerHTML = bodyContent;
+            document.body.appendChild(container);
+
+            // Execute all scripts from the generated HTML
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => {
+                if (script.src) {
+                    // External script - load it
+                    const newScript = document.createElement('script');
+                    newScript.src = script.src;
+                    if (script.async) newScript.async = true;
+                    document.body.appendChild(newScript);
+                } else if (script.textContent) {
+                    // Inline script - execute it
+                    try {
+                        eval(script.textContent);
+                    } catch (e) {
+                        console.error('Error executing script:', e);
+                    }
+                }
+            });
+
+            // Add fullscreen handling
+            const handleFullscreen = () => {
+                if (!document.fullscreenElement && container.parentElement) {
+                    exitPresentation();
+                }
+            };
+
+            document.addEventListener('fullscreenchange', handleFullscreen);
+
+            // Store cleanup function
+            window._cleanupPresentation = () => {
+                document.removeEventListener('fullscreenchange', handleFullscreen);
+                if (container.parentElement) {
+                    container.parentElement.removeChild(container);
+                }
+            };
+        }
+
+        function exitPresentation() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            if (window._cleanupPresentation) {
+                window._cleanupPresentation();
+            }
+            document.body.classList.remove('presentation-mode');
+            renderOutline();
         }
 
         document.getElementById('fullscreenBtn').addEventListener('click', () => document.documentElement.requestFullscreen());
 
-        document.getElementById('exitPresBtn').addEventListener('click', () => {
-            if (document.fullscreenElement) document.exitFullscreen();
-            document.body.classList.remove('presentation-mode');
-            renderOutline();
-        });
+        document.getElementById('exitPresBtn').addEventListener('click', exitPresentation);
 
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement && document.body.classList.contains('presentation-mode')) {
-                document.body.classList.remove('presentation-mode');
-                renderOutline();
+                exitPresentation();
             }
         });
 
         btnSend.addEventListener('click', send);
         userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+
+        
+        // 快速生成
+        window.quickGenerate = function(type) {
+            const prompts = {
+                '教学培训': '帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例',
+                '产品发布': '帮我做一个新产品的发布会演示文稿，包含产品背景、核心功能、用户体验、市场定价',
+                '融资演讲': '帮我做一个商业融资演讲，包含项目简介、市场分析、竞争优势、商业模式、融资需求'
+            };
+            const message = prompts[type] || type;
+            userInput.value = message;
+            userInput.style.height = 'auto';
+            userInput.style.height = Math.min(userInput.scrollHeight, 180) + 'px';
+            btnSend.disabled = false;
+        };
 
         const style = document.createElement('style');
         style.textContent = '@keyframes spinner { to { transform: rotate(360deg); } } .spinner { animation: spinner 1s linear infinite; }';
