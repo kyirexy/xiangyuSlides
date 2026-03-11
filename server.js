@@ -478,6 +478,41 @@ ${length === 'short' ? '确保slides数组有5-8个幻灯片。' : length === 'l
     }
 });
 
+// 重新生成单个幻灯片
+app.post('/api/regenerate-slide', authenticateApiKey, async (req, res) => {
+    const { slide, outline, prompt } = req.body;
+
+    const promptText = `根据以下要求重新生成这个幻灯片：
+
+当前幻灯片: ${JSON.stringify(slide)}
+演示文稿大纲: ${outline.title}
+其他幻灯片: ${JSON.stringify(outline.slides)}
+用户修改要求: ${prompt}
+
+请直接返回JSON格式的幻灯片内容，不要包含任何解释。格式：
+{"type": "类型", "title": "标题", "content": ["内容项1", "内容项2", ...]}
+
+类型可以是: title, content, features, end`;
+
+    try {
+        const result = await callMiniMax([
+            { role: 'user', content: promptText }
+        ]);
+
+        // Extract JSON from response
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const slideData = JSON.parse(jsonMatch[0]);
+            res.json({ slide: slideData });
+        } else {
+            throw new Error('无法解析AI返回的内容');
+        }
+    } catch (error) {
+        console.error('Error regenerating slide:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/generate-html', authenticateApiKey, async (req, res) => {
     const { outline, style, editing } = req.body;
 
@@ -528,6 +563,7 @@ app.post('/api/generate-html', authenticateApiKey, async (req, res) => {
 
 function wrapInHTMLTemplate(content, outline, style, styleInfo) {
     const styleCSS = getFullStyleCSS(style, styleInfo);
+    const slideCount = outline.slides?.length || 0;
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -651,6 +687,19 @@ function wrapInHTMLTemplate(content, outline, style, styleInfo) {
             * { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
             html { scroll-behavior: auto; }
         }
+
+        /* === BUILD ANIMATION === */
+        .slide { opacity: 0; transform: scale(0.95); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .slide.visible { opacity: 1; transform: scale(1); }
+        .slide.visible:nth-child(1) { transition-delay: 0s; }
+        .slide.visible:nth-child(2) { transition-delay: 0.3s; }
+        .slide.visible:nth-child(3) { transition-delay: 0.6s; }
+        .slide.visible:nth-child(4) { transition-delay: 0.9s; }
+        .slide.visible:nth-child(5) { transition-delay: 1.2s; }
+        .slide.visible:nth-child(6) { transition-delay: 1.5s; }
+        .slide.visible:nth-child(7) { transition-delay: 1.8s; }
+        .slide.visible:nth-child(8) { transition-delay: 2.1s; }
+        .slide.visible:nth-child(n+9) { transition-delay: 2.4s; }
 
         /* === USER CONTENT === */
         ${content}

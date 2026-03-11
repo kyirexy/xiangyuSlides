@@ -452,6 +452,12 @@
 
         .modal-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
 
+        .edit-prompt-area { margin-bottom: 12px; }
+        .edit-prompt-area textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit; background: var(--bg-secondary); color: var(--text-primary); resize: vertical; line-height: 1.5; }
+        .edit-prompt-area textarea:focus { outline: none; border-color: var(--primary); }
+        .edit-json-area textarea { width: 100%; min-height: 120px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: monospace; background: var(--bg-secondary); color: var(--text-primary); resize: vertical; line-height: 1.4; }
+        .edit-json-area textarea:focus { outline: none; border-color: var(--primary); }
+
         .modal-body textarea {
             width: 100%;
             min-height: 140px;
@@ -668,16 +674,34 @@
     <button class="exit-pres-btn" id="exitPresBtn"><i class="ph ph-x"></i> 退出</button>
 
     <div class="modal-overlay" id="editModal">
-        <div class="modal">
+        <div class="modal" style="max-width: 600px;">
             <div class="modal-header">
                 <h3>编辑幻灯片</h3>
                 <button class="modal-close" id="closeModal"><i class="ph ph-x"></i></button>
             </div>
             <div class="modal-body">
-                <textarea id="slideEditText"></textarea>
+                <div class="edit-prompt-area">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">
+                        <i class="ph ph-sparkle"></i> 描述你想要的内容修改
+                    </label>
+                    <textarea id="slideEditPrompt" placeholder="例如：把内容改得更详细一些，加入更多案例..."></textarea>
+                </div>
+                <div class="edit-json-area" id="editJsonArea">
+                    <label style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">
+                        <i class="ph ph-code"></i> 或直接编辑 JSON
+                    </label>
+                    <textarea id="slideEditText"></textarea>
+                </div>
+                <div class="edit-loading" id="editLoading" style="display: none;">
+                    <div class="loading-spinner" style="width: 24px; height: 24px; margin: 20px auto;"></div>
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem;">AI 正在生成...</p>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="cancelEdit">取消</button>
+                <button class="btn btn-ai" id="regenerateEdit" style="background: linear-gradient(135deg, #7c3aed, #a855f7); color: white;">
+                    <i class="ph ph-sparkle"></i> AI 重新生成
+                </button>
                 <button class="btn btn-primary" id="saveEdit">保存</button>
             </div>
         </div>
@@ -918,8 +942,53 @@
                 title: slide.title,
                 content: slide.content
             }, null, 2);
+            document.getElementById('slideEditPrompt').value = '';
+            document.getElementById('editJsonArea').style.display = 'block';
+            document.getElementById('editLoading').style.display = 'none';
             document.getElementById('editModal').classList.add('active');
         };
+
+        // AI 重新生成幻灯片
+        document.getElementById('regenerateEdit').addEventListener('click', async () => {
+            const prompt = document.getElementById('slideEditPrompt').value.trim();
+            if (!prompt) {
+                alert('请描述你想要如何修改幻灯片');
+                return;
+            }
+
+            document.getElementById('editJsonArea').style.display = 'none';
+            document.getElementById('editLoading').style.display = 'block';
+            document.getElementById('regenerateEdit').disabled = true;
+
+            try {
+                const res = await fetch('/api/regenerate-slide', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        slide: currentSlides[editingSlideIndex],
+                        outline: { title: currentOutline.title, slides: currentSlides },
+                        prompt: prompt
+                    })
+                });
+
+                const data = await res.json();
+                if (data.slide) {
+                    document.getElementById('slideEditText').value = JSON.stringify(data.slide, null, 2);
+                    document.getElementById('editLoading').style.display = 'none';
+                    document.getElementById('editJsonArea').style.display = 'block';
+                } else {
+                    alert('生成失败: ' + data.error);
+                    document.getElementById('editJsonArea').style.display = 'block';
+                    document.getElementById('editLoading').style.display = 'none';
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+                document.getElementById('editJsonArea').style.display = 'block';
+                document.getElementById('editLoading').style.display = 'none';
+            }
+
+            document.getElementById('regenerateEdit').disabled = false;
+        });
 
         document.getElementById('saveEdit').addEventListener('click', () => {
             try {
@@ -956,29 +1025,85 @@
 
             // Get body content
             const bodyContent = doc.body.innerHTML;
-            container.innerHTML = bodyContent;
+
+            // 创建构建动画覆盖层
+            const buildOverlay = document.createElement('div');
+            buildOverlay.id = 'build-overlay';
+            buildOverlay.style.cssText = `
+                position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10000;background:#0a0a0a;
+                display:flex;flex-direction:column;align-items:center;justify-content:center;
+                transition:opacity 0.5s ease;
+            `;
+
+            const slideCount = currentSlides.length;
+            buildOverlay.innerHTML = `
+                <div class="build-title" style="font-size:1.5rem;color:#fff;margin-bottom:30px;font-weight:600;">
+                    正在创建演示文稿
+                </div>
+                <div class="build-progress" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:80vw;">
+                    ${Array(slideCount).fill(0).map((_, i) => `
+                        <div class="build-dot" data-index="${i}" style="
+                            width:40px;height:40px;border-radius:8px;background:#1a1a1a;border:2px solid #333;
+                            display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#666;
+                            transition:all 0.3s ease;opacity:0.3;
+                        ">${i + 1}</div>
+                    `).join('')}
+                </div>
+                <div class="build-status" style="margin-top:30px;color:#666;font-size:0.9rem;">
+                    正在生成第 <span id="build-current">1</span> / ${slideCount} 页
+                </div>
+            `;
+
+            document.body.appendChild(buildOverlay);
             document.body.appendChild(container);
 
-            // Execute all scripts from the generated HTML
-            const scripts = doc.querySelectorAll('script');
-            scripts.forEach(script => {
-                if (script.src) {
-                    // External script - load it
-                    const newScript = document.createElement('script');
-                    newScript.src = script.src;
-                    if (script.async) newScript.async = true;
-                    document.body.appendChild(newScript);
-                } else if (script.textContent) {
-                    // Inline script - execute it
-                    try {
-                        eval(script.textContent);
-                    } catch (e) {
-                        console.error('Error executing script:', e);
-                    }
-                }
-            });
+            // 设置容器初始隐藏
+            container.style.opacity = '0';
+            container.innerHTML = bodyContent;
 
-            // Add fullscreen handling
+            // 逐个显示构建动画
+            const buildDots = buildOverlay.querySelectorAll('.build-dot');
+            const buildCurrent = buildOverlay.querySelector('#build-current');
+
+            let currentBuildIndex = 0;
+            const buildInterval = setInterval(() => {
+                if (currentBuildIndex >= slideCount) {
+                    clearInterval(buildInterval);
+
+                    // 动画完成，移除覆盖层，显示演示
+                    buildOverlay.style.opacity = '0';
+                    container.style.opacity = '1';
+                    setTimeout(() => {
+                        buildOverlay.remove();
+                    }, 500);
+
+                    // 执行脚本初始化导航
+                    initPresentationScripts(doc);
+                    return;
+                }
+
+                // 高亮当前幻灯片
+                if (currentBuildIndex > 0) {
+                    buildDots[currentBuildIndex - 1].style.background = '#22c55e';
+                    buildDots[currentBuildIndex - 1].style.borderColor = '#22c55e';
+                    buildDots[currentBuildIndex - 1].style.color = '#fff';
+                    buildDots[currentBuildIndex - 1].innerHTML = '<i class="ph ph-check"></i>';
+                    buildDots[currentBuildIndex - 1].style.opacity = '1';
+                }
+
+                // 高亮正在生成的幻灯片
+                const currentDot = buildDots[currentBuildIndex];
+                currentDot.style.background = 'var(--primary)';
+                currentDot.style.borderColor = 'var(--primary)';
+                currentDot.style.color = '#fff';
+                currentDot.style.opacity = '1';
+                currentDot.style.transform = 'scale(1.1)';
+
+                buildCurrent.textContent = currentBuildIndex + 1;
+                currentBuildIndex++;
+            }, 400); // 每400ms创建一个幻灯片
+
+            // 添加全屏处理
             const handleFullscreen = () => {
                 if (!document.fullscreenElement && container.parentElement) {
                     exitPresentation();
@@ -987,13 +1112,34 @@
 
             document.addEventListener('fullscreenchange', handleFullscreen);
 
-            // Store cleanup function
+            // 存储清理函数
             window._cleanupPresentation = () => {
                 document.removeEventListener('fullscreenchange', handleFullscreen);
                 if (container.parentElement) {
                     container.parentElement.removeChild(container);
                 }
+                const overlay = document.getElementById('build-overlay');
+                if (overlay) overlay.remove();
             };
+        }
+
+        // 初始化演示脚本
+        function initPresentationScripts(doc) {
+            const scripts = doc.querySelectorAll('script');
+            scripts.forEach(script => {
+                if (script.src) {
+                    const newScript = document.createElement('script');
+                    newScript.src = script.src;
+                    if (script.async) newScript.async = true;
+                    document.body.appendChild(newScript);
+                } else if (script.textContent) {
+                    try {
+                        eval(script.textContent);
+                    } catch (e) {
+                        console.error('Error executing script:', e);
+                    }
+                }
+            });
         }
 
         function exitPresentation() {
