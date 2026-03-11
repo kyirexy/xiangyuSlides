@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安装 Xiangyu Slides - AI 演示文稿生成器</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            background: #0f0f1a;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1 i { color: #0ea5e9; }
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            color: #0ea5e9;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .code-block {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+        }
+        .code-block pre {
+            color: #a5b4fc;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #0ea5e9;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: #0284c7; }
+        .copy-btn.copied { background: #22c55e; }
+        .steps {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .step {
+            flex: 1;
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .step-num {
+            width: 24px;
+            height: 24px;
+            background: #0ea5e9;
+            border-radius: 50%;
+            color: white;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .step-title { color: #fff; font-size: 0.9rem; margin-bottom: 4px; }
+        .step-desc { color: #666; font-size: 0.75rem; }
+        .api-note {
+            background: #22c55e20;
+            border: 1px solid #22c55e40;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 20px;
+            color: #22c55e;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="ph ph-presentation"></i> Xiangyu Slides</h1>
+        <p class="subtitle">在 OpenClaw 中使用 AI 演示文稿生成器</p>
+
+        <div class="section">
+            <div class="section-title"><i class="ph ph-copy"></i> 复制以下提示词</div>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyPrompt()">
+                    <i class="ph ph-copy"></i> 复制
+                </button>
+                <pre id="prompt"># Xiangyu Slides Skill
+
+## 描述
+AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿
+
+## 配置
+API_URL: http://localhost:3001
+
+## 工具
+1. generate_presentation_outline - 生成演示文稿大纲
+   - topic: string (必填) - 演示文稿主题
+   - purpose: string - 用途 (teaching/pitch/product/meeting/company/tech/personal/story/marketing/event)
+   - length: string - 长度 (short/medium/long)
+
+2. generate_presentation_html - 生成演示文稿 HTML 并保存
+   - topic: string (必填) - 演示文稿主题
+   - purpose: string - 用途
+   - length: string - 长度
+   - style: string - 风格
+   - output: string - 输出文件路径（如 slides.html）
+
+3. list_presentation_styles - 获取可用风格
+
+## 使用示例
+用户: 帮我做一个AI演示文稿
+你: 调用 generate_presentation_html，topic="AI人工智能发展"，purpose="teaching"，length="medium"，style="bold-signal"，output="ai-slides.html"
+
+## 注意
+确保服务正在运行: cd xiangyu-slides-app && node server.js</pre>
+            </div>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-title">启动服务</div>
+                <div class="step-desc">node server.js</div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-title">复制提示词</div>
+                <div class="step-desc">点击复制按钮</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-title">粘贴到 OpenClaw</div>
+                <div class="step-desc">开始生成</div>
+            </div>
+        </div>
+
+        <div class="api-note">
+            <i class="ph ph-info"></i> 服务运行在 http://localhost:3001
+        </div>
+    </div>
+
+    <script>
+        function copyPrompt() {
+            const text = document.getElementById('prompt').textContent;
+            navigator.clipboard.writeText(text);
+
+            const btn = document.querySelector('.copy-btn');
+            btn.innerHTML = '<i class="ph ph-check"></i> 已复制';
+            btn.classList.add('copied');
+
+            setTimeout(() => {
+                btn.innerHTML = '<i class="ph ph-copy"></i> 复制';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
