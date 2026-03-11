@@ -1,16 +1,25 @@
 {
-  "name": "frontend-slides-app",
+  "name": "xiangyu-slides",
   "version": "1.0.0",
-  "description": "Create stunning HTML presentations with AI",
+  "description": "AI-powered HTML presentation generator",
   "main": "server.js",
+  "bin": {
+    "xiangyu-slides": "./bin/cli.js"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "mcp": "node mcp-server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "body-parser": "^1.20.2"
-  }
+  },
+  "optionalDependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "keywords": ["presentation", "slides", "ai", "mcp"],
+  "license": "MIT"
 }
