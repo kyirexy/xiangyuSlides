@@ -280,6 +280,21 @@ app.post('/api/auth/upgrade', authenticateApiKey, (req, res) => {
 
 // ============ Public API ============
 
+app.get('/api/skills', (req, res) => {
+    const skills = require('./skills.json');
+    res.json(skills);
+});
+
+app.get('/api/skills/:id', (req, res) => {
+    const skills = require('./skills.json');
+    const skill = skills.skills.find(s => s.id === req.params.id);
+    if (skill) {
+        res.json(skill);
+    } else {
+        res.status(404).json({ error: 'Skill not found' });
+    }
+});
+
 app.get('/api/styles', (req, res) => {
     res.json(STYLE_PRESETS);
 });

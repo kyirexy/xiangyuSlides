@@ -150,12 +150,21 @@ server.setRequestHandler(CallToolSchema, async (request) => {
       });
 
       // 再生成 HTML
-      const html = await callApi('/api/generate-html', {
+      const htmlResult = await callApi('/api/generate-html', {
         outline,
         style: args.style || 'bold-signal'
       });
 
-      return { content: [{ type: 'text', text: html.html || html }] };
+      const html = htmlResult.html || htmlResult;
+
+      // 如果指定了输出路径，保存文件
+      if (args.output) {
+        const fs = require('fs');
+        fs.writeFileSync(args.output, html);
+        return { content: [{ type: 'text', text: `演示文稿已保存到: ${args.output}\n\n${html.substring(0, 500)}...` }] };
+      }
+
+      return { content: [{ type: 'text', text: html }] };
     }
 
     throw new Error(`Unknown tool: ${name}`);

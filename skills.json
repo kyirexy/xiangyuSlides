@@ -1,0 +1,31 @@
+{
+  "skills": [
+    {
+      "id": "xiangyu-slides",
+      "name": "Xiangyu Slides",
+      "description": "AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿",
+      "category": "presentation",
+      "version": "1.0.0",
+      "endpoint": "http://localhost:3001",
+      "tools": [
+        "generate_presentation_outline",
+        "generate_presentation_html",
+        "list_presentation_styles"
+      ],
+      "mcp": {
+        "command": "node",
+        "args": ["mcp-server.js"]
+      },
+      "cli": {
+        "package": "xiangyu-slides",
+        "command": "xiangyu-slides generate"
+      },
+      "parameters": {
+        "topic": { "type": "string", "required": true, "description": "演示文稿主题" },
+        "purpose": { "type": "string", "required": false, "enum": ["teaching","pitch","product","meeting","company","tech","personal","story","marketing","event"] },
+        "length": { "type": "string", "required": false, "enum": ["short","medium","long"] },
+        "style": { "type": "string", "required": false }
+      }
+    }
+  ]
+}
