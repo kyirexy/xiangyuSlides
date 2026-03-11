@@ -252,6 +252,105 @@
     width: 100%;
 }
 
+/* 产品介绍分栏布局 */
+.product-intro {
+    display: flex;
+    gap: 40px;
+    width: 100%;
+    margin-bottom: 40px;
+    align-items: flex-start;
+}
+
+.product-intro-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.product-intro-image {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.product-intro-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.product-intro-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 320px;
+}
+
+.product-intro-right {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+}
+
+.video-container {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-tertiary);
+}
+
+.video-placeholder i {
+    font-size: 3rem;
+    color: var(--primary);
+    opacity: 0.5;
+}
+
+.video-placeholder span {
+    font-size: 0.85rem;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .product-intro {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .product-intro-image {
+        width: 140px;
+        height: 140px;
+    }
+
+    .product-intro-right {
+        width: 100%;
+    }
+}
+
 /* 底部输入框 */
 .input-container {
     width: 100%;
@@ -417,4 +516,95 @@
     .style-preview-name {
         font-size: 0.8rem;
     }
+}
+
+
+/* 用途详细说明 */
+.purpose-descriptions {
+    display: none;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.purpose-descriptions.show {
+    display: block;
+}
+
+.purpose-desc {
+    display: none;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+}
+
+.purpose-desc.active {
+    display: block;
+}
+
+.purpose-desc-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.purpose-desc-title i {
+    font-size: 1.2rem;
+}
+
+.purpose-desc-content p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.purpose-desc-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.purpose-desc-content ul li {
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    position: relative;
+    padding-left: 20px;
+}
+
+.purpose-desc-content ul li::before {
+    content: "\2022";
+    color: var(--primary);
+    position: absolute;
+    left: 8px;
+}
+
+.purpose-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.purpose-tags span {
+    padding: 4px 12px;
+    background: rgba(14, 165, 233, 0.1);
+    color: var(--primary);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

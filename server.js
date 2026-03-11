@@ -480,12 +480,33 @@ ${length === 'short' ? '确保slides数组有5-8个幻灯片。' : length === 'l
             { role: 'user', content: prompt }
         ]);
 
+        // 尝试提取和修复 JSON
+        let jsonStr = result;
+        
+        // 尝试找到 JSON 部分
         const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-            const outline = JSON.parse(jsonMatch[0]);
-            res.json(outline);
+            jsonStr = jsonMatch[0];
         } else {
             throw new Error('No JSON found in response');
+        }
+        
+        // 尝试解析，可能需要修复常见的 JSON 格式问题
+        try {
+            const outline = JSON.parse(jsonStr);
+            res.json(outline);
+        } catch (parseError) {
+            console.error('JSON parse error, raw response:', result.substring(0, 500));
+            // 尝试修复单引号为双引号
+            const fixedJson = jsonStr
+                .replace(/'/g, '"')
+                .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '"$2":');
+            try {
+                const outline = JSON.parse(fixedJson);
+                res.json(outline);
+            } catch (e2) {
+                throw new Error('Failed to parse JSON: ' + parseError.message);
+            }
         }
     } catch (error) {
         console.error('Error generating outline:', error);
