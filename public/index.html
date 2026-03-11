@@ -375,10 +375,10 @@
                     <i class="ph ph-sparkle"></i>
                     开始创建
                 </a>
-                <a href="https://github.com/kyirexy/xiangyu-skill" target="_blank" class="btn-large btn-large-secondary">
-                    <i class="ph ph-github-logo"></i>
-                    查看文档
-                </a>
+                <button class="btn-large btn-large-secondary" onclick="openInstallModal()">
+                    <i class="ph ph-robot"></i>
+                    Agent 集成
+                </button>
             </div>
             <div class="demo-container">
                 <div class="demo-box">
@@ -464,6 +464,119 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- Agent 集成弹窗 -->
+    <div class="modal-overlay" id="installModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="ph ph-robot"></i> Agent 集成</h3>
+                <button class="modal-close" onclick="closeInstallModal()">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.9rem;">
+                    复制以下提示词到你的 Agent（如 OpenClaw），即可直接调用 Xiangyu Slides 生成演示文稿。
+                </p>
+                <div class="code-block" style="background: var(--bg-secondary); border-radius: 10px; padding: 16px; position: relative;">
+                    <button class="copy-btn" onclick="copyInstallPrompt()" style="
+                        position: absolute; top: 12px; right: 12px;
+                        background: var(--primary); border: none; color: white;
+                        padding: 6px 14px; border-radius: 6px; cursor: pointer;
+                        font-size: 0.8rem; display: flex; align-items: center; gap: 4px;
+                    ">
+                        <i class="ph ph-copy"></i> <span id="copyText">复制</span>
+                    </button>
+                    <pre id="installPrompt" style="color: var(--text-primary); font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; max-height: 320px; overflow-y: auto; margin: 0; line-height: 1.5;"># Xiangyu Slides Skill
+
+## 描述
+AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿
+
+## 配置
+API_URL: http://localhost:3001
+
+## 工具
+1. generate_presentation_outline - 生成演示文稿大纲
+   - topic: string (必填) - 演示文稿主题
+   - purpose: string - 用途 (teaching/pitch/product/meeting/company/tech/personal/story/marketing/event)
+   - length: string - 长度 (short/medium/long)
+
+2. generate_presentation_html - 生成演示文稿 HTML 并保存
+   - topic: string (必填) - 演示文稿主题
+   - purpose: string - 用途
+   - length: string - 长度
+   - style: string - 风格 (bold-signal/electric-studio/creative-voltage/dark-botanical/notebook-tabs/pastel-geometry/split-pastel/vintage-editorial/neon-cyber/terminal-green/swiss-modern/paper-ink)
+   - output: string - 输出文件路径（如 slides.html）
+
+3. list_presentation_styles - 获取可用风格
+
+## 使用示例
+用户: 帮我做一个AI演示文稿
+你: 调用 generate_presentation_html，topic="AI人工智能发展"，purpose="teaching"，length="medium"，style="bold-signal"，output="ai-slides.html"
+
+## 注意
+确保服务正在运行: node server.js (端口 3001)</pre>
+                </div>
+                <div style="margin-top: 16px; padding: 12px; background: #22c55e20; border-radius: 8px; border: 1px solid #22c55e40;">
+                    <p style="color: #22c55e; font-size: 0.85rem; margin: 0;">
+                        <i class="ph ph-info"></i> 提示：首次使用需启动服务 <code>node server.js</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-header h3 { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .modal-header h3 i { color: var(--primary); }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: #ef4444; color: white; }
+        .modal-body { padding: 20px; overflow-y: auto; }
+    </style>
+
     <script>
         // 主题切换
         const themeToggle = document.getElementById('themeToggle');
@@ -486,6 +599,30 @@
             toast.classList.add("show");
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
+
+        // Agent 集成弹窗
+        function openInstallModal() {
+            document.getElementById('installModal').classList.add('active');
+        }
+
+        function closeInstallModal() {
+            document.getElementById('installModal').classList.remove('active');
+        }
+
+        function copyInstallPrompt() {
+            const text = document.getElementById('installPrompt').textContent;
+            navigator.clipboard.writeText(text);
+
+            const copyText = document.getElementById('copyText');
+            copyText.textContent = '已复制!';
+            setTimeout(() => copyText.textContent = '复制', 2000);
+            showToast('提示词已复制到剪贴板');
+        }
+
+        // 点击遮罩关闭弹窗
+        document.getElementById('installModal').addEventListener('click', (e) => {
+            if (e.target.id === 'installModal') closeInstallModal();
+        });
     </script>
 </body>
 </html>
