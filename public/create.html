@@ -6,6 +6,8 @@
     <title>创建演示文稿 - Xiangyu Slides</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/create.css">
     <style>
         .main {
             flex: 1;
@@ -122,69 +124,6 @@
 
         .style-preview-title i { color: var(--primary); }
 
-        .style-preview-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
-
-        .style-preview-card {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            padding: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-
-        .style-preview-card:hover {
-            border-color: var(--text-tertiary);
-            transform: translateY(-2px);
-        }
-
-        .style-preview-card.active {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
-        }
-
-        .style-preview-thumb {
-            width: 100%;
-            height: 40px;
-            border-radius: 6px;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            overflow: hidden;
-        }
-
-        .style-preview-name {
-            font-size: 0.65rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .style-preview-card.active .style-preview-name {
-            color: var(--primary);
-        }
-
-        /* 风格颜色 - 参考 frontend-slides SKILL.md */
-        .style-bold .style-preview-thumb { background: linear-gradient(135deg, #1a1a1a 0%, #FF5722 100%); color: #fff; }
-        .style-electric .style-preview-thumb { background: linear-gradient(180deg, #ffffff 50%, #4361ee 50%); color: #0a0a0a; }
-        .style-creative .style-preview-thumb { background: linear-gradient(135deg, #0066ff 0%, #d4ff00 100%); color: #fff; }
-        .style-botanical .style-preview-thumb { background: linear-gradient(135deg, #0f0f0f 0%, #d4a574 100%); color: #fff; }
-        .style-notebook .style-preview-thumb { background: linear-gradient(135deg, #f8f6f1 0%, #e8e4dc 100%); color: #333; }
-        .style-pastel .style-preview-thumb { background: linear-gradient(135deg, #c8d9e6 0%, #f5c6cb 100%); color: #333; }
-        .style-split .style-preview-thumb { background: linear-gradient(135deg, #f5e6dc 0%, #e4dff0 100%); color: #333; }
-        .style-vintage .style-preview-thumb { background: linear-gradient(135deg, #f5f3ee 0%, #d4c4a8 100%); color: #333; }
-        .style-neon .style-preview-thumb { background: linear-gradient(135deg, #0a0a1a 0%, #00ff88 100%); color: #fff; }
-        .style-terminal .style-preview-thumb { background: linear-gradient(135deg, #0d1117 0%, #00ff00 100%); color: #fff; }
-        .style-swiss .style-preview-thumb { background: linear-gradient(135deg, #ffffff 0%, #ff0000 30%, #0000ff 60%, #ffff00 100%); color: #333; }
-        .style-paper .style-preview-thumb { background: linear-gradient(135deg, #f5f5dc 0%, #2c2c2c 100%); color: #333; }
-
-        /* 底部输入框 */
         .input-container {
             width: 100%;
             max-width: 800px;
@@ -560,7 +499,7 @@
     <header class="header">
         <div class="header-left">
             <a href="/" class="logo">
-                <div class="logo-icon">X</div>
+                <img src="/tubiao.jpg" class="logo-icon-img" alt="Logo">
                 <div class="logo-text">Xiangyu<span>Slides</span></div>
             </a>
             <div class="nav-pills">
@@ -581,6 +520,7 @@
     <main class="main">
         
 
+        <div class="section-label"><i class="ph ph-target"></i> 选择用途</div>
         <div class="quick-actions" id="purposeArea">
             <button class="quick-action" data-val="teaching"><i class="ph ph-graduation-cap"></i> 教学培训</button>
             <button class="quick-action" data-val="pitch"><i class="ph ph-currency-dollar"></i> 融资演讲</button>
@@ -595,7 +535,7 @@
         </div>
         <!-- 页数选择 -->
         <div class="length-area">
-            <div class="length-title">
+            <div class="section-label">
                 <i class="ph ph-files"></i> 演示文稿长度
             </div>
             <div class="length-options" id="lengthArea">
@@ -613,54 +553,50 @@
 
 
         <div class="style-preview-area">
-            <div class="style-preview-title">
-                <i class="ph ph-palette"></i> 选择风格
-            </div>
+            <div class="section-label"><i class="ph ph-palette"></i> 选择风格</div>
             <div class="style-preview-grid" id="styleArea">
-                <div class="style-preview-card style-bold" data-val="bold-signal">
-                    <div class="style-preview-thumb"><i class="ph ph-lightning"></i></div>
-                    <div class="style-preview-name">大胆</div>
+                <div class="style-preview-card style-bold" data-val="bold-signal" style="background: linear-gradient(135deg, #1a1a1a 0%, #FF5722 100%);">
+                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Bold · 大胆</div>
                 </div>
-                <div class="style-preview-card style-electric" data-val="electric-studio">
-                    <div class="style-preview-thumb"><i class="ph ph-lightning"></i></div>
-                    <div class="style-preview-name">电光</div>
+                <div class="style-preview-card style-electric" data-val="electric-studio" style="background: linear-gradient(180deg, #ffffff 50%, #4361ee 50%);">
+                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Electric · 电光</div>
                 </div>
-                <div class="style-preview-card style-creative" data-val="creative-voltage">
-                    <div class="style-preview-thumb"><i class="ph ph-sparkle"></i></div>
-                    <div class="style-preview-name">创意</div>
+                <div class="style-preview-card style-creative" data-val="creative-voltage" style="background: linear-gradient(135deg, #0066ff 0%, #d4ff00 100%);">
+                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Creative · 创意</div>
                 </div>
-                <div class="style-preview-card style-botanical" data-val="dark-botanical">
-                    <div class="style-preview-thumb"><i class="ph ph-tree"></i></div>
-                    <div class="style-preview-name">森系</div>
+                <div class="style-preview-card style-botanical" data-val="dark-botanical" style="background: linear-gradient(135deg, #0f0f0f 0%, #d4a574 100%);">
+                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Botanical · 森系</div>
                 </div>
-                <div class="style-preview-card style-notebook" data-val="notebook-tabs">
-                    <div class="style-preview-thumb"><i class="ph ph-notebook"></i></div>
-                    <div class="style-preview-name">笔记</div>
+                <div class="style-preview-card style-notebook" data-val="notebook-tabs" style="background: linear-gradient(135deg, #f8f6f1 0%, #e8e4dc 100%);">
+                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Notebook · 笔记</div>
                 </div>
-                <div class="style-preview-card style-pastel" data-val="pastel-geometry">
-                    <div class="style-preview-thumb"><i class="ph ph-shapes"></i></div>
-                    <div class="style-preview-name">粉彩</div>
+                <div class="style-preview-card style-pastel" data-val="pastel-geometry" style="background: linear-gradient(135deg, #c8d9e6 0%, #f5c6cb 100%);">
+                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Pastel · 粉彩</div>
                 </div>
-                <div class="style-preview-card style-split" data-val="split-pastel">
-                    <div class="style-preview-thumb"><i class="ph ph-columns"></i></div>
-                    <div class="style-preview-name">分割</div>
+                <div class="style-preview-card style-split" data-val="split-pastel" style="background: linear-gradient(135deg, #f5e6dc 0%, #e4dff0 100%);">
+                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Split · 分割</div>
                 </div>
-                <div class="style-preview-card style-vintage" data-val="vintage-editorial">
-                    <div class="style-preview-thumb"><i class="ph ph-book-open"></i></div>
-                    <div class="style-preview-name">复古</div>
+                <div class="style-preview-card style-vintage" data-val="vintage-editorial" style="background: linear-gradient(135deg, #f5f3ee 0%, #d4c4a8 100%);">
+                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Vintage · 复古</div>
                 </div>
-                <div class="style-preview-card style-neon" data-val="neon-cyber">
-                    <div class="style-preview-thumb"><i class="ph ph-atom"></i></div>
-                    <div class="style-preview-name">赛博</div>
+                <div class="style-preview-card style-neon" data-val="neon-cyber" style="background: linear-gradient(135deg, #0a0a1a 0%, #00ff88 100%);">
+                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Neon · 赛博</div>
                 </div>
-                <div class="style-preview-card style-terminal" data-val="terminal-green">
-                    <div class="style-preview-thumb"><i class="ph ph-terminal"></i></div>
-                    <div class="style-preview-name">终端</div>
+                <div class="style-preview-card style-terminal" data-val="terminal-green" style="background: linear-gradient(135deg, #0d1117 0%, #00ff00 100%);">
+                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Terminal · 终端</div>
                 </div>
             </div>
         </div>
-
-<div class="input-container">            <div class="input-wrapper">                <div class="input-inner"><textarea id="userInput" placeholder="描述你想要创建的演示文稿..." rows="2"></textarea></div>                <div class="input-footer">                    <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>                    <div class="input-actions"><button class="send-btn" id="btnSend" disabled><i class="ph ph-paper-plane-tilt"></i></button></div>                </div>            </div>        </div>        <div class="quick-start">
+        <div class="input-container">
+            <div class="input-wrapper">
+                <div class="input-inner"><textarea id="userInput" placeholder="描述你想要创建的演示文稿..." rows="2"></textarea></div>
+                <div class="input-footer">
+                    <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
+                    <div class="input-actions"><button class="send-btn" id="btnSend" disabled><i class="ph ph-paper-plane-tilt"></i></button></div>
+                </div>
+            </div>
+        </div>
+        <div class="quick-start">
             <div class="quick-start-btns">
                 <button class="quick-start-btn" onclick="quickGenerate('教学培训')">教学培训 - 帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例</button>
                 <button class="quick-start-btn" onclick="quickGenerate('产品发布')">产品发布 - 帮我做一个新产品的发布会演示文稿，包含产品背景、核心功能、用户体验、市场定价</button>
@@ -1185,5 +1121,9 @@
         style.textContent = '@keyframes spinner { to { transform: rotate(360deg); } } .spinner { animation: spinner 1s linear infinite; }';
         document.head.appendChild(style);
     </script>
+<!-- 通用组件 -->
+    <script src="/js/common.js"></script>
+    <!-- 创建页逻辑 -->
+    <script src="/js/create.js"></script>
 </body>
 </html>
