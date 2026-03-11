@@ -128,35 +128,63 @@
                 <button class="copy-btn" onclick="copyPrompt()">
                     <i class="ph ph-copy"></i> 复制
                 </button>
-                <pre id="prompt"># Xiangyu Slides Skill
+                <pre id="prompt">---
+name: xiangyu-slides
+homepage: http://localhost:3001
+description: "Xiangyu Slides: AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿"
+env:
+  - API_URL
+requires:
+  - sessions_spawn
+permissions:
+  network:
+    - "http://localhost:3001"
+  filesystem:
+    write:
+      - "~/.openclaw/workspace/"
+---
 
-## 描述
+# Xiangyu Slides
+
 AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿
 
-## 配置
-API_URL: http://localhost:3001
+## 前提条件
+
+1. 克隆项目：
+```
+git clone https://github.com/kyirexy/xiangyuSlides.git
+cd xiangyuSlides
+npm install
+```
+
+2. 启动服务：
+```
+node server.js
+# 服务运行在 http://localhost:3001
+```
 
 ## 工具
-1. generate_presentation_outline - 生成演示文稿大纲
-   - topic: string (必填) - 演示文稿主题
-   - purpose: string - 用途 (teaching/pitch/product/meeting/company/tech/personal/story/marketing/event)
-   - length: string - 长度 (short/medium/long)
 
-2. generate_presentation_html - 生成演示文稿 HTML 并保存
-   - topic: string (必填) - 演示文稿主题
-   - purpose: string - 用途
-   - length: string - 长度
-   - style: string - 风格
-   - output: string - 输出文件路径（如 slides.html）
+### 1. generate_presentation_outline
+生成演示文稿大纲
+- topic: string (必填) - 演示文稿主题
+- purpose: string - 用途 (teaching/pitch/product/meeting/company/tech/personal/story/marketing/event)
+- length: string - 长度 (short/medium/long)
 
-3. list_presentation_styles - 获取可用风格
+### 2. generate_presentation_html
+生成演示文稿 HTML 并保存
+- topic: string (必填) - 演示文稿主题
+- purpose: string - 用途
+- length: string - 长度
+- style: string - 风格 (bold-signal/electric-studio/creative-voltage/dark-botanical/notebook-tabs/pastel-geometry/split-pastel/vintage-editorial/neon-cyber/terminal-green/swiss-modern/paper-ink)
+- output: string - 输出文件路径（如 slides.html）
+
+### 3. list_presentation_styles
+获取可用风格
 
 ## 使用示例
 用户: 帮我做一个AI演示文稿
-你: 调用 generate_presentation_html，topic="AI人工智能发展"，purpose="teaching"，length="medium"，style="bold-signal"，output="ai-slides.html"
-
-## 注意
-确保服务正在运行: cd xiangyu-slides-app && node server.js</pre>
+你: 调用 generate_presentation_html，topic="AI人工智能发展"，purpose="teaching"，length="medium"，style="bold-signal"，output="ai-slides.html"</pre>
             </div>
         </div>
 

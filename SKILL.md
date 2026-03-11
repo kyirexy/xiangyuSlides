@@ -1,6 +1,17 @@
 ---
 name: xiangyu-slides
-description: AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿。使用 API 方式调用，需要先启动服务。
+homepage: http://localhost:3001
+description: "Xiangyu Slides: AI 演示文稿生成器 - 输入主题自动生成精美 HTML 演示文稿"
+env:
+  - API_URL
+requires:
+  - sessions_spawn
+permissions:
+  network:
+    - "http://localhost:3001"
+  filesystem:
+    write:
+      - "~/.openclaw/workspace/"
 ---
 
 # Xiangyu Slides
@@ -9,7 +20,7 @@ AI 驱动的演示文稿生成器，通过 API 生成精美的 HTML 幻灯片。
 
 ## 前提条件
 
-1. 安装依赖：
+1. 克隆项目：
 ```bash
 git clone https://github.com/kyirexy/xiangyuSlides.git
 cd xiangyuSlides
@@ -36,21 +47,8 @@ node server.js
 
 **参数：**
 - `topic` (必填): 演示文稿主题
-- `purpose` (可选): 用途
-  - `teaching` - 教学培训
-  - `pitch` - 融资演讲
-  - `product` - 产品发布
-  - `meeting` - 会议汇报
-  - `company` - 公司介绍
-  - `tech` - 技术分享
-  - `personal` - 个人简历
-  - `story` - 故事讲解
-  - `marketing` - 营销推广
-  - `event` - 活动策划
-- `length` (可选): 长度
-  - `short` - 5-8 页
-  - `medium` - 8-15 页
-  - `long` - 15-25 页
+- `purpose` (可选): 用途 - teaching/pitch/product/meeting/company/tech/personal/story/marketing/event
+- `length` (可选): 长度 - short/medium/long
 
 **调用示例：**
 ```bash
