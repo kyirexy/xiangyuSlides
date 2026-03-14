@@ -1063,15 +1063,19 @@ class SlidePresentation {
         this.totalSlides = this.slides.length;
         this.lockedUntil = 0;
         this.touchStartY = 0;
+        this.wheelDelta = 0;
+        this.wheelResetTimer = null;
 
         this.setupObserver();
         this.setupKeyboardNav();
         this.setupTouchNav();
         this.setupWheelNav();
         this.setupNavDots();
+        this.setupMessageBridge();
         this.syncUi(this.currentSlide);
 
         window.setTimeout(() => this.goTo(this.currentSlide, false), 40);
+        window.setTimeout(() => this.focusPresentationSurface(), 80);
     }
 
     resolveInitialSlide() {
@@ -1102,22 +1106,17 @@ class SlidePresentation {
 
     setupKeyboardNav() {
         document.addEventListener('keydown', (event) => {
-            if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) {
-                event.preventDefault();
-                this.next();
+            if (this.shouldIgnoreKeyboardEvent(event)) {
+                return;
             }
-            if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) {
-                event.preventDefault();
-                this.prev();
+
+            const action = this.mapKeyToAction(event.key);
+            if (!action) {
+                return;
             }
-            if (event.key === 'Home') {
-                event.preventDefault();
-                this.goTo(0);
-            }
-            if (event.key === 'End') {
-                event.preventDefault();
-                this.goTo(this.totalSlides - 1);
-            }
+
+            event.preventDefault();
+            this.runAction(action);
         });
     }
 
@@ -1142,18 +1141,26 @@ class SlidePresentation {
     setupWheelNav() {
         window.addEventListener('wheel', (event) => {
             const now = Date.now();
-            if (Math.abs(event.deltaY) < 18 || now < this.lockedUntil) {
+            if (now < this.lockedUntil) {
+                event.preventDefault();
+                return;
+            }
+
+            this.wheelDelta += event.deltaY;
+            window.clearTimeout(this.wheelResetTimer);
+            this.wheelResetTimer = window.setTimeout(() => {
+                this.wheelDelta = 0;
+            }, 140);
+
+            if (Math.abs(this.wheelDelta) < 10) {
                 return;
             }
 
             event.preventDefault();
-            this.lockedUntil = now + 700;
-
-            if (event.deltaY > 0) {
-                this.next();
-            } else {
-                this.prev();
-            }
+            this.lockedUntil = now + 520;
+            const action = this.wheelDelta > 0 ? 'next' : 'prev';
+            this.wheelDelta = 0;
+            this.runAction(action);
         }, { passive: false });
     }
 
@@ -1161,6 +1168,110 @@ class SlidePresentation {
         this.navDots.forEach((dot, index) => {
             dot.addEventListener('click', () => this.goTo(index));
         });
+    }
+
+    setupMessageBridge() {
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data || data.type !== 'presentation-nav') {
+                return;
+            }
+
+            if (data.action === 'focus') {
+                this.focusPresentationSurface();
+                return;
+            }
+
+            if (data.action === 'goTo') {
+                const slideNumber = Number(data.slideNumber);
+                if (Number.isInteger(slideNumber)) {
+                    this.goTo(Math.max(0, Math.min(this.totalSlides - 1, slideNumber - 1)), false);
+                }
+                return;
+            }
+
+            this.runAction(data.action);
+        });
+    }
+
+    shouldIgnoreKeyboardEvent(event) {
+        const target = event.target;
+        if (!target) {
+            return false;
+        }
+
+        if (target.isContentEditable) {
+            return true;
+        }
+
+        const tagName = String(target.tagName || '').toLowerCase();
+        return ['input', 'textarea', 'select'].includes(tagName);
+    }
+
+    mapKeyToAction(key) {
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(key)) {
+            return 'next';
+        }
+
+        if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(key)) {
+            return 'prev';
+        }
+
+        if (key === 'Home') {
+            return 'home';
+        }
+
+        if (key === 'End') {
+            return 'end';
+        }
+
+        return null;
+    }
+
+    runAction(action) {
+        switch (action) {
+            case 'next':
+                this.next();
+                break;
+            case 'prev':
+                this.prev();
+                break;
+            case 'home':
+                this.goTo(0);
+                break;
+            case 'end':
+                this.goTo(this.totalSlides - 1);
+                break;
+            default:
+                break;
+        }
+    }
+
+    focusPresentationSurface() {
+        document.body.tabIndex = -1;
+        window.focus();
+        if (typeof document.body.focus === 'function') {
+            document.body.focus({ preventScroll: true });
+        }
+    }
+
+    syncAddress(index) {
+        const slideNumber = index + 1;
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'presentation-state',
+                slide: slideNumber,
+                totalSlides: this.totalSlides
+            }, '*');
+            return;
+        }
+
+        try {
+            history.replaceState(null, '', '#' + String(slideNumber));
+        } catch (error) {
+            // about:srcdoc cannot mutate history URLs; ignore in embedded mode
+        }
     }
 
     syncUi(index) {
@@ -1178,8 +1289,7 @@ class SlidePresentation {
         const totalSlidesEl = document.getElementById('totalSlides');
         if (currentSlideEl) currentSlideEl.textContent = String(index + 1);
         if (totalSlidesEl) totalSlidesEl.textContent = String(this.totalSlides);
-
-        history.replaceState(null, '', '#' + String(index + 1));
+        this.syncAddress(index);
     }
 
     next() {
@@ -1205,7 +1315,7 @@ class SlidePresentation {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    new SlidePresentation();
+    window.presentationController = new SlidePresentation();
 });`;
 }
 

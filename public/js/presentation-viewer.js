@@ -3,6 +3,7 @@ class PresentationViewer {
         this.presentationId = this.resolvePresentationId();
         this.pollTimer = null;
         this.record = null;
+        this.inputBridgeBound = false;
 
         this.elements = {
             loading: document.getElementById('loading'),
@@ -21,6 +22,7 @@ class PresentationViewer {
         };
 
         this.ensureToolbarActions();
+        this.bindInputBridge();
         this.init();
     }
 
@@ -43,6 +45,166 @@ class PresentationViewer {
         }
 
         actions.appendChild(button);
+    }
+
+    bindInputBridge() {
+        if (this.inputBridgeBound) {
+            return;
+        }
+
+        this.inputBridgeBound = true;
+
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data || data.type !== 'presentation-state') {
+                return;
+            }
+
+            this.updateLocationHash(data.slide);
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (!this.record?.html || this.shouldIgnoreKeydown(event)) {
+                return;
+            }
+
+            const action = this.mapKeyToAction(event.key);
+            if (!action) {
+                return;
+            }
+
+            event.preventDefault();
+            this.sendPresentationCommand(action);
+        });
+
+        this.elements.frame?.addEventListener('load', () => {
+            this.focusPresentation();
+            this.syncSlideFromLocation();
+        });
+
+        this.elements.frame?.addEventListener('mouseenter', () => {
+            this.focusPresentation();
+        });
+
+        this.elements.frame?.addEventListener('click', () => {
+            this.focusPresentation();
+        });
+    }
+
+    shouldIgnoreKeydown(event) {
+        const target = event.target;
+        if (!target) {
+            return false;
+        }
+
+        if (target.isContentEditable) {
+            return true;
+        }
+
+        const tagName = String(target.tagName || '').toLowerCase();
+        if (['input', 'textarea', 'select'].includes(tagName)) {
+            return true;
+        }
+
+        return Boolean(target.closest?.('.toolbar'));
+    }
+
+    mapKeyToAction(key) {
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(key)) {
+            return 'next';
+        }
+
+        if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(key)) {
+            return 'prev';
+        }
+
+        if (key === 'Home') {
+            return 'home';
+        }
+
+        if (key === 'End') {
+            return 'end';
+        }
+
+        return null;
+    }
+
+    sendPresentationCommand(action) {
+        const frameWindow = this.elements.frame?.contentWindow;
+        if (!frameWindow) {
+            return;
+        }
+
+        frameWindow.postMessage({
+            type: 'presentation-nav',
+            action
+        }, '*');
+    }
+
+    sendGoToSlide(slideNumber) {
+        const frameWindow = this.elements.frame?.contentWindow;
+        if (!frameWindow) {
+            return;
+        }
+
+        frameWindow.postMessage({
+            type: 'presentation-nav',
+            action: 'goTo',
+            slideNumber
+        }, '*');
+    }
+
+    focusPresentation() {
+        const frame = this.elements.frame;
+        if (!frame || frame.style.display === 'none') {
+            return;
+        }
+
+        frame.focus();
+
+        const frameWindow = frame.contentWindow;
+        if (!frameWindow) {
+            return;
+        }
+
+        frameWindow.focus();
+        frameWindow.postMessage({
+            type: 'presentation-nav',
+            action: 'focus'
+        }, '*');
+    }
+
+    resolveRequestedSlide() {
+        const numeric = Number(window.location.hash.replace('#', ''));
+        if (Number.isInteger(numeric) && numeric > 0) {
+            return numeric;
+        }
+
+        return null;
+    }
+
+    syncSlideFromLocation() {
+        const slideNumber = this.resolveRequestedSlide();
+        if (!slideNumber) {
+            return;
+        }
+
+        this.sendGoToSlide(slideNumber);
+    }
+
+    updateLocationHash(slideNumber) {
+        const numeric = Number(slideNumber);
+        if (!Number.isInteger(numeric) || numeric < 1) {
+            return;
+        }
+
+        const nextHash = `#${numeric}`;
+        if (window.location.hash === nextHash) {
+            return;
+        }
+
+        const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+        history.replaceState(history.state, '', nextUrl);
     }
 
     init() {
@@ -157,7 +319,9 @@ class PresentationViewer {
 
         this.elements.toolbarTitle.textContent = data.title || '未命名演示稿';
         this.elements.toolbarId.textContent = data.id;
+        this.elements.frame.setAttribute('tabindex', '0');
         this.elements.frame.srcdoc = data.html;
+        this.focusPresentation();
 
         document.title = `${data.title || '演示稿'} - Xiangyu Slides`;
     }
