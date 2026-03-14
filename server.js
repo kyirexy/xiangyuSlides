@@ -17,13 +17,30 @@ const DATA_FILE = path.join(__dirname, 'data.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const PRESENTATIONS_DIR = path.join(__dirname, 'presentations');
 
+// 检测运行环境 - Vercel 环境使用内存存储
+const isVercel = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
+let dataStore = null;
+let presentationsStore = {};
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
-// 初始化数据文件
+// 初始化数据存储
 function initData() {
+    if (isVercel) {
+        // Vercel 环境: 使用内存存储
+        dataStore = {
+            users: {},
+            apiKeys: {},
+            usage: {}
+        };
+        console.log('[Vercel] Using in-memory data store');
+        return;
+    }
+
+    // 本地环境: 使用文件存储
     if (!fs.existsSync(DATA_FILE)) {
         const initialData = {
             users: {},
@@ -36,7 +53,7 @@ function initData() {
 initData();
 
 function ensurePresentationsDir() {
-    if (!fs.existsSync(PRESENTATIONS_DIR)) {
+    if (!isVercel && !fs.existsSync(PRESENTATIONS_DIR)) {
         fs.mkdirSync(PRESENTATIONS_DIR, { recursive: true });
     }
 }
@@ -44,11 +61,18 @@ ensurePresentationsDir();
 
 // 读取数据
 function readData() {
+    if (isVercel) {
+        return dataStore;
+    }
     return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
 
 // 保存数据
 function saveData(data) {
+    if (isVercel) {
+        dataStore = data;
+        return;
+    }
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
@@ -65,6 +89,10 @@ function getPresentationFilePath(presentationId) {
 }
 
 function readPresentationRecord(presentationId) {
+    if (isVercel) {
+        return presentationsStore[presentationId] || null;
+    }
+
     const filePath = getPresentationFilePath(presentationId);
     if (!fs.existsSync(filePath)) {
         return null;
@@ -74,6 +102,11 @@ function readPresentationRecord(presentationId) {
 }
 
 function savePresentationRecord(record) {
+    if (isVercel) {
+        presentationsStore[record.id] = record;
+        return record;
+    }
+
     fs.writeFileSync(
         getPresentationFilePath(record.id),
         JSON.stringify(record, null, 2)
