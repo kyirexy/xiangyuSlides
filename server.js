@@ -18,7 +18,12 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const PRESENTATIONS_DIR = path.join(__dirname, 'presentations');
 
 // 检测运行环境 - Vercel 环境使用内存存储
-const isVercel = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
+// 检测运行环境 - Vercel Serverless 环境不可写，使用内存存储
+// 检测方式：检查常见 Vercel 环境变量或尝试写入测试
+const isVercel = process.env.VERCEL === '1' 
+    || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined
+    || process.env.VERCEL_REGION !== undefined
+    || !fs.existsSync('./data.json'); // 如果 data.json 不存在（首次部署）
 let dataStore = null;
 let presentationsStore = {};
 
