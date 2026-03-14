@@ -5,15 +5,22 @@ const path = require('path');
 const https = require('https');
 const crypto = require('crypto');
 const fs = require('fs');
+const {
+    normalizeOutline,
+    renderPresentationHtml,
+    exportPresentationPptx
+} = require('./presentation-generator');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const DATA_FILE = path.join(__dirname, 'data.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const PRESENTATIONS_DIR = path.join(__dirname, 'presentations');
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
 // 初始化数据文件
 function initData() {
@@ -28,6 +35,13 @@ function initData() {
 }
 initData();
 
+function ensurePresentationsDir() {
+    if (!fs.existsSync(PRESENTATIONS_DIR)) {
+        fs.mkdirSync(PRESENTATIONS_DIR, { recursive: true });
+    }
+}
+ensurePresentationsDir();
+
 // 读取数据
 function readData() {
     return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
@@ -36,6 +50,51 @@ function readData() {
 // 保存数据
 function saveData(data) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isValidPresentationId(presentationId) {
+    return /^pres_[a-zA-Z0-9_-]{6,128}$/.test(presentationId || '');
+}
+
+function getPresentationFilePath(presentationId) {
+    return path.join(PRESENTATIONS_DIR, `${presentationId}.json`);
+}
+
+function readPresentationRecord(presentationId) {
+    const filePath = getPresentationFilePath(presentationId);
+    if (!fs.existsSync(filePath)) {
+        return null;
+    }
+
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
+function savePresentationRecord(record) {
+    fs.writeFileSync(
+        getPresentationFilePath(record.id),
+        JSON.stringify(record, null, 2)
+    );
+
+    return record;
+}
+
+function upsertPresentationRecord(presentationId, patch = {}) {
+    const now = new Date().toISOString();
+    const existing = readPresentationRecord(presentationId) || {
+        id: presentationId,
+        createdAt: now
+    };
+
+    return savePresentationRecord({
+        ...existing,
+        ...patch,
+        id: presentationId,
+        updatedAt: now
+    });
 }
 
 // 生成 API Key
@@ -124,16 +183,16 @@ const STYLE_PRESETS = [
 ];
 
 // Call MiniMax API
-function callMiniMax(messages) {
+function callMiniMax(messages, options = {}) {
     return new Promise((resolve, reject) => {
         const data = JSON.stringify({
             model: 'MiniMax-M2.5-highspeed',
             messages: messages,
-            max_tokens: 8000,
-            temperature: 0.7
+            max_tokens: options.maxTokens || 8000,
+            temperature: options.temperature ?? 0.7
         });
 
-        const options = {
+        const requestOptions = {
             hostname: 'api.minimaxi.com',
             path: '/v1/text/chatcompletion_v2',
             method: 'POST',
@@ -143,7 +202,7 @@ function callMiniMax(messages) {
             }
         };
 
-        const req = https.request(options, (res) => {
+        const req = https.request(requestOptions, (res) => {
             let body = '';
             res.on('data', chunk => body += chunk);
             res.on('end', () => {
@@ -164,6 +223,25 @@ function callMiniMax(messages) {
         req.write(data);
         req.end();
     });
+}
+
+function extractJSONObject(text) {
+    const jsonMatch = String(text || '').match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+    }
+
+    const jsonStr = jsonMatch[0];
+
+    try {
+        return JSON.parse(jsonStr);
+    } catch (parseError) {
+        const fixedJson = jsonStr
+            .replace(/'/g, '"')
+            .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+
+        return JSON.parse(fixedJson);
+    }
 }
 
 // ============ Auth API ============
@@ -299,6 +377,370 @@ app.get('/api/styles', (req, res) => {
     res.json(STYLE_PRESETS);
 });
 
+app.get('/api/presentations/:id', (req, res) => {
+    const { id } = req.params;
+
+    if (!isValidPresentationId(id)) {
+        return res.status(400).json({ error: 'Invalid presentation id' });
+    }
+
+    const record = readPresentationRecord(id);
+    if (!record) {
+        return res.status(404).json({ error: 'Presentation not found' });
+    }
+
+    const response = {
+        id: record.id,
+        status: record.status || 'building',
+        progress: record.progress || 0,
+        step: record.step || 1,
+        message: record.message || '正在准备演示稿...',
+        title: record.title || '未命名演示稿',
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+        style: record.style || null,
+        outline: record.outline || null
+    };
+
+    if (record.status === 'ready') {
+        const html = getRenderedPresentationHtml(record);
+        if (html && html !== record.html) {
+            upsertPresentationRecord(id, { html });
+        }
+
+        response.html = html;
+        response.pptxUrl = `/api/presentations/${record.id}/export.pptx`;
+    }
+
+    if (record.error) {
+        response.error = record.error;
+    }
+
+    res.json(response);
+});
+
+app.get('/api/presentations/:id/html', (req, res) => {
+    const { id } = req.params;
+
+    if (!isValidPresentationId(id)) {
+        return res.status(400).json({ error: 'Invalid presentation id' });
+    }
+
+    const record = readPresentationRecord(id);
+    if (!record || record.status !== 'ready') {
+        return res.status(404).json({ error: 'Presentation HTML not found' });
+    }
+
+    const html = getRenderedPresentationHtml(record);
+    if (html && html !== record.html) {
+        upsertPresentationRecord(id, { html });
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+});
+
+app.get('/api/presentations/:id/export.pptx', async (req, res) => {
+    const { id } = req.params;
+
+    if (!isValidPresentationId(id)) {
+        return res.status(400).json({ error: 'Invalid presentation id' });
+    }
+
+    const record = readPresentationRecord(id);
+    if (!record || !record.outline) {
+        return res.status(404).json({ error: 'Presentation not found' });
+    }
+
+    try {
+        const buffer = await exportPresentationPptx(record.outline, record.style?.id || record.style || 'bold-signal');
+        const safeName = (record.title || id)
+            .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+            .slice(0, 80);
+
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${encodeURIComponent(safeName || id)}.pptx"`
+        );
+        res.send(buffer);
+    } catch (error) {
+        console.error('Error exporting PPTX:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+function getStyleInfo(styleId) {
+    return STYLE_PRESETS.find((item) => item.id === styleId) || STYLE_PRESETS[0];
+}
+
+function getRenderedPresentationHtml(record) {
+    if (!record?.outline) {
+        return record?.html || '';
+    }
+
+    return renderPresentationHtml(record.outline, getStyleInfo(record.style?.id || record.style).id);
+}
+
+function getPurposeDescription(purpose) {
+    const purposeDescriptions = {
+        teaching: 'Teaching deck with goals, concepts, examples, and summary.',
+        pitch: 'Fundraising deck with problem, market, product, moat, team, and ask.',
+        product: 'Product deck with context, features, user value, launch plan, and roadmap.',
+        meeting: 'Meeting deck with progress, outcomes, blockers, and next steps.',
+        company: 'Company deck with overview, business, team, traction, and vision.',
+        tech: 'Technical deck with background, architecture, implementation, and lessons.',
+        personal: 'Personal deck with intro, background, experience, and strengths.',
+        story: 'Narrative deck with setup, progression, turning point, and takeaway.',
+        marketing: 'Marketing deck with audience, offer, channels, proof, and CTA.',
+        event: 'Event deck with positioning, schedule, highlights, logistics, and CTA.'
+    };
+
+    return purposeDescriptions[purpose] || purposeDescriptions.teaching;
+}
+
+function buildOutlinePrompt({ topic, purpose, length, content }) {
+    return `You are a presentation outline planner.
+
+Goal: Produce a stable, presentation-ready slide outline.
+Purpose: ${getPurposeDescription(purpose)}
+Length: ${length || 'medium'}
+Topic: ${topic}
+Context: ${content || ''}
+
+Return JSON only:
+{
+  "title": "Presentation title",
+  "subtitle": "Presentation subtitle",
+  "slides": [
+    {
+      "type": "title|content|features|quote|code|end",
+      "title": "Slide title",
+      "subtitle": "Optional short subtitle",
+      "content": ["Point 1", "Point 2", "Point 3"]
+    }
+  ]
+}
+
+Rules:
+- Keep each bullet concise.
+- Prefer 6-10 slides for medium, 4-6 for short, 10-14 for long.
+- Use "features" only when a grid layout makes sense.
+- Use "quote" for a single key statement.
+- Use "code" only for technical topics.
+- Ensure the flow is coherent from opening to closing.`;
+}
+
+async function generateStableOutline({ topic, purpose, length, content }) {
+    const outlineResult = await callMiniMax([
+        { role: 'user', content: buildOutlinePrompt({ topic, purpose, length, content }) }
+    ], {
+        temperature: 0.25,
+        maxTokens: 4000
+    });
+
+    return normalizeOutline(extractJSONObject(outlineResult));
+}
+
+app.post('/api/generate', authenticateApiKey, async (req, res) => {
+    const { topic, purpose, length, style, content } = req.body;
+
+    if (!topic) {
+        return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    try {
+        const outline = await generateStableOutline({ topic, purpose, length, content });
+        const styleInfo = getStyleInfo(style);
+        const html = renderPresentationHtml(outline, styleInfo.id);
+        const data = readData();
+        const usage = data.usage[req.userId] || { count: 0 };
+
+        res.json({
+            success: true,
+            outline,
+            html,
+            style: styleInfo,
+            usage: {
+                used: usage.count,
+                limit: req.user?.isPro ? 'unlimited' : 10
+            }
+        });
+    } catch (error) {
+        console.error('Error in generate:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/generate-outline', authenticateApiKey, async (req, res) => {
+    let { purpose, length, content, topic } = req.body;
+
+    if (!topic || topic.trim().length < 3) {
+        return res.json({
+            clarification: true,
+            message: 'Please provide a clearer presentation topic.'
+        });
+    }
+
+    purpose = purpose || 'teaching';
+    length = length || 'medium';
+
+    try {
+        const outline = await generateStableOutline({ topic, purpose, length, content });
+        res.json(outline);
+    } catch (error) {
+        console.error('Error generating outline:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/presentations/generate', authenticateApiKey, async (req, res) => {
+    const { presentationId, outline, style } = req.body;
+
+    if (!isValidPresentationId(presentationId)) {
+        return res.status(400).json({ error: 'A valid presentationId is required' });
+    }
+
+    if (!outline || !Array.isArray(outline.slides) || outline.slides.length === 0) {
+        return res.status(400).json({ error: 'Outline with slides is required' });
+    }
+
+    const normalizedOutline = normalizeOutline(outline);
+    const styleInfo = getStyleInfo(style);
+    const presentationUrl = `/presentations/${presentationId}`;
+    const pptxUrl = `/api/presentations/${presentationId}/export.pptx`;
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const syncProgress = (progress, message, step, extra = {}) => {
+        upsertPresentationRecord(presentationId, {
+            status: extra.status || 'building',
+            progress,
+            step,
+            message,
+            title: normalizedOutline.title || 'Untitled presentation',
+            outline: normalizedOutline,
+            style: styleInfo,
+            ownerId: req.userId,
+            ...extra
+        });
+
+        const { html, ...clientExtra } = extra;
+
+        res.write(`data: ${JSON.stringify({
+            presentationId,
+            progress,
+            step,
+            message,
+            status: extra.status || 'building',
+            url: presentationUrl,
+            pptxUrl,
+            ...clientExtra
+        })}\n\n`);
+    };
+
+    try {
+        syncProgress(8, 'Validating outline structure...', 1);
+        await sleep(100);
+
+        syncProgress(26, `Outline normalized to ${normalizedOutline.slides.length} slides.`, 1);
+        await sleep(120);
+
+        syncProgress(48, `Applying ${styleInfo.name} theme tokens...`, 2);
+        await sleep(120);
+
+        syncProgress(72, 'Rendering viewport-safe slides locally...', 3);
+        const html = renderPresentationHtml(normalizedOutline, styleInfo.id);
+        await sleep(80);
+
+        syncProgress(90, 'Saving presentation record and export metadata...', 4);
+        await sleep(80);
+
+        syncProgress(100, 'Presentation ready. HTML and PPTX export are available.', 5, {
+            status: 'ready',
+            html,
+            title: normalizedOutline.title
+        });
+
+        setTimeout(() => res.end(), 120);
+    } catch (error) {
+        console.error('Error generating presentation record:', error);
+        syncProgress(-1, 'Generation failed: ' + error.message, 4, {
+            status: 'failed',
+            error: error.message
+        });
+        res.end();
+    }
+});
+
+app.post('/api/generate-html', authenticateApiKey, async (req, res) => {
+    const { outline, style } = req.body;
+
+    if (!outline || !Array.isArray(outline.slides) || outline.slides.length === 0) {
+        return res.status(400).json({ error: 'Outline with slides is required' });
+    }
+
+    try {
+        const normalizedOutline = normalizeOutline(outline);
+        const styleInfo = getStyleInfo(style);
+        const html = renderPresentationHtml(normalizedOutline, styleInfo.id);
+
+        res.json({
+            html,
+            outline: normalizedOutline,
+            style: styleInfo
+        });
+    } catch (error) {
+        console.error('Error generating HTML:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/generate/stream', authenticateApiKey, async (req, res) => {
+    const { topic, purpose, length, style, content } = req.body;
+
+    if (!topic) {
+        return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const sendProgress = (progress, message, data = {}) => {
+        res.write(`data: ${JSON.stringify({ progress, message, ...data })}\n\n`);
+    };
+
+    try {
+        sendProgress(5, 'Analyzing topic and constraints...');
+        const outline = await generateStableOutline({ topic, purpose, length, content });
+        sendProgress(42, `Outline ready with ${outline.slides.length} slides.`, { outline });
+        await sleep(200);
+
+        const styleInfo = getStyleInfo(style);
+        sendProgress(64, `Applying ${styleInfo.name} theme...`);
+        await sleep(180);
+
+        sendProgress(82, 'Rendering stable HTML slides...');
+        const html = renderPresentationHtml(outline, styleInfo.id);
+        await sleep(120);
+
+        sendProgress(100, 'Presentation ready.', { html, outline, style: styleInfo });
+        setTimeout(() => res.end(), 120);
+    } catch (error) {
+        console.error('Error in stream generate:', error);
+        sendProgress(-1, 'Generation failed: ' + error.message, { error: error.message });
+        res.end();
+    }
+});
+
 // ============ Protected API ============
 
 // 一键生成演示文稿
@@ -347,13 +789,12 @@ ${purposeDesc}
 
         const outlineResult = await callMiniMax([
             { role: 'user', content: outlinePrompt }
-        ]);
+        ], {
+            temperature: 0.25,
+            maxTokens: 4000
+        });
 
-        const jsonMatch = outlineResult.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error('Failed to generate outline');
-        }
-        const outline = JSON.parse(jsonMatch[0]);
+        const outline = normalizeOutline(extractJSONObject(outlineResult));
 
         // Step 2: 生成 HTML
         const styleInfo = STYLE_PRESETS.find(s => s.id === style) || STYLE_PRESETS[0];
@@ -546,6 +987,111 @@ app.post('/api/regenerate-slide', authenticateApiKey, async (req, res) => {
     } catch (error) {
         console.error('Error regenerating slide:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/presentations/generate', authenticateApiKey, async (req, res) => {
+    const { presentationId, outline, style } = req.body;
+
+    if (!isValidPresentationId(presentationId)) {
+        return res.status(400).json({ error: 'A valid presentationId is required' });
+    }
+
+    if (!outline || !Array.isArray(outline.slides) || outline.slides.length === 0) {
+        return res.status(400).json({ error: 'Outline with slides is required' });
+    }
+
+    const styleInfo = STYLE_PRESETS.find(s => s.id === style) || STYLE_PRESETS[0];
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const syncProgress = (progress, message, step, extra = {}) => {
+        upsertPresentationRecord(presentationId, {
+            status: extra.status || 'building',
+            progress,
+            step,
+            message,
+            title: outline.title || '未命名演示稿',
+            outline,
+            style: styleInfo,
+            ownerId: req.userId,
+            ...extra
+        });
+
+        const { html, ...clientExtra } = extra;
+
+        res.write(`data: ${JSON.stringify({
+            presentationId,
+            progress,
+            step,
+            message,
+            status: extra.status || 'building',
+            url: `/presentations/${presentationId}`,
+            ...clientExtra
+        })}\n\n`);
+    };
+
+    try {
+        syncProgress(6, '已创建演示稿 ID，正在校验脚本结构...', 1);
+        await sleep(150);
+
+        syncProgress(18, `脚本校验完成，共 ${outline.slides.length} 页，正在整理内容层级...`, 1);
+        await sleep(180);
+
+        syncProgress(34, `已套用 ${styleInfo.name} 风格，正在生成 HTML 幻灯片...`, 2);
+
+        const styleCSS = getFullStyleCSS(style, styleInfo);
+        const prompt = `生成一个完整的HTML演示文稿。
+
+演示文稿大纲: ${JSON.stringify(outline)}
+风格: ${styleInfo.name} - ${styleInfo.vibe}
+
+要求：
+1. 每个幻灯片使用<section class="slide"> 包裹
+2. 内容放在 <div class="slide-content"> 中
+3. 使用CSS变量定义颜色，标题使用clamp()响应式字体
+4. 使用reveal类实现滚动动画
+5. 包含键盘导航（左右箭头、空格）、触摸滑动、进度条、导航点
+
+风格CSS: ${styleCSS}
+
+请直接返回完整HTML代码，不要包含任何解释文字。HTML应该是一个完整的、可以独立运行的演示文稿。`;
+
+        const result = await callMiniMax([
+            { role: 'user', content: prompt }
+        ]);
+
+        syncProgress(76, 'HTML 主体已生成，正在补齐交互和兼容结构...', 3);
+
+        const htmlMatch = result.match(/<html[\s\S]*<\/html>/i);
+        let html = htmlMatch ? htmlMatch[0] : result;
+
+        if (!html.includes('.slide') && html.includes('<!DOCTYPE html>')) {
+            // Keep the returned HTML as-is when it already looks complete.
+        } else if (!html.includes('<!DOCTYPE html>')) {
+            html = wrapInHTMLTemplate(html, outline, style, styleInfo);
+        }
+
+        syncProgress(92, '正在保存演示稿，并准备独立访问地址...', 4);
+        await sleep(120);
+
+        syncProgress(100, '演示稿已生成完成，新页面可以直接打开。', 5, {
+            status: 'ready',
+            html,
+            title: outline.title || '未命名演示稿'
+        });
+
+        setTimeout(() => res.end(), 120);
+    } catch (error) {
+        console.error('Error generating presentation record:', error);
+        syncProgress(-1, '生成失败: ' + error.message, 4, {
+            status: 'failed',
+            error: error.message
+        });
+        res.end();
     }
 });
 
@@ -990,12 +1536,140 @@ function getStyleCSS(styleId) {
     return styles[styleId] || styles['bold-signal'];
 }
 
-// Serve main app
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+// ============ SSE 流式生成演示文稿 ============
+app.post('/api/generate/stream', authenticateApiKey, async (req, res) => {
+    const { topic, purpose, length, style, content } = req.body;
+
+    if (!topic) {
+        return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const sendProgress = (progress, message, data = {}) => {
+        res.write(`data: ${JSON.stringify({ progress, message, ...data })}
+
+`);
+    };
+
+    const purposeDescriptions = {
+        'teaching': '教学培训演示文稿',
+        'pitch': '融资演讲演示文稿',
+        'product': '产品发布会演示文稿',
+        'meeting': '会议汇报演示文稿',
+        'company': '公司介绍演示文稿',
+        'tech': '技术分享演示文稿',
+        'personal': '个人简历演示文稿',
+        'story': '故事讲解演示文稿',
+        'marketing': '营销推广演示文稿',
+        'event': '活动策划演示文稿'
+    };
+
+    const purposeDesc = purposeDescriptions[purpose] || purposeDescriptions['teaching'];
+
+    try {
+        sendProgress(5, '正在分析主题和结构...');
+
+        const outlinePrompt = `你是一个专业的演示文稿策划专家。根据以下信息创建一个详细的演示文稿大纲：
+
+主题: ${topic}
+用途: ${purposeDesc}
+长度: ${length || 'medium'}
+内容概要: ${content || ''}
+
+请严格按照以下JSON格式返回：
+{
+    "title": "演示文稿标题",
+    "subtitle": "副标题",
+    "slides": [
+        {"type": "title/content/features/end", "title": "幻灯片标题", "content": ["要点1", "要点2"]}
+    ]
+}
+
+${length === 'short' ? '确保5-8个幻灯片' : length === 'long' ? '确保15-25个幻灯片' : '确保8-15个幻灯片'}`;
+
+        sendProgress(15, '正在生成演示文稿大纲...');
+
+        const outlineResult = await callMiniMax([
+            { role: 'user', content: outlinePrompt }
+        ]);
+
+        const jsonMatch = outlineResult.match(/{[\s\S]*}/);
+        if (!jsonMatch) {
+            throw new Error('生成大纲失败');
+        }
+        const outline = JSON.parse(jsonMatch[0]);
+
+        sendProgress(45, `大纲生成完成！共 ${outline.slides?.length || 0} 页`, { outline });
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        sendProgress(55, '正在设计幻灯片样式...');
+
+        const styleInfo = STYLE_PRESETS.find(s => s.id === style) || STYLE_PRESETS[0];
+
+        const htmlPrompt = `生成一个完整的HTML演示文稿：
+
+演示文稿大纲: ${JSON.stringify(outline)}
+风格: ${styleInfo.name} - ${styleInfo.vibe}
+
+要求：
+1. 每个幻灯片使用 <section class="slide"> 包裹
+2. 使用CSS变量定义颜色
+3. 标题使用clamp()响应式字体
+4. 包含动画和过渡效果
+
+风格CSS: ${getFullStyleCSS(style, styleInfo)}
+
+请直接返回完整HTML代码。`;
+
+        sendProgress(65, '正在渲染幻灯片内容...');
+
+        const htmlResult = await callMiniMax([
+            { role: 'user', content: htmlPrompt }
+        ]);
+
+        const htmlMatch = htmlResult.match(/<html>[\s\S]*<\/html>/i);
+        let html = htmlMatch ? htmlMatch[0] : htmlResult;
+
+        if (!html.includes('<!DOCTYPE html>')) {
+            html = wrapInHTMLTemplate(html, outline, style, styleInfo);
+        }
+
+        sendProgress(85, '正在进行最终处理...');
+        await new Promise(resolve => setTimeout(resolve, 400));
+
+        sendProgress(100, '演示文稿生成完成！', { html, outline, style: styleInfo });
+
+        setTimeout(() => { res.end(); }, 1500);
+
+    } catch (error) {
+        console.error('Error in stream generate:', error);
+        sendProgress(-1, '生成失败: ' + error.message, { error: error.message });
+        res.end();
+    }
 });
 
-app.listen(PORT, () => {
+
+// Serve main app
+app.get('/create', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'create.html'));
+});
+
+app.get('/presentations/:id', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'preview.html'));
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
+const server = app.listen(PORT, () => {
     console.log(`Xiangyu Slides API running at http://localhost:${PORT}`);
     console.log(`API Documentation: http://localhost:${PORT}/api`);
 });
+
+module.exports = { app, server };

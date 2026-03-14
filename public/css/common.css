@@ -127,17 +127,17 @@
     opacity: 0.9;
 }
 
-/* ==================== Header 样式 (紧凑型) ==================== */
+/* ==================== Header 样式 ==================== */
 .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 60px;
-    background: rgba(255, 255, 255, 0.7);
+    padding: 12px 80px;
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    height: 56px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    height: 70px;
     box-sizing: border-box;
     position: fixed;
     top: 0;
@@ -147,34 +147,34 @@
 }
 
 [data-theme="dark"] .header {
-    background: rgba(15, 23, 42, 0.7);
+    background: rgba(15, 23, 42, 0.85);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
 }
 
 .header-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     text-decoration: none;
 }
 
 /* Logo 图标样式 */
 .logo-icon-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
     object-fit: cover;
 }
 
@@ -193,7 +193,7 @@
 
 .logo-text {
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1.3rem;
     color: var(--text-primary);
 }
 
@@ -203,18 +203,19 @@
 
 .nav-pills {
     display: flex;
-    gap: 4px;
+    gap: 6px;
 }
 
 .nav-pill {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
-    border-radius: 6px;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
     text-decoration: none;
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 500;
     transition: all 0.2s ease;
 }
 
@@ -229,15 +230,38 @@
 }
 
 .nav-pill i {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
+}
+
+/* 登录注册按钮样式 */
+.nav-btn-login {
+    background: transparent;
+    border: 1px solid var(--border);
+}
+
+.nav-btn-login:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(14, 165, 233, 0.08);
+}
+
+.nav-btn-register {
+    background: var(--gradient-primary);
+    color: white !important;
+    border: none;
+}
+
+.nav-btn-register:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
 }
 
 .theme-toggle {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     border: none;
     background: transparent;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -254,3 +278,79 @@
 .theme-toggle .ph-sun { display: none; }
 [data-theme="dark"] .theme-toggle .ph-moon { display: none; }
 [data-theme="dark"] .theme-toggle .ph-sun { display: block; }
+
+/* 登录注册表单样式 */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-group input {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.form-group input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.btn-auth-submit {
+    padding: 12px 24px;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.btn-auth-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.auth-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}

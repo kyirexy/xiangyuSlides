@@ -285,7 +285,106 @@ class CreatePage {
         this.renderStyles();
     }
 
-    // ==================== Generate Presentation ====================
+        // ==================== 生成进度展示 ====================
+
+    showGeneratingOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'generating-overlay';
+        overlay.innerHTML = `
+            <div class="generating-modal">
+                <div class="generating-header">
+                    <div class="generating-icon">
+                        <i class="ph ph-spinner spinner"></i>
+                    </div>
+                    <h3>正在生成演示文稿</h3>
+                </div>
+                <div class="generating-progress">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="gen-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text" id="gen-progress-text">准备中...</span>
+                </div>
+                <div class="generating-steps">
+                    <div class="gen-step" id="gen-step-1">
+                        <i class="ph ph-circle"></i>
+                        <span>分析主题</span>
+                    </div>
+                    <div class="gen-step" id="gen-step-2">
+                        <i class="ph ph-circle"></i>
+                        <span>生成大纲</span>
+                    </div>
+                    <div class="gen-step" id="gen-step-3">
+                        <i class="ph ph-circle"></i>
+                        <span>设计样式</span>
+                    </div>
+                    <div class="gen-step" id="gen-step-4">
+                        <i class="ph ph-circle"></i>
+                        <span>渲染内容</span>
+                    </div>
+                    <div class="gen-step" id="gen-step-5">
+                        <i class="ph ph-circle"></i>
+                        <span>完成</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const style = document.createElement('style');
+        style.id = 'generating-style';
+        style.textContent = `
+            #generating-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(8px); }
+            .generating-modal { background: var(--bg-card, #fff); border-radius: 20px; padding: 40px; max-width: 450px; width: 90%; text-align: center; }
+            .generating-header { margin-bottom: 30px; }
+            .generating-icon { width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, #0ea5e9, #6366f1); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+            .generating-icon i { font-size: 40px; color: white; }
+            .generating-icon .spinner { animation: spin 1s linear infinite; }
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            .generating-header h3 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+            .generating-progress { margin-bottom: 30px; }
+            .progress-bar-container { height: 8px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+            .progress-bar { height: 100%; background: linear-gradient(90deg, #0ea5e9, #6366f1, #8b5cf6); border-radius: 4px; transition: width 0.5s ease; }
+            .progress-text { font-size: 0.95rem; color: var(--text-secondary); }
+            .generating-steps { display: flex; justify-content: space-between; gap: 8px; }
+            .gen-step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; opacity: 0.4; transition: all 0.3s ease; }
+            .gen-step.active { opacity: 1; }
+            .gen-step.completed i { color: #22c55e; }
+            .gen-step.active i { color: #0ea5e9; animation: pulse 1s infinite; }
+            .gen-step i { font-size: 1.2rem; color: var(--text-tertiary); }
+            .gen-step span { font-size: 0.75rem; color: var(--text-secondary); }
+            @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        `;
+        document.head.appendChild(style);
+    }
+
+    updateGeneratingProgress(progress, message, step) {
+        const progressBar = document.getElementById('gen-progress-bar');
+        const progressText = document.getElementById('gen-progress-text');
+        if (progressBar) progressBar.style.width = progress + '%';
+        if (progressText) progressText.textContent = message;
+        for (let i = 1; i <= 5; i++) {
+            const stepEl = document.getElementById('gen-step-' + i);
+            if (stepEl) {
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                    stepEl.querySelector('i').className = 'ph ph-check-circle';
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                }
+            }
+        }
+    }
+
+    hideGeneratingOverlay() {
+        const overlay = document.getElementById('generating-overlay');
+        if (overlay) overlay.remove();
+        const style = document.getElementById('generating-style');
+        if (style) style.remove();
+    }
+
+
+// ==================== Generate Presentation ====================
 
     async generatePresentation() {
         if (!this.wizardData.style) {
@@ -303,7 +402,7 @@ class CreatePage {
         }
 
         try {
-            const response = await fetch('/api/generate-html', {
+            const response = await fetch('/api/generate/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -315,15 +414,49 @@ class CreatePage {
 
             if (!response.ok) throw new Error('生成失败');
 
-            const data = await response.json();
-            this.wizardData.html = data.html;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
 
-            // Show preview
-            const iframe = document.getElementById('presentation-preview');
-            if (iframe) iframe.srcdoc = data.html;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-            this.goToStep(4);
-            showToast('演示文稿生成成功！', 'success');
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+
+
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+
+                            if (data.progress === -1) {
+                                throw new Error(data.message);
+                            }
+
+                            let step = 1;
+                            if (data.progress >= 15 && data.progress < 45) step = 2;
+                            else if (data.progress >= 45 && data.progress < 55) step = 2;
+                            else if (data.progress >= 55 && data.progress < 65) step = 3;
+                            else if (data.progress >= 65 && data.progress < 85) step = 4;
+                            else if (data.progress >= 85) step = 5;
+
+                            this.updateGeneratingProgress(data.progress, data.message, step);
+
+                            if (data.html) {
+                                this.wizardData.html = data.html;
+                                if (data.outline) this.wizardData.outline = data.outline;
+                            }
+                        } catch (e) {
+                            console.error('Parse error:', e);
+                        }
+                    }
+                }
+            }
+
+this.updateGeneratingProgress(100, '生成完成！', 5);            await new Promise(resolve => setTimeout(resolve, 500));            this.hideGeneratingOverlay();            // 检查生成的HTML是否存在            if (!this.wizardData.html) {                showToast('生成失败：没有HTML内容', 'error');                return;            }            // 生成唯一的演示文稿ID            const presentationId = 'pres_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);            // 尝试存储到 localStorage            try {                localStorage.setItem(presentationId, this.wizardData.html);            } catch (e) {                console.error('localStorage存储失败:', e);                showToast('存储失败，演示文稿可能过大', 'error');                return;            }            // 打开新窗口            const newWindow = window.open('/preview.html?id=' + presentationId, '_blank');            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {                // 如果新窗口打开失败，可能是被阻止，尝试直接在当前页面跳转                window.location.href = '/preview.html?id=' + presentationId;            } else {                showToast('演示文稿已在新窗口打开！', 'success');            }
         } catch (error) {
             showToast('生成演示文稿失败: ' + error.message, 'error');
             console.error(error);

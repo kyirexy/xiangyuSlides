@@ -14,254 +14,320 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 60px 20px 220px;
-            max-width: 900px;
+            padding: 96px 20px 160px;
+            max-width: 940px;
             margin: 0 auto;
             width: 100%;
         }
 
-        .hero {
-            text-align: center;
+        .intro-card {
+            width: 100%;
             margin-bottom: 24px;
+            padding: 24px 28px;
+            border-radius: 24px;
+            background:
+                radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 34%),
+                radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.14), transparent 30%),
+                var(--bg-card);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
         }
 
-        .hero h1 {
-            font-size: 1.8rem;
+        .intro-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 14px;
+        }
+
+        .intro-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(14, 165, 233, 0.12);
+            color: var(--primary);
+            font-size: 0.82rem;
             font-weight: 700;
-            margin-bottom: 8px;
+        }
+
+        .intro-card h1 {
+            font-size: clamp(2rem, 4vw, 2.6rem);
+            line-height: 1.12;
+            margin-bottom: 10px;
             color: var(--text-primary);
         }
 
-        .hero p {
+        .intro-card p {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 680px;
         }
 
-        /* 快捷分类 */
-        .quick-actions {
+        .intro-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 20px;
-            max-width: 600px;
+            gap: 10px;
+            margin-top: 18px;
         }
 
-        .quick-action {
-            padding: 8px 14px;
+        .intro-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 14px;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 0.8rem;
             color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            font-size: 0.82rem;
         }
 
-        .quick-action:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .quick-action.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
-        }
-
-        .quick-action i { font-size: 0.9rem; }
-        /* 快速开始 */
-        .quick-start { width: 100%; margin-top: 20px; }
-        .quick-start-btns { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 600px; }
-        .quick-start-btn {
+        .control-block {
             width: 100%;
-            padding: 8px 16px;
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin-bottom: 18px;
         }
-        .quick-start-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .length-area { width: 100%; margin-bottom: 16px; }
-        .length-title { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        .length-title i { color: var(--primary); }
-        .length-options { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-        .length-btn { padding: 10px 20px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
-        .length-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-        .length-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
-        .length-btn i { font-size: 1rem; }
-
-
-        /* 风格预览区域 */
-        .style-preview-area {
-            width: 100%;
-            margin-bottom: 16px;
-        }
-
-        .style-preview-title {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .style-preview-title i { color: var(--primary); }
 
         .input-container {
             width: 100%;
-            max-width: 800px;
-            margin: 0 auto 20px;
+            margin: 8px 0 20px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: 22px;
             box-shadow: var(--shadow-lg);
             overflow: hidden;
         }
 
         .input-wrapper {
             width: 100%;
-            max-width: 800px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .input-wrapper:focus-within {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-lg), 0 0 0 2px rgba(14, 165, 233, 0.15);
+            box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.35);
         }
 
-        .input-inner { padding: 16px 20px; }
+        .input-inner {
+            padding: 18px 20px 10px;
+        }
 
         .input-inner textarea {
             width: 100%;
-            padding: 8px 0;
+            min-height: 56px;
+            max-height: 180px;
+            resize: none;
             border: none;
             background: transparent;
             color: var(--text-primary);
-            font-size: 1.05rem;
-            font-family: inherit;
-            resize: none;
+            font: inherit;
+            font-size: 1.04rem;
+            line-height: 1.7;
             outline: none;
-            min-height: 32px;
-            max-height: 180px;
-            line-height: 1.6;
         }
 
-        .input-inner textarea::placeholder { color: var(--text-tertiary); }
+        .input-inner textarea::placeholder {
+            color: var(--text-tertiary);
+        }
 
         .input-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 16px;
+            gap: 12px;
+            padding: 12px 16px 16px;
             border-top: 1px solid var(--border);
         }
 
         .input-hint {
-            font-size: 0.75rem;
             color: var(--text-tertiary);
+            font-size: 0.76rem;
         }
 
-        .input-actions { display: flex; align-items: center; gap: 12px; }
-
         .send-btn {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
+            width: 44px;
+            height: 44px;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
-        .send-btn:hover:not(:disabled) { background: var(--primary-dark); transform: scale(1.05); }
-        .send-btn:disabled { background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; }
-        .send-btn i { font-size: 1.2rem; }
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
 
-        /* 结果区域 */
-        .result-area {
-            margin-bottom: 60px;
+        .send-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .send-btn i {
+            font-size: 1.2rem;
+        }
+
+        .quick-start {
             width: 100%;
-            max-width: 800px;
+            margin-bottom: 26px;
+        }
+
+        .quick-start-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .quick-start-btns {
+            display: grid;
+            gap: 8px;
+        }
+
+        .quick-start-btn {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font: inherit;
+            font-size: 0.87rem;
+            line-height: 1.5;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+        }
+
+        .quick-start-btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(14, 165, 233, 0.35);
+            background: var(--bg-secondary);
+        }
+
+        .result-area {
+            width: 100%;
         }
 
         .result-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            animation: slideUp 0.3s ease;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.28s ease;
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(16px); }
+            from { opacity: 0; transform: translateY(14px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .result-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            padding: 14px 18px;
+            gap: 18px;
+            padding: 16px 18px;
             border-bottom: 1px solid var(--border);
         }
 
         .result-title {
-            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.95rem;
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
-        .result-title i { color: var(--primary); }
+        .result-title i {
+            color: var(--primary);
+        }
 
-        .result-btns { display: flex; gap: 8px; }
+        .result-subtitle {
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: 0.84rem;
+            line-height: 1.55;
+        }
+
+        .result-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
         .result-btn {
-            padding: 8px 14px;
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
         }
 
-        .result-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-        .result-btn.primary { background: var(--primary); color: white; }
-        .result-btn.primary:hover { background: var(--primary-dark); }
+        .result-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
 
-        .outline-content { padding: 12px 18px; max-height: 350px; overflow-y: auto; }
+        .result-btn.primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            border: none;
+            color: white;
+        }
+
+        .result-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px 18px 0;
+        }
+
+        .meta-pill,
+        .id-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+        }
+
+        .id-pill {
+            font-family: Consolas, monospace;
+            color: var(--text-primary);
+        }
+
+        .outline-content {
+            padding: 12px 18px 16px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
 
         .outline-slide-item {
             display: flex;
@@ -271,227 +337,350 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .outline-slide-item:last-child { border-bottom: none; }
+        .outline-slide-item:last-child {
+            border-bottom: none;
+        }
 
         .slide-num {
-            width: 24px;
-            height: 24px;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
             color: var(--text-secondary);
+            font-size: 0.76rem;
+            font-weight: 700;
             flex-shrink: 0;
         }
 
-        .slide-info { flex: 1; min-width: 0; }
+        .slide-info {
+            flex: 1;
+            min-width: 0;
+        }
 
         .slide-title {
-            font-weight: 600;
-            font-size: 0.9rem;
             color: var(--text-primary);
-            margin-bottom: 3px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 4px;
         }
 
         .slide-desc {
-            font-size: 0.8rem;
             color: var(--text-secondary);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            font-size: 0.82rem;
+            line-height: 1.55;
         }
 
         .slide-edit-btn {
-            width: 26px;
-            height: 26px;
-            border: none;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .slide-edit-btn:hover { background: var(--primary); color: white; }
-
-        .loading { padding: 40px; text-align: center; }
-
-        .loading-spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 14px;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading p { color: var(--text-secondary); }
-        .error-msg { padding: 40px; text-align: center; color: #f87171; }
-
-        /* 弹窗 */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-overlay.active { display: flex; }
-
-        .modal {
-            background: var(--bg-card);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 480px;
-            max-height: 80vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .modal-header {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .modal-header h3 { font-size: 0.95rem; font-weight: 600; }
-
-        .modal-close {
             width: 30px;
             height: 30px;
             border: none;
+            border-radius: 10px;
             background: var(--bg-secondary);
-            border-radius: 8px;
+            color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-secondary);
+            transition: background 0.2s ease, color 0.2s ease;
+            flex-shrink: 0;
         }
 
-        .modal-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
+        .slide-edit-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
 
-        .edit-prompt-area { margin-bottom: 12px; }
-        .edit-prompt-area textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit; background: var(--bg-secondary); color: var(--text-primary); resize: vertical; line-height: 1.5; }
-        .edit-prompt-area textarea:focus { outline: none; border-color: var(--primary); }
-        .edit-json-area textarea { width: 100%; min-height: 120px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: monospace; background: var(--bg-secondary); color: var(--text-primary); resize: vertical; line-height: 1.4; }
-        .edit-json-area textarea:focus { outline: none; border-color: var(--primary); }
+        .loading {
+            padding: 42px;
+            text-align: center;
+        }
 
-        .modal-body textarea {
-            width: 100%;
-            min-height: 140px;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-family: inherit;
+        .loading-spinner {
+            width: 34px;
+            height: 34px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading p,
+        .result-note {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .error-msg {
+            padding: 40px;
+            text-align: center;
+            color: #ef4444;
+            line-height: 1.6;
+        }
+
+        .build-body {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+            gap: 18px;
+            padding: 18px;
+        }
+
+        .build-overview,
+        .build-sidebar {
+            display: grid;
+            gap: 16px;
+        }
+
+        .build-progress-track {
+            height: 10px;
+            border-radius: 999px;
             background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .build-progress-bar {
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #0ea5e9 0%, #22c55e 100%);
+            transition: width 0.3s ease;
+        }
+
+        .build-progress-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+
+        .build-progress-row strong {
             color: var(--text-primary);
-            resize: vertical;
+            font-size: 1rem;
+        }
+
+        .build-steps {
+            display: grid;
+            gap: 10px;
+        }
+
+        .build-step {
+            display: grid;
+            grid-template-columns: 36px 1fr;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            opacity: 0.56;
+            transition: all 0.25s ease;
+        }
+
+        .build-step.active,
+        .build-step.completed {
+            opacity: 1;
+        }
+
+        .build-step.active {
+            border-color: rgba(14, 165, 233, 0.35);
+            box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.12) inset;
+        }
+
+        .build-step.completed {
+            border-color: rgba(34, 197, 94, 0.28);
+        }
+
+        .build-step-index {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+
+        .build-step strong {
+            display: block;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .build-step div span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
             line-height: 1.5;
         }
 
-        .modal-body textarea:focus { outline: none; border-color: var(--primary); }
+        .status-panel {
+            padding: 14px;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
 
-        .modal-footer {
-            padding: 10px 18px;
-            border-top: 1px solid var(--border);
+        .status-panel-title {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .status-panel-actions {
             display: flex;
-            justify-content: flex-end;
+            flex-wrap: wrap;
             gap: 8px;
         }
 
+        .status-panel-actions.stacked {
+            flex-direction: column;
+        }
+
+        .result-link {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--primary);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .result-link:hover {
+            text-decoration: underline;
+        }
+
+        .build-log {
+            display: grid;
+            gap: 8px;
+        }
+
+        .build-log-item {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .build-log-item span {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-tertiary);
+            font-size: 0.72rem;
+        }
+
+        .build-log-item strong {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .modal-body textarea {
+            width: 100%;
+            min-height: 132px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            resize: vertical;
+            font: inherit;
+            line-height: 1.6;
+        }
+
+        .edit-json-area textarea {
+            font-family: Consolas, monospace;
+            font-size: 0.84rem;
+        }
+
+        .modal-body textarea:focus {
+            outline: none;
+            border-color: rgba(14, 165, 233, 0.45);
+        }
+
+        .modal-footer {
+            padding: 12px 18px 18px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            border-top: 1px solid var(--border);
+        }
+
         .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font: inherit;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-ai {
             border: none;
         }
 
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-dark); }
-        .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+        @media (max-width: 760px) {
+            .main {
+                padding: 84px 16px 120px;
+            }
 
-        /* 演示模式 */
-        .presentation-mode .header, .presentation-mode .input-container { display: none !important; }
-        .presentation-mode .main { padding: 0; max-width: 100%; }
+            .intro-card {
+                padding: 20px;
+            }
 
-        .fullscreen-btn {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            z-index: 1000;
-            width: 44px;
-            height: 44px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-        }
+            .intro-top,
+            .result-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-        .presentation-mode .fullscreen-btn { display: flex; }
-        .fullscreen-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+            .style-preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
 
-        .exit-pres-btn {
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 1000;
-            padding: 8px 14px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-        }
+            .input-footer {
+                align-items: flex-end;
+                flex-direction: column;
+            }
 
-        .presentation-mode .exit-pres-btn { display: flex; }
-        .exit-pres-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+            .build-body {
+                grid-template-columns: 1fr;
+            }
 
-        /* 移动端 */
-        @media (max-width: 640px) {
-            .hero h1 { font-size: 1.5rem; }
-            .input-container { padding: 12px 16px 20px; }
-            .quick-actions { gap: 6px; }
-            .quick-action { padding: 6px 10px; font-size: 0.75rem; }
-            .style-preview-grid { grid-template-columns: repeat(3, 1fr); }
-            .input-hint { display: none; }
+            .result-btns,
+            .status-panel-actions {
+                width: 100%;
+            }
+
+            .result-btn {
+                flex: 1 1 140px;
+            }
         }
     </style>
 </head>
@@ -503,627 +692,189 @@
                 <div class="logo-text">Xiangyu<span>Slides</span></div>
             </a>
             <div class="nav-pills">
-                <a href="/" class="nav-pill"><i class="ph ph-house"></i> 首页</a>
-                <a href="/create.html" class="nav-pill active"><i class="ph ph-plus-circle"></i> 创建</a>
+                <a href="/" class="nav-pill">
+                    <i class="ph ph-house"></i>
+                    首页
+                </a>
+                <a href="/create" class="nav-pill active">
+                    <i class="ph ph-plus-circle"></i>
+                    创建
+                </a>
             </div>
         </div>
         <div class="header-right">
             <button class="theme-toggle" id="themeToggle" title="切换主题">
-                <i class="ph ph-moon"></i><i class="ph ph-sun"></i>
+                <i class="ph ph-moon"></i>
+                <i class="ph ph-sun"></i>
             </button>
-            <a href="https://github.com/kyirexy/xiangyuSlides" target="_blank" class="nav-pill nav-pill-github">
+            <a href="https://github.com/kyirexy/xiangyuSlides" target="_blank" rel="noreferrer" class="nav-pill nav-pill-github">
                 <i class="ph ph-github-logo"></i>
             </a>
         </div>
     </header>
 
     <main class="main">
-        
+        <section class="intro-card">
+            <div class="intro-top">
+                <div>
+                    <div class="intro-tag">
+                        <i class="ph ph-sparkle"></i>
+                        从脚本到独立页面
+                    </div>
+                    <h1>先生成脚本，再一键生成带 ID 的独立幻灯片页面</h1>
+                    <p>这里会先帮你整理演示脚本。确认脚本后点击“开始生成”，系统会在新页面打开一个专属地址，例如 <code>/presentations/pres_xxx</code>，同时在当前页展示实时进度，不再是黑盒。</p>
+                </div>
+            </div>
+            <div class="intro-meta">
+                <span><i class="ph ph-path"></i> 干净路由：`/create`</span>
+                <span><i class="ph ph-browser"></i> 新窗口独立访问</span>
+                <span><i class="ph ph-activity"></i> 可见的生成阶段</span>
+            </div>
+        </section>
 
-        <div class="section-label"><i class="ph ph-target"></i> 选择用途</div>
-        <div class="quick-actions" id="purposeArea">
-            <button class="quick-action" data-val="teaching"><i class="ph ph-graduation-cap"></i> 教学培训</button>
-            <button class="quick-action" data-val="pitch"><i class="ph ph-currency-dollar"></i> 融资演讲</button>
-            <button class="quick-action" data-val="product"><i class="ph ph-rocket-launch"></i> 产品发布</button>
-            <button class="quick-action" data-val="meeting"><i class="ph ph-chart-bar"></i> 会议汇报</button>
-            <button class="quick-action" data-val="company"><i class="ph ph-buildings"></i> 公司介绍</button>
-            <button class="quick-action" data-val="tech"><i class="ph ph-code"></i> 技术分享</button>
-            <button class="quick-action" data-val="personal"><i class="ph ph-user"></i> 个人简历</button>
-            <button class="quick-action" data-val="story"><i class="ph ph-book-open"></i> 故事讲解</button>
-            <button class="quick-action" data-val="marketing"><i class="ph ph-megaphone"></i> 营销推广</button>
-            <button class="quick-action" data-val="event"><i class="ph ph-calendar"></i> 活动策划</button>
-        </div>
-        <!-- 页数选择 -->
-        <div class="length-area">
+        <div class="control-block">
             <div class="section-label">
-                <i class="ph ph-files"></i> 演示文稿长度
+                <i class="ph ph-target"></i>
+                选择用途
+            </div>
+            <div class="quick-actions" id="purposeArea">
+                <button class="quick-action" data-val="teaching"><i class="ph ph-graduation-cap"></i> 教学培训</button>
+                <button class="quick-action" data-val="pitch"><i class="ph ph-currency-dollar"></i> 融资演讲</button>
+                <button class="quick-action" data-val="product"><i class="ph ph-rocket-launch"></i> 产品发布</button>
+                <button class="quick-action" data-val="meeting"><i class="ph ph-chart-bar"></i> 会议汇报</button>
+                <button class="quick-action" data-val="company"><i class="ph ph-buildings"></i> 公司介绍</button>
+                <button class="quick-action" data-val="tech"><i class="ph ph-code"></i> 技术分享</button>
+                <button class="quick-action" data-val="personal"><i class="ph ph-user"></i> 个人简历</button>
+                <button class="quick-action" data-val="story"><i class="ph ph-book-open"></i> 故事讲解</button>
+                <button class="quick-action" data-val="marketing"><i class="ph ph-megaphone"></i> 营销推广</button>
+                <button class="quick-action" data-val="event"><i class="ph ph-calendar"></i> 活动策划</button>
+            </div>
+        </div>
+
+        <div class="control-block length-area">
+            <div class="section-label">
+                <i class="ph ph-files"></i>
+                演示文稿长度
             </div>
             <div class="length-options" id="lengthArea">
-                <button class="length-btn" data-val="short">
-                    <i class="ph ph-file"></i> 简短 (5-8页)
-                </button>
-                <button class="length-btn" data-val="medium">
-                    <i class="ph ph-files"></i> 中等 (8-15页)
-                </button>
-                <button class="length-btn" data-val="long">
-                    <i class="ph ph-folder-open"></i> 完整 (15-25页)
-                </button>
+                <button class="length-btn" data-val="short"><i class="ph ph-file"></i> 简短（5-8 页）</button>
+                <button class="length-btn" data-val="medium"><i class="ph ph-files"></i> 中等（8-15 页）</button>
+                <button class="length-btn" data-val="long"><i class="ph ph-folder-open"></i> 完整（15-25 页）</button>
             </div>
         </div>
 
-
-        <div class="style-preview-area">
-            <div class="section-label"><i class="ph ph-palette"></i> 选择风格</div>
+        <div class="control-block style-preview-area">
+            <div class="section-label">
+                <i class="ph ph-palette"></i>
+                选择风格
+            </div>
             <div class="style-preview-grid" id="styleArea">
-                <div class="style-preview-card style-bold" data-val="bold-signal" style="background: linear-gradient(135deg, #1a1a1a 0%, #FF5722 100%);">
-                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Bold · 大胆</div>
+                <div class="style-preview-card style-bold" data-val="bold-signal" style="background: linear-gradient(135deg, #18181b 0%, #f97316 100%);">
+                    <div class="style-preview-name" style="color: #fff;">Bold · 大胆</div>
                 </div>
                 <div class="style-preview-card style-electric" data-val="electric-studio" style="background: linear-gradient(180deg, #ffffff 50%, #4361ee 50%);">
-                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Electric · 电光</div>
+                    <div class="style-preview-name" style="color: #1f2937;">Electric · 电光</div>
                 </div>
                 <div class="style-preview-card style-creative" data-val="creative-voltage" style="background: linear-gradient(135deg, #0066ff 0%, #d4ff00 100%);">
-                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Creative · 创意</div>
+                    <div class="style-preview-name" style="color: #fff;">Creative · 创意</div>
                 </div>
-                <div class="style-preview-card style-botanical" data-val="dark-botanical" style="background: linear-gradient(135deg, #0f0f0f 0%, #d4a574 100%);">
-                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Botanical · 森系</div>
+                <div class="style-preview-card style-botanical" data-val="dark-botanical" style="background: linear-gradient(135deg, #0f172a 0%, #d4a574 100%);">
+                    <div class="style-preview-name" style="color: #fff;">Botanical · 森系</div>
                 </div>
                 <div class="style-preview-card style-notebook" data-val="notebook-tabs" style="background: linear-gradient(135deg, #f8f6f1 0%, #e8e4dc 100%);">
-                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Notebook · 笔记</div>
+                    <div class="style-preview-name" style="color: #3f3f46;">Notebook · 笔记</div>
                 </div>
                 <div class="style-preview-card style-pastel" data-val="pastel-geometry" style="background: linear-gradient(135deg, #c8d9e6 0%, #f5c6cb 100%);">
-                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Pastel · 粉彩</div>
+                    <div class="style-preview-name" style="color: #334155;">Pastel · 粉彩</div>
                 </div>
                 <div class="style-preview-card style-split" data-val="split-pastel" style="background: linear-gradient(135deg, #f5e6dc 0%, #e4dff0 100%);">
-                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Split · 分割</div>
+                    <div class="style-preview-name" style="color: #334155;">Split · 分割</div>
                 </div>
                 <div class="style-preview-card style-vintage" data-val="vintage-editorial" style="background: linear-gradient(135deg, #f5f3ee 0%, #d4c4a8 100%);">
-                    <div class="style-preview-name" style="color: #333; font-weight: 700;">Vintage · 复古</div>
+                    <div class="style-preview-name" style="color: #3f3f46;">Vintage · 复古</div>
                 </div>
-                <div class="style-preview-card style-neon" data-val="neon-cyber" style="background: linear-gradient(135deg, #0a0a1a 0%, #00ff88 100%);">
-                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Neon · 赛博</div>
+                <div class="style-preview-card style-neon" data-val="neon-cyber" style="background: linear-gradient(135deg, #020617 0%, #00ff88 100%);">
+                    <div class="style-preview-name" style="color: #fff;">Neon · 赛博</div>
                 </div>
-                <div class="style-preview-card style-terminal" data-val="terminal-green" style="background: linear-gradient(135deg, #0d1117 0%, #00ff00 100%);">
-                    <div class="style-preview-name" style="color: #fff; font-weight: 700;">Terminal · 终端</div>
+                <div class="style-preview-card style-terminal" data-val="terminal-green" style="background: linear-gradient(135deg, #111827 0%, #00ff00 100%);">
+                    <div class="style-preview-name" style="color: #fff;">Terminal · 终端</div>
                 </div>
             </div>
         </div>
+
         <div class="input-container">
             <div class="input-wrapper">
-                <div class="input-inner"><textarea id="userInput" placeholder="描述你想要创建的演示文稿..." rows="2"></textarea></div>
+                <div class="input-inner">
+                    <textarea id="userInput" rows="2" placeholder="描述你想创建的演示主题、目标听众和重点内容，例如：给产品团队做一份 AI Agent 工作流分享。"></textarea>
+                </div>
                 <div class="input-footer">
-                    <span class="input-hint">Enter 发送 · Shift+Enter 换行</span>
-                    <div class="input-actions"><button class="send-btn" id="btnSend" disabled><i class="ph ph-paper-plane-tilt"></i></button></div>
+                    <span class="input-hint">Enter 发送生成脚本，Shift + Enter 换行</span>
+                    <button class="send-btn" id="btnSend" disabled>
+                        <i class="ph ph-paper-plane-tilt"></i>
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="quick-start">
-            <div class="quick-start-btns">
-                <button class="quick-start-btn" onclick="quickGenerate('教学培训')">教学培训 - 帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例</button>
-                <button class="quick-start-btn" onclick="quickGenerate('产品发布')">产品发布 - 帮我做一个新产品的发布会演示文稿，包含产品背景、核心功能、用户体验、市场定价</button>
-                <button class="quick-start-btn" onclick="quickGenerate('融资演讲')">融资演讲 - 帮我做一个商业融资演讲，包含项目简介、市场分析、竞争优势、商业模式、融资需求</button>
+
+        <section class="quick-start">
+            <div class="quick-start-title">
+                <i class="ph ph-lightning"></i>
+                快速开始
             </div>
-        </div>
+            <div class="quick-start-btns">
+                <button class="quick-start-btn" onclick="quickGenerate('教学培训')">📚 教学培训：面向零基础学员的 AI 发展与应用课程</button>
+                <button class="quick-start-btn" onclick="quickGenerate('产品发布')">🚀 产品发布：新产品发布会、媒体与客户同步宣讲</button>
+                <button class="quick-start-btn" onclick="quickGenerate('融资演讲')">💰 融资演讲：给投资人看的商业计划与融资路演</button>
+                <button class="quick-start-btn" onclick="quickGenerate('技术分享')">💻 技术分享：面向团队或社区的架构与实践拆解</button>
+                <button class="quick-start-btn" onclick="quickGenerate('年度报告')">📊 年度报告：企业年度经营回顾与下一年规划</button>
+            </div>
+        </section>
+
         <div class="result-area" id="resultArea"></div>
-        
-        
-    <button class="fullscreen-btn" id="fullscreenBtn" title="全屏"><i class="ph ph-arrows-out"></i></button>
-    <button class="exit-pres-btn" id="exitPresBtn"><i class="ph ph-x"></i> 退出</button>
+    </main>
 
     <div class="modal-overlay" id="editModal">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal">
             <div class="modal-header">
-                <h3>编辑幻灯片</h3>
-                <button class="modal-close" id="closeModal"><i class="ph ph-x"></i></button>
+                <h3><i class="ph ph-pencil-simple"></i> 编辑这页脚本</h3>
+                <button class="modal-close" id="closeModal">
+                    <i class="ph ph-x"></i>
+                </button>
             </div>
             <div class="modal-body">
-                <div class="edit-prompt-area">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">
-                        <i class="ph ph-sparkle"></i> 描述你想要的内容修改
+                <div class="edit-prompt-area" style="margin-bottom: 14px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.82rem;">
+                        <i class="ph ph-sparkle"></i>
+                        让 AI 改写这页脚本
                     </label>
-                    <textarea id="slideEditPrompt" placeholder="例如：把内容改得更详细一些，加入更多案例..."></textarea>
+                    <textarea id="slideEditPrompt" placeholder="例如：把这一页改成更适合 CEO 汇报的表达，增加 3 个量化结果。"></textarea>
                 </div>
                 <div class="edit-json-area" id="editJsonArea">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">
-                        <i class="ph ph-code"></i> 或直接编辑 JSON
+                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.82rem;">
+                        <i class="ph ph-code"></i>
+                        或者直接编辑 JSON
                     </label>
                     <textarea id="slideEditText"></textarea>
                 </div>
                 <div class="edit-loading" id="editLoading" style="display: none;">
-                    <div class="loading-spinner" style="width: 24px; height: 24px; margin: 20px auto;"></div>
-                    <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem;">AI 正在生成...</p>
+                    <div class="loading-spinner" style="width: 24px; height: 24px; margin: 18px auto;"></div>
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 0.84rem;">AI 正在改写这页脚本...</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelEdit">取消</button>
-                <button class="btn btn-ai" id="regenerateEdit" style="background: linear-gradient(135deg, #7c3aed, #a855f7); color: white;">
-                    <i class="ph ph-sparkle"></i> AI 重新生成
+                <button class="btn" id="cancelEdit">取消</button>
+                <button class="btn btn-ai" id="regenerateEdit" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: white;">
+                    <i class="ph ph-sparkle"></i>
+                    AI 重写
                 </button>
-                <button class="btn btn-primary" id="saveEdit">保存</button>
+                <button class="btn btn-primary" id="saveEdit">保存脚本</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let config = { purpose: null, length: null, style: null };
-        let currentOutline = null;
-        let currentSlides = [];
-        let editingSlideIndex = null;
-        let generatedHtml = null;
+    <div class="toast" id="toast"></div>
 
-        // 主题切换
-        const themeToggle = document.getElementById('themeToggle');
-        const html = document.documentElement;
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        html.setAttribute('data-theme', savedTheme);
-        themeToggle.addEventListener('click', () => {
-            const current = html.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        });
-
-        // 输入
-        const userInput = document.getElementById('userInput');
-        const btnSend = document.getElementById('btnSend');
-        const resultArea = document.getElementById('resultArea');
-
-        userInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 180) + 'px';
-            btnSend.disabled = !this.value.trim();
-        });
-
-        // 选择用途
-        document.getElementById('purposeArea').addEventListener('click', function(e) {
-            if (e.target.closest('.quick-action')) {
-                const btn = e.target.closest('.quick-action');
-                if (btn.classList.contains('active')) {
-                    btn.classList.remove('active');
-                    config.purpose = null;
-                } else {
-                    this.querySelectorAll('.quick-action').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    config.purpose = btn.dataset.val;
-                }
-            }
-        });
-
-        // 选择风格
-        document.getElementById('styleArea').addEventListener('click', function(e) {
-            if (e.target.closest('.style-preview-card')) {
-                const btn = e.target.closest('.style-preview-card');
-                if (btn.classList.contains('active')) {
-                    btn.classList.remove('active');
-                    config.style = null;
-                } else {
-                    this.querySelectorAll('.style-preview-card').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    config.style = btn.dataset.val;
-                }
-            }
-        });
-
-        
-        // 选择页数 - toggle 行为
-        document.getElementById('lengthArea').addEventListener('click', function(e) {
-            if (e.target.closest('.length-btn')) {
-                const btn = e.target.closest('.length-btn');
-                if (btn.classList.contains('active')) {
-                    btn.classList.remove('active');
-                    config.length = null;
-                } else {
-                    this.querySelectorAll('.length-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    config.length = btn.dataset.val;
-                }
-            }
-        });
-
-        // 发送
-        async function send() {
-            const message = userInput.value.trim();
-            if (!message) return;
-
-            userInput.value = '';
-            userInput.style.height = 'auto';
-            btnSend.disabled = true;
-
-            resultArea.innerHTML = `
-                <div class="result-card">
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>正在思考...</p>
-                    </div>
-                </div>
-            `;
-
-            setTimeout(() => resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-
-            try {
-                const outlineRes = await fetch('/api/generate-outline', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        purpose: config.purpose || 'teaching',
-                        length: config.length || 'medium',
-                        topic: message,
-                        content: ''
-                    })
-                });
-
-                const outlineData = await outlineRes.json();
-
-                // 处理需要澄清的情况
-                if (outlineData.clarification) {
-                    resultArea.innerHTML = `
-                        <div class="result-card">
-                            <div class="result-header">
-                                <div class="result-title">
-                                    <i class="ph ph-chat-circle-dots"></i>
-                                    需要更多信息
-                                </div>
-                            </div>
-                            <div class="outline-content">
-                                <p style="color: var(--text-secondary); padding: 12px 0;">
-                                    ${outlineData.message}
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                    btnSend.disabled = false;
-                    return;
-                }
-
-                if (!outlineData.slides) {
-                    throw new Error(outlineData.error || '生成大纲失败');
-                }
-
-                currentOutline = outlineData;
-                currentSlides = outlineData.slides.map((s, i) => ({...s, index: i + 1}));
-                renderOutline();
-
-            } catch (e) {
-                resultArea.innerHTML = `<div class="result-card"><div class="error-msg">生成失败: ${e.message}</div></div>`;
-                btnSend.disabled = false;
-            }
-        }
-
-        // 渲染大纲
-        function renderOutline() {
-            resultArea.innerHTML = `
-                <div class="result-card">
-                    <div class="result-header">
-                        <div class="result-title">
-                            <i class="ph ph-list-checks"></i>
-                            ${currentOutline.title}
-                        </div>
-                        <div class="result-btns">
-                            <button class="result-btn" onclick="generateHTML()">
-                                <i class="ph ph-play"></i> 生成演示
-                            </button>
-                            <button class="result-btn primary" onclick="downloadHTML()">
-                                <i class="ph ph-download-simple"></i> 下载
-                            </button>
-                        </div>
-                    </div>
-                    <div class="outline-content">
-                        ${currentSlides.map((slide, i) => `
-                            <div class="outline-slide-item">
-                                <div class="slide-num">${slide.index}</div>
-                                <div class="slide-info">
-                                    <div class="slide-title">${slide.title}</div>
-                                    <div class="slide-desc">${Array.isArray(slide.content) ? slide.content.join('、 ') : slide.content}</div>
-                                </div>
-                                <button class="slide-edit-btn" onclick="editSlide(${i})" title="编辑">
-                                    <i class="ph ph-pencil-simple"></i>
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            btnSend.disabled = false;
-        }
-
-        // 生成 HTML
-        window.generateHTML = async function() {
-            const btn = resultArea.querySelector('.result-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="ph ph-spinner spinner"></i> 生成中...';
-
-            try {
-                const res = await fetch('/api/generate-html', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        outline: { title: currentOutline.title, subtitle: currentOutline.subtitle, slides: currentSlides },
-                        style: config.style,
-                        editing: true
-                    })
-                });
-
-                const data = await res.json();
-                if (data.html) {
-                    generatedHtml = data.html;
-                    startPresentation();
-                } else {
-                    alert('生成失败: ' + data.error);
-                }
-            } catch (e) {
-                alert('请求失败: ' + e.message);
-            }
-
-            btn.innerHTML = originalText;
-        };
-
-        // 下载
-        window.downloadHTML = function() {
-            if (generatedHtml) {
-                const blob = new Blob([generatedHtml], { type: 'text/html' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'presentation.html';
-                a.click();
-            } else {
-                alert('请先生成演示文稿');
-            }
-        };
-
-        // 编辑
-        window.editSlide = function(index) {
-            editingSlideIndex = index;
-            const slide = currentSlides[index];
-            document.getElementById('slideEditText').value = JSON.stringify({
-                type: slide.type,
-                title: slide.title,
-                content: slide.content
-            }, null, 2);
-            document.getElementById('slideEditPrompt').value = '';
-            document.getElementById('editJsonArea').style.display = 'block';
-            document.getElementById('editLoading').style.display = 'none';
-            document.getElementById('editModal').classList.add('active');
-        };
-
-        // AI 重新生成幻灯片
-        document.getElementById('regenerateEdit').addEventListener('click', async () => {
-            const prompt = document.getElementById('slideEditPrompt').value.trim();
-            if (!prompt) {
-                alert('请描述你想要如何修改幻灯片');
-                return;
-            }
-
-            document.getElementById('editJsonArea').style.display = 'none';
-            document.getElementById('editLoading').style.display = 'block';
-            document.getElementById('regenerateEdit').disabled = true;
-
-            try {
-                const res = await fetch('/api/regenerate-slide', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        slide: currentSlides[editingSlideIndex],
-                        outline: { title: currentOutline.title, slides: currentSlides },
-                        prompt: prompt
-                    })
-                });
-
-                const data = await res.json();
-                if (data.slide) {
-                    document.getElementById('slideEditText').value = JSON.stringify(data.slide, null, 2);
-                    document.getElementById('editLoading').style.display = 'none';
-                    document.getElementById('editJsonArea').style.display = 'block';
-                } else {
-                    alert('生成失败: ' + data.error);
-                    document.getElementById('editJsonArea').style.display = 'block';
-                    document.getElementById('editLoading').style.display = 'none';
-                }
-            } catch (e) {
-                alert('请求失败: ' + e.message);
-                document.getElementById('editJsonArea').style.display = 'block';
-                document.getElementById('editLoading').style.display = 'none';
-            }
-
-            document.getElementById('regenerateEdit').disabled = false;
-        });
-
-        document.getElementById('saveEdit').addEventListener('click', () => {
-            try {
-                const data = JSON.parse(document.getElementById('slideEditText').value);
-                currentSlides[editingSlideIndex] = {...currentSlides[editingSlideIndex], ...data};
-                renderOutline();
-                document.getElementById('editModal').classList.remove('active');
-            } catch (e) {
-                alert('JSON 格式错误');
-            }
-        });
-
-        document.getElementById('closeModal').addEventListener('click', () => document.getElementById('editModal').classList.remove('active'));
-        document.getElementById('cancelEdit').addEventListener('click', () => document.getElementById('editModal').classList.remove('active'));
-
-        // 演示
-        function startPresentation() {
-            document.body.classList.add('presentation-mode');
-
-            // Create a container for the presentation
-            const container = document.createElement('div');
-            container.id = 'presentation-container';
-            container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;overflow:hidden;z-index:9999;background:#000;';
-
-            // Parse the HTML and extract scripts
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(generatedHtml, 'text/html');
-
-            // Get all styles and append to head
-            const styles = doc.querySelectorAll('style');
-            styles.forEach(style => {
-                document.head.appendChild(style.cloneNode(true));
-            });
-
-            // Get body content
-            const bodyContent = doc.body.innerHTML;
-
-            // 创建构建动画覆盖层
-            const buildOverlay = document.createElement('div');
-            buildOverlay.id = 'build-overlay';
-            buildOverlay.style.cssText = `
-                position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10000;background:#0a0a0a;
-                display:flex;flex-direction:column;align-items:center;justify-content:center;
-                transition:opacity 0.5s ease;
-            `;
-
-            const slideCount = currentSlides.length;
-            buildOverlay.innerHTML = `
-                <div class="build-title" style="font-size:1.5rem;color:#fff;margin-bottom:30px;font-weight:600;">
-                    正在创建演示文稿
-                </div>
-                <div class="build-progress" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:80vw;">
-                    ${Array(slideCount).fill(0).map((_, i) => `
-                        <div class="build-dot" data-index="${i}" style="
-                            width:40px;height:40px;border-radius:8px;background:#1a1a1a;border:2px solid #333;
-                            display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#666;
-                            transition:all 0.3s ease;opacity:0.3;
-                        ">${i + 1}</div>
-                    `).join('')}
-                </div>
-                <div class="build-status" style="margin-top:30px;color:#666;font-size:0.9rem;">
-                    正在生成第 <span id="build-current">1</span> / ${slideCount} 页
-                </div>
-            `;
-
-            document.body.appendChild(buildOverlay);
-            document.body.appendChild(container);
-
-            // 设置容器初始隐藏
-            container.style.opacity = '0';
-            container.innerHTML = bodyContent;
-
-            // 逐个显示构建动画
-            const buildDots = buildOverlay.querySelectorAll('.build-dot');
-            const buildCurrent = buildOverlay.querySelector('#build-current');
-
-            let currentBuildIndex = 0;
-            const buildInterval = setInterval(() => {
-                if (currentBuildIndex >= slideCount) {
-                    clearInterval(buildInterval);
-
-                    // 动画完成，移除覆盖层，显示演示
-                    buildOverlay.style.opacity = '0';
-                    container.style.opacity = '1';
-                    setTimeout(() => {
-                        buildOverlay.remove();
-                    }, 500);
-
-                    // 执行脚本初始化导航
-                    initPresentationScripts(doc);
-                    return;
-                }
-
-                // 高亮当前幻灯片
-                if (currentBuildIndex > 0) {
-                    buildDots[currentBuildIndex - 1].style.background = '#22c55e';
-                    buildDots[currentBuildIndex - 1].style.borderColor = '#22c55e';
-                    buildDots[currentBuildIndex - 1].style.color = '#fff';
-                    buildDots[currentBuildIndex - 1].innerHTML = '<i class="ph ph-check"></i>';
-                    buildDots[currentBuildIndex - 1].style.opacity = '1';
-                }
-
-                // 高亮正在生成的幻灯片
-                const currentDot = buildDots[currentBuildIndex];
-                currentDot.style.background = 'var(--primary)';
-                currentDot.style.borderColor = 'var(--primary)';
-                currentDot.style.color = '#fff';
-                currentDot.style.opacity = '1';
-                currentDot.style.transform = 'scale(1.1)';
-
-                buildCurrent.textContent = currentBuildIndex + 1;
-                currentBuildIndex++;
-            }, 400); // 每400ms创建一个幻灯片
-
-            // 添加全屏处理
-            const handleFullscreen = () => {
-                if (!document.fullscreenElement && container.parentElement) {
-                    exitPresentation();
-                }
-            };
-
-            document.addEventListener('fullscreenchange', handleFullscreen);
-
-            // 存储清理函数
-            window._cleanupPresentation = () => {
-                document.removeEventListener('fullscreenchange', handleFullscreen);
-                if (container.parentElement) {
-                    container.parentElement.removeChild(container);
-                }
-                const overlay = document.getElementById('build-overlay');
-                if (overlay) overlay.remove();
-            };
-        }
-
-        // 初始化演示脚本
-        function initPresentationScripts(doc) {
-            const scripts = doc.querySelectorAll('script');
-            scripts.forEach(script => {
-                if (script.src) {
-                    const newScript = document.createElement('script');
-                    newScript.src = script.src;
-                    if (script.async) newScript.async = true;
-                    document.body.appendChild(newScript);
-                } else if (script.textContent) {
-                    try {
-                        eval(script.textContent);
-                    } catch (e) {
-                        console.error('Error executing script:', e);
-                    }
-                }
-            });
-        }
-
-        function exitPresentation() {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            if (window._cleanupPresentation) {
-                window._cleanupPresentation();
-            }
-            document.body.classList.remove('presentation-mode');
-            renderOutline();
-        }
-
-        document.getElementById('fullscreenBtn').addEventListener('click', () => document.documentElement.requestFullscreen());
-
-        document.getElementById('exitPresBtn').addEventListener('click', exitPresentation);
-
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement && document.body.classList.contains('presentation-mode')) {
-                exitPresentation();
-            }
-        });
-
-        btnSend.addEventListener('click', send);
-        userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-
-        
-        // 快速生成
-        window.quickGenerate = function(type) {
-            const prompts = {
-                '教学培训': '帮我做一个关于AI发展的教学演示，包含机器学习基础、深度学习介绍、实战案例',
-                '产品发布': '帮我做一个新产品的发布会演示文稿，包含产品背景、核心功能、用户体验、市场定价',
-                '融资演讲': '帮我做一个商业融资演讲，包含项目简介、市场分析、竞争优势、商业模式、融资需求'
-            };
-            const message = prompts[type] || type;
-            userInput.value = message;
-            userInput.style.height = 'auto';
-            userInput.style.height = Math.min(userInput.scrollHeight, 180) + 'px';
-            btnSend.disabled = false;
-        };
-
-        const style = document.createElement('style');
-        style.textContent = '@keyframes spinner { to { transform: rotate(360deg); } } .spinner { animation: spinner 1s linear infinite; }';
-        document.head.appendChild(style);
-    </script>
-<!-- 通用组件 -->
     <script src="/js/common.js"></script>
-    <!-- 创建页逻辑 -->
-    <script src="/js/create.js"></script>
+    <script src="/js/create-page.js"></script>
 </body>
 </html>

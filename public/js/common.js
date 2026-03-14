@@ -64,8 +64,100 @@ function copyInstallPrompt() {
     showToast('提示词已复制到剪贴板');
 }
 
+// ==================== 登录注册弹窗 ====================
+function initAuthModals() {
+    // 登录弹窗
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.addEventListener('click', (e) => {
+            if (e.target.id === 'loginModal') closeLoginModal();
+        });
+    }
+
+    // 注册弹窗
+    const registerModal = document.getElementById('registerModal');
+    if (registerModal) {
+        registerModal.addEventListener('click', (e) => {
+            if (e.target.id === 'registerModal') closeRegisterModal();
+        });
+    }
+}
+
+function openLoginModal() {
+    closeRegisterModal();
+    closeInstallModal();
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function openRegisterModal() {
+    closeLoginModal();
+    closeInstallModal();
+    const modal = document.getElementById('registerModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeRegisterModal() {
+    const modal = document.getElementById('registerModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function switchToRegister() {
+    closeLoginModal();
+    openRegisterModal();
+}
+
+function switchToLogin() {
+    closeRegisterModal();
+    openLoginModal();
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const form = e.target;
+    const email = form.email.value;
+    const password = form.password.value;
+
+    // 模拟登录验证
+    if (email && password) {
+        showToast('登录成功！欢迎回来');
+        closeLoginModal();
+    } else {
+        showToast('请填写完整信息', 'error');
+    }
+}
+
+function handleRegister(e) {
+    e.preventDefault();
+    const form = e.target;
+    const username = form.username.value;
+    const email = form.email.value;
+    const password = form.password.value;
+    const confirmPassword = form.confirmPassword.value;
+
+    if (password !== confirmPassword) {
+        showToast('两次输入的密码不一致', 'error');
+        return;
+    }
+
+    // 模拟注册验证
+    if (username && email && password) {
+        showToast('注册成功！请登录');
+        closeRegisterModal();
+        setTimeout(() => openLoginModal(), 500);
+    } else {
+        showToast('请填写完整信息', 'error');
+    }
+}
+
 // ==================== 页面加载完成后初始化 ====================
 document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     initInstallModal();
+    initAuthModals();
 });
