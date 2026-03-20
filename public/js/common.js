@@ -1,17 +1,68 @@
-// ==================== 通用 JavaScript ====================
+const XiangyuI18n = {
+    resolveLocale() {
+        const params = new URLSearchParams(window.location.search);
+        const requested = String(params.get('lang') || '').trim().toLowerCase();
+        const preferred = requested
+            || String(document.documentElement.lang || '').trim().toLowerCase()
+            || String(navigator.language || navigator.userLanguage || '').trim().toLowerCase();
 
-// ==================== Toast 提示 ====================
-function showToast(message, type = "success") {
-    const toast = document.getElementById("toast");
+        return preferred.startsWith('zh') ? 'zh-CN' : 'en';
+    },
+
+    setPageLocale(locale) {
+        const resolved = locale || this.resolveLocale();
+        document.documentElement.lang = resolved;
+        return resolved;
+    },
+
+    interpolate(template, values = {}) {
+        return String(template || '').replace(/\{(\w+)\}/g, (_, key) => {
+            const value = values[key];
+            return value === undefined || value === null ? '' : String(value);
+        });
+    }
+};
+
+const COMMON_I18N = {
+    'zh-CN': {
+        themeToggle: '切换主题',
+        copy: '复制',
+        copied: '已复制',
+        installPromptCopied: '提示词已复制到剪贴板',
+        loginSuccess: '登录成功，欢迎回来。',
+        fillCompleteInfo: '请填写完整信息。',
+        passwordMismatch: '两次输入的密码不一致。',
+        registerSuccess: '注册成功，请登录。'
+    },
+    en: {
+        themeToggle: 'Toggle theme',
+        copy: 'Copy',
+        copied: 'Copied',
+        installPromptCopied: 'The installation prompt has been copied to the clipboard.',
+        loginSuccess: 'Login successful. Welcome back.',
+        fillCompleteInfo: 'Please complete all required fields.',
+        passwordMismatch: 'The passwords do not match.',
+        registerSuccess: 'Registration successful. Please log in.'
+    }
+};
+
+window.XiangyuI18n = XiangyuI18n;
+
+function getCommonCopy() {
+    const locale = window.XiangyuI18n.resolveLocale();
+    return COMMON_I18N[locale] || COMMON_I18N.en;
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
     if (!toast) return;
 
     toast.textContent = message;
-    toast.className = "toast " + type;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// ==================== 主题切换 ====================
 function initTheme() {
     const themeToggle = document.getElementById('themeToggle');
     if (!themeToggle) return;
@@ -19,23 +70,23 @@ function initTheme() {
     const html = document.documentElement;
     const savedTheme = localStorage.getItem('theme') || 'light';
     html.setAttribute('data-theme', savedTheme);
+    themeToggle.title = getCommonCopy().themeToggle;
 
     themeToggle.addEventListener('click', () => {
         const current = html.getAttribute('data-theme');
         const next = current === 'dark' ? 'light' : 'dark';
         html.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
+        themeToggle.title = getCommonCopy().themeToggle;
     });
 }
 
-// ==================== Agent 集成弹窗 ====================
 function initInstallModal() {
     const modal = document.getElementById('installModal');
     if (!modal) return;
 
-    // 点击遮罩关闭弹窗
-    modal.addEventListener('click', (e) => {
-        if (e.target.id === 'installModal') closeInstallModal();
+    modal.addEventListener('click', (event) => {
+        if (event.target.id === 'installModal') closeInstallModal();
     });
 }
 
@@ -53,32 +104,32 @@ function copyInstallPrompt() {
     const promptEl = document.getElementById('installPrompt');
     if (!promptEl) return;
 
-    const text = promptEl.textContent;
-    navigator.clipboard.writeText(text);
-
+    navigator.clipboard.writeText(promptEl.textContent);
+    const copy = getCommonCopy();
     const copyText = document.getElementById('copyText');
+
     if (copyText) {
-        copyText.textContent = '已复制!';
-        setTimeout(() => copyText.textContent = '复制', 2000);
+        copyText.textContent = copy.copied;
+        setTimeout(() => {
+            copyText.textContent = copy.copy;
+        }, 2000);
     }
-    showToast('提示词已复制到剪贴板');
+
+    showToast(copy.installPromptCopied);
 }
 
-// ==================== 登录注册弹窗 ====================
 function initAuthModals() {
-    // 登录弹窗
     const loginModal = document.getElementById('loginModal');
     if (loginModal) {
-        loginModal.addEventListener('click', (e) => {
-            if (e.target.id === 'loginModal') closeLoginModal();
+        loginModal.addEventListener('click', (event) => {
+            if (event.target.id === 'loginModal') closeLoginModal();
         });
     }
 
-    // 注册弹窗
     const registerModal = document.getElementById('registerModal');
     if (registerModal) {
-        registerModal.addEventListener('click', (e) => {
-            if (e.target.id === 'registerModal') closeRegisterModal();
+        registerModal.addEventListener('click', (event) => {
+            if (event.target.id === 'registerModal') closeRegisterModal();
         });
     }
 }
@@ -117,46 +168,46 @@ function switchToLogin() {
     openLoginModal();
 }
 
-function handleLogin(e) {
-    e.preventDefault();
-    const form = e.target;
+function handleLogin(event) {
+    event.preventDefault();
+    const form = event.target;
     const email = form.email.value;
     const password = form.password.value;
+    const copy = getCommonCopy();
 
-    // 模拟登录验证
     if (email && password) {
-        showToast('登录成功！欢迎回来');
+        showToast(copy.loginSuccess);
         closeLoginModal();
     } else {
-        showToast('请填写完整信息', 'error');
+        showToast(copy.fillCompleteInfo, 'error');
     }
 }
 
-function handleRegister(e) {
-    e.preventDefault();
-    const form = e.target;
+function handleRegister(event) {
+    event.preventDefault();
+    const form = event.target;
     const username = form.username.value;
     const email = form.email.value;
     const password = form.password.value;
     const confirmPassword = form.confirmPassword.value;
+    const copy = getCommonCopy();
 
     if (password !== confirmPassword) {
-        showToast('两次输入的密码不一致', 'error');
+        showToast(copy.passwordMismatch, 'error');
         return;
     }
 
-    // 模拟注册验证
     if (username && email && password) {
-        showToast('注册成功！请登录');
+        showToast(copy.registerSuccess);
         closeRegisterModal();
         setTimeout(() => openLoginModal(), 500);
     } else {
-        showToast('请填写完整信息', 'error');
+        showToast(copy.fillCompleteInfo, 'error');
     }
 }
 
-// ==================== 页面加载完成后初始化 ====================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
+    XiangyuI18n.setPageLocale();
     initTheme();
     initInstallModal();
     initAuthModals();

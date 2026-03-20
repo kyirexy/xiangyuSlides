@@ -20,11 +20,11 @@
                 <div class="logo-text">Xiangyu<span>Slides</span></div>
             </a>
             <div class="nav-pills">
-                <a href="/" class="nav-pill active">
+                <a href="/" class="nav-pill active" id="homeNavHome">
                     <i class="ph ph-house"></i>
                     首页
                 </a>
-                <a href="/create" class="nav-pill">
+                <a href="/create" class="nav-pill" id="homeNavCreate">
                     <i class="ph ph-plus-circle"></i>
                     创建
                 </a>
@@ -35,11 +35,11 @@
                 <i class="ph ph-moon"></i>
                 <i class="ph ph-sun"></i>
             </button>
-            <a href="#" class="nav-pill nav-btn-login" onclick="openLoginModal()">
+            <a href="#" class="nav-pill nav-btn-login" id="homeLoginLink" onclick="openLoginModal()">
                 <i class="ph ph-sign-in"></i>
                 登录
             </a>
-            <a href="#" class="nav-pill nav-btn-register" onclick="openRegisterModal()">
+            <a href="#" class="nav-pill nav-btn-register" id="homeRegisterLink" onclick="openRegisterModal()">
                 <i class="ph ph-user-plus"></i>
                 注册
             </a>
@@ -68,14 +68,14 @@
                     </span>
                 </h1>
 
-                <p class="hero-subtitle">输入主题，AI 自动创建精美演示文稿</p>
+                <p class="hero-subtitle" id="homeHeroSubtitle">输入主题，AI 自动创建精美演示文稿</p>
 
                 <div class="hero-btns">
-                    <a href="/create" class="btn-large btn-large-primary">
+                    <a href="/create" class="btn-large btn-large-primary" id="homeCreateBtn">
                         <i class="ph ph-sparkle"></i>
                         开始创建
                     </a>
-                    <button class="btn-large btn-large-secondary" onclick="openInstallModal()">
+                    <button class="btn-large btn-large-secondary" id="homeAgentBtn" onclick="openInstallModal()">
                         <i class="ph ph-robot"></i>
                         Agent 集成
                     </button>
@@ -97,37 +97,37 @@
 
     <section class="pricing">
         <div class="section-title">
-            <h2>价格方案</h2>
-            <p>选择适合你的方案</p>
+            <h2 id="pricingTitle">价格方案</h2>
+            <p id="pricingSubtitle">选择适合你的方案</p>
         </div>
         <div class="pricing-grid">
             <div class="pricing-card">
-                <h3>免费版</h3>
+                <h3 id="pricingFreeTitle">免费版</h3>
                 <div class="pricing-price">¥0<span>/月</span></div>
-                <p class="pricing-desc">适合体验和轻量使用</p>
+                <p class="pricing-desc" id="pricingFreeDesc">适合体验和轻量使用</p>
                 <ul class="pricing-features">
                     <li><i class="ph ph-check-circle"></i> 每月 10 次生成</li>
                     <li><i class="ph ph-check-circle"></i> 12 种风格选择</li>
                     <li><i class="ph ph-check-circle"></i> HTML 文件导出</li>
                 </ul>
-                <a href="#" class="btn-pricing btn-pricing-outline">当前方案</a>
+                <a href="#" class="btn-pricing btn-pricing-outline" id="pricingFreeBtn">当前方案</a>
             </div>
             <div class="pricing-card featured">
-                <h3>专业版</h3>
+                <h3 id="pricingProTitle">专业版</h3>
                 <div class="pricing-price">¥9.9<span>/月</span></div>
-                <p class="pricing-desc">适合频繁使用和商业场景</p>
+                <p class="pricing-desc" id="pricingProDesc">适合频繁使用和商业场景</p>
                 <ul class="pricing-features">
                     <li><i class="ph ph-check-circle"></i> 无限次生成</li>
                     <li><i class="ph ph-check-circle"></i> 12 种风格选择</li>
                     <li><i class="ph ph-check-circle"></i> 优先技术支持</li>
                 </ul>
-                <a href="#" class="btn-pricing btn-pricing-fill">立即升级</a>
+                <a href="#" class="btn-pricing btn-pricing-fill" id="pricingProBtn">立即升级</a>
             </div>
         </div>
     </section>
 
     <footer class="footer">
-        <p>© 2024 Xiangyu Slides. Built with MiniMax AI.</p>
+        <p id="homeFooterText">© 2024 Xiangyu Slides. Built with MiniMax AI.</p>
     </footer>
 
     <div class="toast" id="toast"></div>

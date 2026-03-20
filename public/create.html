@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/create.css">
     <style>
-        .main {
+        .main:not(.create-mode-main) {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -267,6 +267,28 @@
             gap: 8px;
         }
 
+        .result-select-group {
+            display: grid;
+            gap: 6px;
+            min-width: 180px;
+        }
+
+        .result-select-group span {
+            color: var(--text-tertiary);
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .result-select-group select {
+            min-height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font: inherit;
+        }
+
         .result-btn {
             display: inline-flex;
             align-items: center;
@@ -373,7 +395,16 @@
             line-height: 1.55;
         }
 
-        .slide-edit-btn {
+        .slide-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .slide-edit-btn,
+        .slide-action-btn {
             width: 30px;
             height: 30px;
             border: none;
@@ -384,12 +415,29 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s ease, color 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
             flex-shrink: 0;
         }
 
-        .slide-edit-btn:hover {
+        .slide-edit-btn:hover,
+        .slide-action-btn:hover:not(:disabled) {
             background: var(--primary);
+            color: white;
+        }
+
+        .slide-action-btn:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+        }
+
+        .slide-action-btn.warn {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.18);
+        }
+
+        .slide-action-btn.warn:hover:not(:disabled) {
+            background: #f59e0b;
             color: white;
         }
 
@@ -607,6 +655,293 @@
             font-size: 0.84rem;
         }
 
+        .deck-tooling,
+        .slide-tooling {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .deck-tool-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            gap: 14px;
+        }
+
+        .slide-tool-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+            gap: 14px;
+        }
+
+        .slide-tool-card-wide {
+            grid-column: 1 / -1;
+        }
+
+        .deck-tool-card {
+            padding: 14px;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .deck-tool-head {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .deck-tool-head strong {
+            color: var(--text-primary);
+            font-size: 0.88rem;
+        }
+
+        .deck-tool-head span {
+            color: var(--text-tertiary);
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+
+        .deck-subsection,
+        .slide-subsection {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .slide-structure-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .slide-structure-helper {
+            margin-top: 10px;
+            color: var(--text-tertiary);
+            font-size: 0.76rem;
+            line-height: 1.55;
+        }
+
+        .deck-toggle-stack,
+        .deck-field-stack,
+        .deck-marker-form,
+        .deck-marker-list,
+        .deck-audio-form,
+        .deck-audio-list,
+        .deck-cue-form,
+        .deck-cue-list,
+        .slide-field-grid,
+        .slide-timing-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .slide-field-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .slide-timing-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .deck-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+
+        .deck-toggle-row input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        .deck-field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .deck-field span {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .deck-field input,
+        .deck-field select,
+        .deck-field textarea {
+            width: 100%;
+            min-height: 42px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font: inherit;
+        }
+
+        .deck-field input:focus,
+        .deck-field select:focus,
+        .deck-field textarea:focus {
+            outline: none;
+            border-color: rgba(14, 165, 233, 0.45);
+        }
+
+        .deck-field textarea {
+            min-height: 96px;
+            resize: vertical;
+        }
+
+        .deck-marker-actions,
+        .deck-audio-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .deck-tool-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 38px;
+            padding: 0 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .deck-tool-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .deck-tool-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .deck-tool-btn.primary {
+            border: none;
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .deck-tool-btn.warn {
+            border-color: rgba(251, 191, 36, 0.32);
+            background: rgba(245, 158, 11, 0.12);
+            color: #f59e0b;
+        }
+
+        .deck-marker-item,
+        .deck-audio-item,
+        .deck-cue-item {
+            display: grid;
+            gap: 4px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+        }
+
+        .deck-marker-item:hover,
+        .deck-audio-item:hover,
+        .deck-cue-item:hover {
+            transform: translateY(-1px);
+            border-color: rgba(14, 165, 233, 0.26);
+        }
+
+        .deck-marker-item.active,
+        .deck-audio-item.active,
+        .deck-cue-item.active {
+            border-color: rgba(14, 165, 233, 0.4);
+            box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.12) inset;
+        }
+
+        .deck-marker-item strong,
+        .deck-audio-item strong,
+        .deck-cue-item strong {
+            color: var(--text-primary);
+            font-size: 0.82rem;
+        }
+
+        .deck-marker-meta {
+            color: var(--text-tertiary);
+            font-size: 0.74rem;
+            line-height: 1.45;
+        }
+
+        .deck-marker-empty {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px dashed var(--border);
+            color: var(--text-tertiary);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .deck-starter-summary-card {
+            display: grid;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(14, 165, 233, 0.06), rgba(14, 165, 233, 0.02));
+        }
+
+        .deck-starter-summary-title {
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .deck-starter-summary-meta,
+        .deck-starter-summary-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .deck-starter-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(14, 165, 233, 0.18);
+            background: rgba(255, 255, 255, 0.58);
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .deck-starter-pill.subtle {
+            border-color: var(--border);
+            background: var(--bg-card);
+        }
+
+        .deck-audio-source {
+            color: var(--text-tertiary);
+            font-size: 0.72rem;
+            line-height: 1.45;
+            word-break: break-all;
+        }
+
         .modal-body textarea:focus {
             outline: none;
             border-color: rgba(14, 165, 233, 0.45);
@@ -673,6 +1008,13 @@
                 grid-template-columns: 1fr;
             }
 
+            .deck-tool-grid,
+            .slide-tool-grid,
+            .slide-field-grid,
+            .slide-timing-grid {
+                grid-template-columns: 1fr;
+            }
+
             .result-btns,
             .status-panel-actions {
                 width: 100%;
@@ -683,6 +1025,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/css/create-copilot.css">
 </head>
 <body>
     <header class="header">
@@ -692,11 +1035,11 @@
                 <div class="logo-text">Xiangyu<span>Slides</span></div>
             </a>
             <div class="nav-pills">
-                <a href="/" class="nav-pill">
+                <a href="/" class="nav-pill" id="createNavHome">
                     <i class="ph ph-house"></i>
                     首页
                 </a>
-                <a href="/create" class="nav-pill active">
+                <a href="/create" class="nav-pill active" id="createNavCreate">
                     <i class="ph ph-plus-circle"></i>
                     创建
                 </a>
@@ -713,27 +1056,228 @@
         </div>
     </header>
 
-    <main class="main">
-        <section class="intro-card">
-            <div class="intro-top">
-                <div>
-                    <div class="intro-tag">
-                        <i class="ph ph-sparkle"></i>
-                        从脚本到独立页面
+    <main class="main create-mode-main">
+        <section class="copilot-shell" id="fastModeShell">
+            <div class="copilot-shell-topbar">
+                <div class="copilot-shell-brand">
+                    <div class="copilot-shell-title-row">
+                        <strong id="copilotShellTitle">Create Studio</strong>
+                        <span class="copilot-shell-badge" id="copilotShellMode">Fast Mode</span>
                     </div>
-                    <h1>先生成脚本，再一键生成带 ID 的独立幻灯片页面</h1>
-                    <p>这里会先帮你整理演示脚本。确认脚本后点击“开始生成”，系统会在新页面打开一个专属地址，例如 <code>/presentations/pres_xxx</code>，同时在当前页展示实时进度，不再是黑盒。</p>
+                    <p id="copilotShellHint">Fast Mode 先出稿，生成后再进入 Advanced 微调。</p>
+                </div>
+                <div class="copilot-shell-flow">
+                    <span class="copilot-flow-pill" id="copilotFlowBrief">一句话 Brief</span>
+                    <span class="copilot-flow-pill" id="copilotFlowPlan">AI 规划</span>
+                    <span class="copilot-flow-pill" id="copilotFlowPreview">实时预览</span>
+                    <span class="copilot-flow-pill" id="copilotFlowRefine">高级编辑</span>
                 </div>
             </div>
-            <div class="intro-meta">
-                <span><i class="ph ph-path"></i> 干净路由：`/create`</span>
-                <span><i class="ph ph-browser"></i> 新窗口独立访问</span>
-                <span><i class="ph ph-activity"></i> 可见的生成阶段</span>
+            <div class="copilot-workbench">
+                <aside class="copilot-left-rail">
+                    <section class="copilot-brand-card">
+                        <div class="copilot-kicker" id="copilotKicker">
+                            <i class="ph ph-sparkle"></i>
+                            Copilot Fast Mode
+                        </div>
+                        <h1 class="copilot-title" id="copilotTitle">一句话生成更完整的演示</h1>
+                        <p class="copilot-description" id="copilotDescription">
+                            默认只说你想讲什么，Copilot 会自动补齐用途、时长、风格、基础节奏和旁白占位。复杂参数全部后移到高级编辑。
+                        </p>
+                    </section>
+
+                    <section class="copilot-card copilot-card-autofill">
+                        <div class="copilot-card-head">
+                            <strong id="copilotAutofillTitle">AI 自动补齐</strong>
+                            <span id="copilotAutofillHint">默认自动填这些，不再让首屏变成参数墙。</span>
+                        </div>
+                        <ul class="copilot-autofill-list" id="copilotAutofillList">
+                            <li>用途 / 场景</li>
+                            <li>页数节奏</li>
+                            <li>视觉家族</li>
+                            <li>基础转场与动效</li>
+                            <li>旁白占位与提示</li>
+                            <li>时间轴 starter</li>
+                        </ul>
+                    </section>
+                </aside>
+
+                <section class="copilot-center-column">
+                    <section class="copilot-card copilot-card-thread">
+                        <div class="copilot-card-head copilot-thread-head">
+                            <div>
+                                <strong id="copilotThreadTitle">生成对话</strong>
+                                <span id="copilotThreadHint">你只需要描述目标、场景和想要的风格。</span>
+                            </div>
+                            <div class="copilot-thread-badge" id="copilotThreadRoute">/create -> copilot -> preview</div>
+                        </div>
+                        <div class="copilot-preset-row">
+                            <button class="copilot-preset-btn" id="copilotPresetPitch" type="button" data-copilot-template="pitch"></button>
+                            <button class="copilot-preset-btn" id="copilotPresetProduct" type="button" data-copilot-template="product"></button>
+                            <button class="copilot-preset-btn" id="copilotPresetTeaching" type="button" data-copilot-template="teaching"></button>
+                            <button class="copilot-preset-btn" id="copilotPresetShowcase" type="button" data-copilot-template="showcase"></button>
+                        </div>
+                        <section class="copilot-card copilot-card-settings copilot-inline-settings">
+                            <div class="copilot-card-head">
+                                <strong id="copilotSettingsTitle">轻量选项</strong>
+                                <span id="copilotSettingsHint">都可以不填，AI 会自动补齐。</span>
+                            </div>
+                            <div class="copilot-settings-grid">
+                                <label class="copilot-field">
+                                    <span id="copilotDeckLocaleLabel">输出语言</span>
+                                    <select id="copilotDeckLocale">
+                                        <option value="zh-CN">中文默认</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </label>
+                                <label class="copilot-field">
+                                    <span id="copilotOutputIntentLabel">输出目标</span>
+                                    <select id="copilotOutputIntent">
+                                        <option value="">自动</option>
+                                        <option value="showcase">展示型</option>
+                                        <option value="briefing">汇报型</option>
+                                        <option value="short-video">短视频友好</option>
+                                    </select>
+                                </label>
+                                <label class="copilot-field">
+                                    <span id="copilotVisualPreferenceLabel">视觉倾向</span>
+                                    <select id="copilotVisualPreference">
+                                        <option value="">自动</option>
+                                        <option value="showcase">电影感</option>
+                                        <option value="editorial">编辑感</option>
+                                        <option value="briefing">商务感</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="copilot-summary" id="copilotSummary"></div>
+                            <div class="copilot-actions">
+                                <button class="copilot-secondary-btn" id="toggleAdvancedModeBtn" type="button">高级编辑</button>
+                            </div>
+                        </section>
+                        <div class="copilot-thread" id="copilotThread" data-log-label="AI 记录" data-log-hint="只保留关键规划、追问和生成回执。"></div>
+                        <div class="copilot-input-wrap">
+                            <textarea id="copilotInput" rows="3" placeholder="例如：帮我做一个融资路演，偏 Apple 发布会风格，8 页左右。"></textarea>
+                            <div class="copilot-input-footer">
+                                <span id="copilotInputHint">按 Enter 发送，Shift + Enter 换行</span>
+                                <button class="copilot-send-btn" id="copilotSendBtn" type="button">
+                                    <i class="ph ph-paper-plane-tilt"></i>
+                                    <span id="copilotSendText">开始生成</span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </section>
+
+                <aside class="copilot-right-panel">
+                    <section class="copilot-stage-card">
+                        <div class="copilot-stage-head">
+                            <div>
+                                <span class="copilot-stage-label" id="copilotStageLabel">Presentation Stage</span>
+                                <strong class="copilot-stage-status" id="copilotStageStatus">Ready to plan</strong>
+                            </div>
+                        </div>
+                        <div class="copilot-stage-canvas">
+                            <div class="copilot-stage-screen">
+                                <div class="copilot-stage-screen-top">
+                                    <span class="copilot-stage-chip" id="copilotStageVisual">Showcase</span>
+                                    <span class="copilot-stage-chip" id="copilotStageIntent">Showcase</span>
+                                    <span class="copilot-stage-chip" id="copilotStageLocale">中文</span>
+                                </div>
+                                <div class="copilot-stage-layout">
+                                    <div class="copilot-stage-main">
+                                <div class="copilot-stage-kicker-row">
+                                    <span class="copilot-stage-kicker" id="copilotStageStoryLabel">Story Flow</span>
+                                    <span class="copilot-stage-route" id="copilotStageRoute">/create -> copilot -> preview</span>
+                                </div>
+                                <h2 id="copilotStageHeadline">更像一个产品工作台，而不是表单页</h2>
+                                <p id="copilotStageSubhead">Fast Mode 负责一键生成，Advanced 负责生成后的精修。</p>
+                                    </div>
+                                    <div class="copilot-stage-storyboard">
+                                        <div class="copilot-stage-storyboard-head">
+                                            <span class="copilot-stage-storyboard-label" id="copilotStageStoryboardLabel">Outline Peek</span>
+                                        </div>
+                                <div class="copilot-stage-outline-peek">
+                                    <article class="copilot-stage-scene-card">
+                                        <span class="copilot-stage-scene-index" id="copilotStageSceneOneLabel">Scene 01</span>
+                                        <strong id="copilotStageSceneOne">Opening setup</strong>
+                                    </article>
+                                    <article class="copilot-stage-scene-card">
+                                        <span class="copilot-stage-scene-index" id="copilotStageSceneTwoLabel">Scene 02</span>
+                                        <strong id="copilotStageSceneTwo">Key argument</strong>
+                                    </article>
+                                    <article class="copilot-stage-scene-card">
+                                        <span class="copilot-stage-scene-index" id="copilotStageSceneThreeLabel">Scene 03</span>
+                                        <strong id="copilotStageSceneThree">Final call to action</strong>
+                                    </article>
+                                </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="copilot-stage-meta">
+                            <div class="copilot-stage-metric">
+                                <span id="copilotStageMetricOneLabel">模式</span>
+                                <strong id="copilotStageMetricOneValue">Fast Mode</strong>
+                            </div>
+                            <div class="copilot-stage-metric">
+                                <span id="copilotStageMetricTwoLabel">体验</span>
+                                <strong id="copilotStageMetricTwoValue">Preview-first</strong>
+                            </div>
+                            <div class="copilot-stage-metric">
+                                <span id="copilotStageMetricThreeLabel">编辑</span>
+                                <strong id="copilotStageMetricThreeValue">Advanced on demand</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                </aside>
             </div>
         </section>
 
+        <section id="advancedPanel" class="advanced-shell" hidden>
+            <div class="advanced-shell-topbar">
+                <div class="advanced-shell-copy">
+                    <span class="advanced-shell-label" id="advancedShellLabel">Advanced Workspace</span>
+                    <h2 class="advanced-shell-title" id="advancedShellTitle">在这里继续精修结构、风格与导出</h2>
+                    <p class="advanced-shell-hint" id="advancedShellHint">左侧负责配置和输入，右侧负责脚本、构建状态和结果工作区。</p>
+                </div>
+                <div class="advanced-shell-pills">
+                    <span class="advanced-shell-pill" id="advancedShellPillOutline">Outline</span>
+                    <span class="advanced-shell-pill" id="advancedShellPillBuild">Build</span>
+                    <span class="advanced-shell-pill" id="advancedShellPillExport">Export</span>
+                </div>
+            </div>
+
+            <div class="advanced-shell-grid">
+                <div class="advanced-config-column">
+        <section class="intro-card">
+            <div class="intro-top">
+                <div>
+                    <div class="intro-tag" id="introTag">
+                        <i class="ph ph-sparkle"></i>
+                        从脚本到独立页面
+                    </div>
+                    <h1 id="introTitle">先生成脚本，再一键生成带 ID 的独立幻灯片页面</h1>
+                    <p id="introDescription">这里会先帮你整理演示脚本。确认脚本后点击“开始生成”，系统会在新页面打开一个专属地址，例如 <code>/presentations/pres_xxx</code>，同时在当前页展示实时进度，不再是黑盒。</p>
+                </div>
+            </div>
+            <div class="intro-meta">
+                <span id="introMetaRoute"><i class="ph ph-path"></i> 干净路由：`/create`</span>
+                <span id="introMetaWindow"><i class="ph ph-browser"></i> 新窗口独立访问</span>
+                <span id="introMetaStages"><i class="ph ph-activity"></i> 可见的生成阶段</span>
+            </div>
+        </section>
+
+        <div class="advanced-config-stack">
+        <section class="advanced-config-section">
+            <div class="advanced-config-section-head">
+                <span class="advanced-config-section-label" id="advancedSetupLabel">Project Setup</span>
+                <p class="advanced-config-section-copy" id="advancedSetupCopy">Choose purpose, deck length, and visual style before drafting the outline.</p>
+            </div>
+            <div class="advanced-config-section-body">
+
         <div class="control-block">
-            <div class="section-label">
+            <div class="section-label" id="purposeLabel">
                 <i class="ph ph-target"></i>
                 选择用途
             </div>
@@ -752,7 +1296,7 @@
         </div>
 
         <div class="control-block length-area">
-            <div class="section-label">
+            <div class="section-label" id="lengthLabel">
                 <i class="ph ph-files"></i>
                 演示文稿长度
             </div>
@@ -764,7 +1308,7 @@
         </div>
 
         <div class="control-block style-preview-area">
-            <div class="section-label">
+            <div class="section-label" id="styleLabel">
                 <i class="ph ph-palette"></i>
                 选择风格
             </div>
@@ -802,13 +1346,22 @@
             </div>
         </div>
 
+        </div>
+        </section>
+
+        <section class="advanced-config-section">
+            <div class="advanced-config-section-head">
+                <span class="advanced-config-section-label" id="advancedBriefLabel">Brief Composer</span>
+                <p class="advanced-config-section-copy" id="advancedBriefCopy">Write the brief here, then turn it into an outline before building the standalone page.</p>
+            </div>
+            <div class="advanced-config-section-body">
         <div class="input-container">
             <div class="input-wrapper">
                 <div class="input-inner">
                     <textarea id="userInput" rows="2" placeholder="描述你想创建的演示主题、目标听众和重点内容，例如：给产品团队做一份 AI Agent 工作流分享。"></textarea>
                 </div>
                 <div class="input-footer">
-                    <span class="input-hint">Enter 发送生成脚本，Shift + Enter 换行</span>
+                    <span class="input-hint" id="inputHint">Enter 发送生成脚本，Shift + Enter 换行</span>
                     <button class="send-btn" id="btnSend" disabled>
                         <i class="ph ph-paper-plane-tilt"></i>
                     </button>
@@ -816,41 +1369,533 @@
             </div>
         </div>
 
+        </div>
+        </section>
+
+        <section class="advanced-config-section">
+            <div class="advanced-config-section-head">
+                <span class="advanced-config-section-label" id="advancedStarterLabel">Quick Starters</span>
+                <p class="advanced-config-section-copy" id="advancedStarterCopy">Use a starter prompt when you want a faster first outline and a clearer scene direction.</p>
+            </div>
+            <div class="advanced-config-section-body">
         <section class="quick-start">
-            <div class="quick-start-title">
+            <div class="quick-start-title" id="quickStartTitle">
                 <i class="ph ph-lightning"></i>
                 快速开始
             </div>
             <div class="quick-start-btns">
-                <button class="quick-start-btn" onclick="quickGenerate('教学培训')">📚 教学培训：面向零基础学员的 AI 发展与应用课程</button>
-                <button class="quick-start-btn" onclick="quickGenerate('产品发布')">🚀 产品发布：新产品发布会、媒体与客户同步宣讲</button>
-                <button class="quick-start-btn" onclick="quickGenerate('融资演讲')">💰 融资演讲：给投资人看的商业计划与融资路演</button>
-                <button class="quick-start-btn" onclick="quickGenerate('技术分享')">💻 技术分享：面向团队或社区的架构与实践拆解</button>
-                <button class="quick-start-btn" onclick="quickGenerate('年度报告')">📊 年度报告：企业年度经营回顾与下一年规划</button>
+                <button class="quick-start-btn" id="quickStartTeaching" onclick="quickGenerate('teaching')">📚 教学培训：面向零基础学员的 AI 发展与应用课程</button>
+                <button class="quick-start-btn" id="quickStartProduct" onclick="quickGenerate('product')">🚀 产品发布：新产品发布会、媒体与客户同步宣讲</button>
+                <button class="quick-start-btn" id="quickStartPitch" onclick="quickGenerate('pitch')">💰 融资演讲：给投资人看的商业计划与融资路演</button>
+                <button class="quick-start-btn" id="quickStartTech" onclick="quickGenerate('tech')">💻 技术分享：面向团队或社区的架构与实践拆解</button>
+                <button class="quick-start-btn" id="quickStartReport" onclick="quickGenerate('report')">📊 年度报告：企业年度经营回顾与下一年规划</button>
             </div>
         </section>
+            </div>
+        </section>
+        </div>
+                </div>
 
-        <div class="result-area" id="resultArea"></div>
+                <div class="advanced-workspace-column">
+                    <div class="advanced-workspace-head">
+                        <div>
+                            <div class="advanced-workspace-title" id="advancedWorkspaceTitle">编辑工作区</div>
+                            <p class="advanced-workspace-hint" id="advancedWorkspaceHint">脚本、生成进度、结果卡片和后续微调都集中在这里。</p>
+                        </div>
+                    </div>
+                    <div class="result-area" id="resultArea"></div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div class="modal-overlay" id="editModal">
         <div class="modal">
             <div class="modal-header">
-                <h3><i class="ph ph-pencil-simple"></i> 编辑这页脚本</h3>
+                <h3 id="editModalTitle"><i class="ph ph-pencil-simple"></i> 编辑这页脚本</h3>
                 <button class="modal-close" id="closeModal">
                     <i class="ph ph-x"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="edit-prompt-area" style="margin-bottom: 14px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.82rem;">
+                <div class="edit-prompt-area" id="editPromptArea" style="margin-bottom: 14px;">
+                    <label id="editPromptLabel" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.82rem;">
                         <i class="ph ph-sparkle"></i>
                         让 AI 改写这页脚本
                     </label>
                     <textarea id="slideEditPrompt" placeholder="例如：把这一页改成更适合 CEO 汇报的表达，增加 3 个量化结果。"></textarea>
                 </div>
+                <div class="slide-tooling" id="slideTooling" hidden>
+                    <div class="slide-tool-grid">
+                        <section class="deck-tool-card slide-tool-card-wide">
+                            <div class="deck-tool-head">
+                                <strong id="slideStructureTitle">Slide Structure</strong>
+                                <span id="slideStructureHint">Adjust the slide type, headline hierarchy, and content lines here before fine-tuning the raw JSON.</span>
+                            </div>
+                            <div class="slide-field-grid">
+                                <label class="deck-field">
+                                    <span id="slideTypeText">Slide Type</span>
+                                    <select id="slideTypeSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideTitleText">Title</span>
+                                    <input type="text" id="slideTitleInput" placeholder="Slide headline">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideSubtitleText">Subtitle</span>
+                                    <input type="text" id="slideSubtitleInput" placeholder="Optional subtitle or kicker">
+                                </label>
+                                <label class="deck-field" style="grid-column: 1 / -1;">
+                                    <span id="slideContentText">Content Lines</span>
+                                    <textarea id="slideContentInput" placeholder="Write one bullet or line per row."></textarea>
+                                </label>
+                            </div>
+                            <div class="slide-subsection">
+                                <div class="slide-structure-preview">
+                                    <span class="meta-pill" id="slideContentShapePill">Content Shape: Bullet List</span>
+                                    <span class="meta-pill" id="slideRuntimeLayoutPill">Runtime Layout: Text Only</span>
+                                </div>
+                                <div class="slide-structure-helper" id="slideStructureHelperText">
+                                    Content slides render the content lines as bullet items in the runtime.
+                                </div>
+                            </div>
+                        </section>
+                        <section class="deck-tool-card">
+                            <div class="deck-tool-head">
+                                <strong id="slideMotionTitle">Motion Presets</strong>
+                                <span id="slideMotionHint">Tune scene and element motion here, while the raw JSON remains the fallback source of truth.</span>
+                            </div>
+                            <div class="slide-field-grid">
+                                <label class="deck-field">
+                                    <span id="slideMotionSceneText">Scene Motion</span>
+                                    <select id="slideMotionSceneSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMotionHeadingText">Heading Motion</span>
+                                    <select id="slideMotionHeadingSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMotionSubtitleText">Subtitle Motion</span>
+                                    <select id="slideMotionSubtitleSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMotionContentText">Content Motion</span>
+                                    <select id="slideMotionContentSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMotionMediaText">Media Motion</span>
+                                    <select id="slideMotionMediaSelect"></select>
+                                </label>
+                            </div>
+                        </section>
+                        <section class="deck-tool-card">
+                            <div class="deck-tool-head">
+                                <strong id="slideTransitionTitle">Scene Transition</strong>
+                                <span id="slideTransitionHint">Control scene transition rhythm, overlay, and element timing without hand-editing every field.</span>
+                            </div>
+                            <div class="slide-field-grid">
+                                <label class="deck-field">
+                                    <span id="slideTransitionPresetText">Transition Preset</span>
+                                    <select id="slideTransitionPresetSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideTransitionOverlayText">Overlay</span>
+                                    <select id="slideTransitionOverlaySelect"></select>
+                                </label>
+                            </div>
+                            <div class="slide-subsection">
+                                <div class="slide-timing-grid">
+                                    <label class="deck-field">
+                                        <span id="slideTransitionDurationText">Duration (ms)</span>
+                                        <input type="number" id="slideTransitionDurationInput" min="0" step="10" placeholder="620">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideTransitionContentDelayText">Content Delay (ms)</span>
+                                        <input type="number" id="slideTransitionContentDelayInput" min="0" step="10" placeholder="70">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideTransitionMotionDurationText">Motion Duration (ms)</span>
+                                        <input type="number" id="slideTransitionMotionDurationInput" min="0" step="10" placeholder="720">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideTransitionStaggerText">Stagger Step (ms)</span>
+                                        <input type="number" id="slideTransitionStaggerInput" min="0" step="10" placeholder="110">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideTransitionEnterText">Enter (ms)</span>
+                                        <input type="number" id="slideTransitionEnterInput" min="0" step="10" placeholder="560">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideTransitionHoldText">Hold (ms)</span>
+                                        <input type="number" id="slideTransitionHoldInput" min="0" step="10" placeholder="0">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideTransitionExitText">Exit (ms)</span>
+                                        <input type="number" id="slideTransitionExitInput" min="0" step="10" placeholder="200">
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="deck-tool-card slide-tool-card-wide">
+                            <div class="deck-tool-head">
+                                <strong id="slideMediaTitle">Media</strong>
+                                <span id="slideMediaHint">Configure image or video fields here so the preview runtime can render the slide media without editing raw JSON only.</span>
+                            </div>
+                            <div class="slide-field-grid">
+                                <label class="deck-field">
+                                    <span id="slideMediaTypeText">Media Type</span>
+                                    <select id="slideMediaTypeSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMediaSourceText">Media Source</span>
+                                    <input type="text" id="slideMediaSourceInput" placeholder="https://example.com/media.mp4">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMediaMimeTypeText">MIME Type</span>
+                                    <input type="text" id="slideMediaMimeTypeInput" placeholder="video/mp4">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMediaPosterText">Poster</span>
+                                    <input type="text" id="slideMediaPosterInput" placeholder="https://example.com/poster.jpg">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMediaAltText">Alt Text</span>
+                                    <input type="text" id="slideMediaAltInput" placeholder="Describe the media for accessibility">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideMediaCaptionText">Caption</span>
+                                    <input type="text" id="slideMediaCaptionInput" placeholder="Optional caption">
+                                </label>
+                            </div>
+                            <div class="deck-toggle-stack" style="margin-top: 12px;">
+                                <label class="deck-toggle-row">
+                                    <input type="checkbox" id="slideMediaAutoplay">
+                                    <span id="slideMediaAutoplayText">Autoplay</span>
+                                </label>
+                                <label class="deck-toggle-row">
+                                    <input type="checkbox" id="slideMediaLoop">
+                                    <span id="slideMediaLoopText">Loop</span>
+                                </label>
+                            </div>
+                        </section>
+                        <section class="deck-tool-card slide-tool-card-wide">
+                            <div class="deck-tool-head">
+                                <strong id="slideTimingTitle">Timing & Voiceover</strong>
+                                <span id="slideTimingHint">Control slide duration and voiceover placeholders here so the runtime timeline stays editable without dropping to raw JSON.</span>
+                            </div>
+                            <div class="slide-field-grid">
+                                <label class="deck-field">
+                                    <span id="slideDurationText">Duration (ms)</span>
+                                    <input type="number" id="slideDurationInput" min="0" step="100" placeholder="4500">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="slideVoiceoverLanguageText">Voiceover Language</span>
+                                    <select id="slideVoiceoverLanguageSelect">
+                                        <option value="zh-CN">Chinese</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </label>
+                                <label class="deck-field" style="grid-column: 1 / -1;">
+                                    <span id="slideVoiceoverTextLabel">Voiceover Text</span>
+                                    <textarea id="slideVoiceoverTextInput" placeholder="Example: summarize the slide goal first, then split key lines into cues."></textarea>
+                                </label>
+                            </div>
+                            <div class="slide-subsection">
+                                <div class="deck-tool-head">
+                                    <strong id="slideVoiceoverCueTitle">Voiceover Cues</strong>
+                                    <span id="slideVoiceoverCueHint">Add subtitle cue offsets for the current slide without switching to deck-wide editing.</span>
+                                </div>
+                                <div class="deck-cue-form">
+                                    <label class="deck-field">
+                                        <span id="slideVoiceoverCueAtText">Cue Offset (ms)</span>
+                                        <input type="number" id="slideVoiceoverCueAtInput" min="0" step="100" value="0">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="slideVoiceoverCueTextText">Cue Text</span>
+                                        <input type="text" id="slideVoiceoverCueTextInput" placeholder="Example: line one of the narration">
+                                    </label>
+                                </div>
+                                <div class="deck-audio-actions">
+                                    <button class="deck-tool-btn primary" id="slideVoiceoverCueAddBtn" type="button">
+                                        <i class="ph ph-plus"></i>
+                                        Add Cue
+                                    </button>
+                                    <button class="deck-tool-btn" id="slideVoiceoverCueApplyBtn" type="button">
+                                        <i class="ph ph-check"></i>
+                                        Apply Cue
+                                    </button>
+                                    <button class="deck-tool-btn warn" id="slideVoiceoverCueRemoveBtn" type="button">
+                                        <i class="ph ph-trash"></i>
+                                        Remove Cue
+                                    </button>
+                                </div>
+                                <div class="deck-cue-list" id="slideVoiceoverCueList"></div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <div class="deck-tooling" id="deckTooling" hidden>
+                    <div class="deck-tool-grid">
+                        <section class="deck-tool-card">
+                            <div class="deck-tool-head">
+                                <strong id="deckTimelineTitle">Timeline Settings</strong>
+                                <span id="deckTimelineHint">Control deck playback flags before fine-tuning the raw JSON.</span>
+                            </div>
+                            <div class="deck-toggle-stack">
+                                <label class="deck-toggle-row">
+                                    <input type="checkbox" id="deckTimelineEnabled">
+                                    <span id="deckTimelineEnabledText">Timeline enabled</span>
+                                </label>
+                                <label class="deck-toggle-row">
+                                    <input type="checkbox" id="deckTimelineAutoplay">
+                                    <span id="deckTimelineAutoplayText">Auto-play</span>
+                                </label>
+                            </div>
+                            <div class="deck-field-stack" style="margin-top: 12px;">
+                                <label class="deck-field">
+                                    <span id="deckSubtitleModeText">Subtitle Mode</span>
+                                    <select id="deckSubtitleModeSelect">
+                                        <option value="voiceover-placeholder">Voiceover</option>
+                                        <option value="static">Static</option>
+                                        <option value="off">Off</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="deck-field-stack" style="margin-top: 12px;">
+                                <label class="deck-field">
+                                    <span id="deckTimelineStarterText">Timeline Starter</span>
+                                    <select id="deckTimelineStarterSelect">
+                                        <option value="full-flow">Full Flow</option>
+                                        <option value="opening">Opening</option>
+                                        <option value="proof">Proof</option>
+                                        <option value="closing">Closing</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="deck-audio-actions">
+                                <button class="deck-tool-btn" id="deckTimelineStarterApplyBtn" type="button">
+                                    <i class="ph ph-magic-wand"></i>
+                                    Apply Starter
+                                </button>
+                                <button class="deck-tool-btn" id="deckTimelineStarterResetBtn" type="button">
+                                    <i class="ph ph-arrow-counter-clockwise"></i>
+                                    Reset Starter
+                                </button>
+                            </div>
+                            <div class="deck-marker-list" id="deckTimelineStarterSummary"></div>
+                            <div class="deck-subsection">
+                                <div class="deck-tool-head">
+                                    <strong id="deckAudioEditorTitle">Audio Tracks</strong>
+                                    <span id="deckAudioEditorHint">Configure local or remote tracks here so the preview runtime can play the deck timeline directly.</span>
+                                </div>
+                                <div class="deck-audio-form">
+                                    <label class="deck-field">
+                                        <span id="deckAudioTemplateText">Audio Template</span>
+                                        <select id="deckAudioTemplateSelect"></select>
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckAudioLabelText">Label</span>
+                                        <input type="text" id="deckAudioLabelInput" placeholder="Ambient Bed">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckAudioSourceText">Audio Source</span>
+                                        <input type="url" id="deckAudioSourceInput" placeholder="https://example.com/audio.mp3">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckAudioStartText">Start Offset (ms)</span>
+                                        <input type="number" id="deckAudioStartInput" min="0" step="100" value="0">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckAudioGainText">Gain (0-1)</span>
+                                        <input type="number" id="deckAudioGainInput" min="0" max="1" step="0.05" placeholder="1">
+                                    </label>
+                                    <div class="deck-toggle-stack">
+                                        <label class="deck-toggle-row">
+                                            <input type="checkbox" id="deckAudioAutoplay">
+                                            <span id="deckAudioAutoplayText">Autoplay</span>
+                                        </label>
+                                        <label class="deck-toggle-row">
+                                            <input type="checkbox" id="deckAudioLoop">
+                                            <span id="deckAudioLoopText">Loop</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="deck-audio-actions">
+                                    <button class="deck-tool-btn" id="deckAudioTemplateApplyBtn" type="button">
+                                        <i class="ph ph-waveform"></i>
+                                        Apply Template
+                                    </button>
+                                    <button class="deck-tool-btn primary" id="deckAudioAddBtn" type="button">
+                                        <i class="ph ph-plus"></i>
+                                        Add Audio
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckAudioApplyBtn" type="button">
+                                        <i class="ph ph-check"></i>
+                                        Apply Audio
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckAudioDuplicateBtn" type="button">
+                                        <i class="ph ph-copy"></i>
+                                        Duplicate Audio
+                                    </button>
+                                    <button class="deck-tool-btn warn" id="deckAudioRemoveBtn" type="button">
+                                        <i class="ph ph-trash"></i>
+                                        Remove Audio
+                                    </button>
+                                </div>
+                                <div class="deck-audio-list" id="deckAudioList"></div>
+                            </div>
+                        </section>
+                        <section class="deck-tool-card">
+                            <div class="deck-tool-head">
+                                <strong id="deckMarkerEditorTitle">Markers</strong>
+                                <span id="deckMarkerEditorHint">Add navigation, narration, or edit cues without hand-writing every marker.</span>
+                            </div>
+                            <div class="deck-marker-form">
+                                <label class="deck-field">
+                                    <span id="deckMarkerLabelText">Label</span>
+                                    <input type="text" id="deckMarkerLabelInput" placeholder="Marker label">
+                                </label>
+                                <label class="deck-field">
+                                    <span id="deckMarkerSceneText">Scene</span>
+                                    <select id="deckMarkerSceneSelect"></select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="deckMarkerKindText">Kind</span>
+                                    <select id="deckMarkerKindSelect">
+                                        <option value="navigation">Navigation</option>
+                                        <option value="narration">Narration</option>
+                                        <option value="edit">Edit</option>
+                                    </select>
+                                </label>
+                                <label class="deck-field">
+                                    <span id="deckMarkerAnchorText">Anchor</span>
+                                    <select id="deckMarkerAnchorSelect">
+                                        <option value="start">Start</option>
+                                        <option value="advance">Advance</option>
+                                        <option value="exit">Exit</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="deck-marker-actions">
+                                <button class="deck-tool-btn primary" id="deckMarkerAddBtn" type="button">
+                                    <i class="ph ph-plus"></i>
+                                    Add Marker
+                                </button>
+                                <button class="deck-tool-btn" id="deckMarkerGenerateBtn" type="button">
+                                    <i class="ph ph-navigation-arrow"></i>
+                                    Generate Nav
+                                </button>
+                                <button class="deck-tool-btn" id="deckMarkerGenerateEditBtn" type="button">
+                                    <i class="ph ph-pencil-line"></i>
+                                    Generate Edit Cues
+                                </button>
+                                <button class="deck-tool-btn" id="deckMarkerGenerateSuiteBtn" type="button">
+                                    <i class="ph ph-stack"></i>
+                                    Generate Marker Suite
+                                </button>
+                                <button class="deck-tool-btn" id="deckMarkerClearGeneratedBtn" type="button">
+                                    <i class="ph ph-broom"></i>
+                                    Clear Generated
+                                </button>
+                                <button class="deck-tool-btn" id="deckMarkerApplyBtn" type="button">
+                                    <i class="ph ph-check"></i>
+                                    Apply Selection
+                                </button>
+                                <button class="deck-tool-btn warn" id="deckMarkerRemoveBtn" type="button">
+                                    <i class="ph ph-trash"></i>
+                                    Remove
+                                </button>
+                            </div>
+                            <div class="deck-marker-list" id="deckMarkerList"></div>
+                            <div class="deck-subsection">
+                                <div class="deck-tool-head">
+                                    <strong id="deckVoiceoverEditorTitle">Voiceover & Subtitle Cues</strong>
+                                    <span id="deckVoiceoverEditorHint">Maintain scene-level voiceover text and cues here so the preview runtime can consume the placeholders directly.</span>
+                                </div>
+                                <div class="deck-field-stack">
+                                    <label class="deck-field">
+                                        <span id="deckVoiceoverSceneText">Voiceover Scene</span>
+                                        <select id="deckVoiceoverSceneSelect"></select>
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckVoiceoverLanguageText">Language</span>
+                                        <select id="deckVoiceoverLanguageSelect">
+                                            <option value="zh-CN">Chinese</option>
+                                            <option value="en">English</option>
+                                        </select>
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckVoiceoverTextLabel">Voiceover Text</span>
+                                        <textarea id="deckVoiceoverTextInput" placeholder="Example: explain the scene goal first, then split it into cues."></textarea>
+                                    </label>
+                                </div>
+                                <div class="deck-cue-form">
+                                    <label class="deck-field">
+                                        <span id="deckCueAtText">Cue Offset (ms)</span>
+                                        <input type="number" id="deckCueAtInput" min="0" step="100" value="0">
+                                    </label>
+                                    <label class="deck-field">
+                                        <span id="deckCueTextText">Cue Text</span>
+                                        <input type="text" id="deckCueTextInput" placeholder="Example: Narration line 1">
+                                    </label>
+                                </div>
+                                <div class="deck-audio-actions">
+                                    <button class="deck-tool-btn" id="deckVoiceoverCopyPrevBtn" type="button">
+                                        <i class="ph ph-copy"></i>
+                                        Copy Previous Voiceover
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckVoiceoverCopyNextBtn" type="button">
+                                        <i class="ph ph-copy"></i>
+                                        Copy Next Voiceover
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckCueGenerateBtn" type="button">
+                                        <i class="ph ph-text-align-left"></i>
+                                        Generate Cue Set
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckCueAppendBtn" type="button">
+                                        <i class="ph ph-text-indent"></i>
+                                        Append Cue Set
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckCueRetimeBtn" type="button">
+                                        <i class="ph ph-timer"></i>
+                                        Re-time Cues
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckVoiceoverGenerateMarkersBtn" type="button">
+                                        <i class="ph ph-chat-circle-text"></i>
+                                        Generate Markers
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckVoiceoverGenerateBtn" type="button">
+                                        <i class="ph ph-waveform"></i>
+                                        Generate Voiceover
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckVoiceoverClearGeneratedBtn" type="button">
+                                        <i class="ph ph-broom"></i>
+                                        Clear Generated
+                                    </button>
+                                    <button class="deck-tool-btn primary" id="deckCueAddBtn" type="button">
+                                        <i class="ph ph-plus"></i>
+                                        Add Cue
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckCueApplyBtn" type="button">
+                                        <i class="ph ph-check"></i>
+                                        Apply Cue
+                                    </button>
+                                    <button class="deck-tool-btn" id="deckCueDuplicateBtn" type="button">
+                                        <i class="ph ph-copy"></i>
+                                        Duplicate Cue
+                                    </button>
+                                    <button class="deck-tool-btn warn" id="deckCueRemoveBtn" type="button">
+                                        <i class="ph ph-trash"></i>
+                                        Remove Cue
+                                    </button>
+                                </div>
+                                <div class="deck-cue-list" id="deckCueList"></div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
                 <div class="edit-json-area" id="editJsonArea">
-                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.82rem;">
+                    <label id="editJsonLabel" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.82rem;">
                         <i class="ph ph-code"></i>
                         或者直接编辑 JSON
                     </label>
@@ -858,7 +1903,7 @@
                 </div>
                 <div class="edit-loading" id="editLoading" style="display: none;">
                     <div class="loading-spinner" style="width: 24px; height: 24px; margin: 18px auto;"></div>
-                    <p style="text-align: center; color: var(--text-secondary); font-size: 0.84rem;">AI 正在改写这页脚本...</p>
+                    <p id="editLoadingText" style="text-align: center; color: var(--text-secondary); font-size: 0.84rem;">AI 正在改写这页脚本...</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -875,6 +1920,23 @@
     <div class="toast" id="toast"></div>
 
     <script src="/js/common.js"></script>
+<script src="/js/create-page-presets.js"></script>
+<script src="/js/create-page-authoring.js"></script>
+<script src="/js/create-page-deck-authoring.js"></script>
+<script src="/js/create-page-deck-generators.js"></script>
+<script src="/js/create-page-deck-audio-presets.js"></script>
+<script src="/js/create-page-deck-audio-flow.js"></script>
+<script src="/js/create-page-deck-voiceover-flow.js"></script>
+<script src="/js/create-page-deck-starters.js"></script>
+    <script src="/js/create-page-deck-rendering.js"></script>
+    <script src="/js/create-page-deck-state.js"></script>
+    <script src="/js/create-page-deck-forms.js"></script>
+    <script src="/js/create-page-deck-sync.js"></script>
+    <script src="/js/create-page-deck-ui.js"></script>
+    <script src="/js/create-page-deck-bindings.js"></script>
+    <script src="/js/create-page-deck-actions.js"></script>
     <script src="/js/create-page.js"></script>
+    <script src="/js/create-page-workspace.js"></script>
+    <script src="/js/create-page-copilot.js"></script>
 </body>
 </html>

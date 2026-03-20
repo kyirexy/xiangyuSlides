@@ -1,0 +1,23 @@
+{
+  "presentationId": "pres_1773751960022_timeline_markers_v3",
+  "assets": [
+    {
+      "id": "asset_audio_track_1",
+      "presentationId": "pres_1773751960022_timeline_markers_v3",
+      "type": "audio",
+      "source": {
+        "kind": "remote",
+        "path": "",
+        "url": "https://example.com/audio.mp3"
+      },
+      "mimeType": "",
+      "status": "ready",
+      "meta": {
+        "label": "Ambient Bed",
+        "autoplay": true,
+        "loop": false,
+        "gain": 0.7
+      }
+    }
+  ]
+}

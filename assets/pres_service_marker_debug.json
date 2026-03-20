@@ -1,0 +1,23 @@
+{
+  "presentationId": "pres_service_marker_debug",
+  "assets": [
+    {
+      "id": "asset_audio_track_1",
+      "presentationId": "pres_service_marker_debug",
+      "type": "audio",
+      "source": {
+        "kind": "remote",
+        "path": "",
+        "url": "https://example.com/audio.mp3"
+      },
+      "mimeType": "",
+      "status": "ready",
+      "meta": {
+        "label": "Ambient Bed",
+        "autoplay": true,
+        "loop": false,
+        "gain": 0.7
+      }
+    }
+  ]
+}

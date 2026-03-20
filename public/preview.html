@@ -300,9 +300,9 @@
             <span class="id-badge" id="toolbarId">--</span>
         </div>
         <div class="toolbar-actions">
-            <button class="toolbar-btn" onclick="copyLink()">复制链接</button>
-            <button class="toolbar-btn" onclick="downloadHtml()">下载 HTML</button>
-            <button class="toolbar-btn primary" onclick="openRawHtml()">打开原始 HTML</button>
+            <button class="toolbar-btn" id="copyLinkBtn" onclick="copyLink()">复制链接</button>
+            <button class="toolbar-btn" id="downloadHtmlBtn" onclick="downloadHtml()">下载 HTML</button>
+            <button class="toolbar-btn primary" id="openRawHtmlBtn" onclick="openRawHtml()">打开原始 HTML</button>
         </div>
     </div>
 
@@ -311,7 +311,7 @@
             <h2 id="loadingTitle">演示稿正在生成</h2>
             <p id="loadingMessage">正在等待创建页开始生成任务...</p>
             <div class="shell-meta">
-                <span class="shell-pill">访问地址已固定</span>
+                <span class="shell-pill" id="loadingRoutePill">访问地址已固定</span>
                 <span class="shell-pill">ID: <strong id="loadingId">--</strong></span>
             </div>
             <div class="loading-progress">
@@ -325,12 +325,13 @@
         <div class="error-card">
             <h2 id="errorTitle">无法打开演示稿</h2>
             <p id="errorMessage">这份演示稿可能还没有生成成功，或者链接已经失效。</p>
-            <button class="toolbar-btn primary" onclick="retryLoadPresentation()">重新加载</button>
+            <button class="toolbar-btn primary" id="retryLoadBtn" onclick="retryLoadPresentation()">重新加载</button>
         </div>
     </section>
 
     <iframe id="preview-frame"></iframe>
 
+    <script src="/js/common.js"></script>
     <script src="/js/presentation-viewer.js"></script>
 </body>
 </html>

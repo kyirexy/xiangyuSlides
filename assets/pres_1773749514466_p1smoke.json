@@ -1,0 +1,43 @@
+{
+  "presentationId": "pres_1773749514466_p1smoke",
+  "assets": [
+    {
+      "id": "asset_scene_002_media",
+      "presentationId": "pres_1773749514466_p1smoke",
+      "type": "image",
+      "source": {
+        "kind": "remote",
+        "path": "",
+        "url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+      },
+      "mimeType": "",
+      "status": "ready",
+      "meta": {
+        "alt": "Mountain landscape",
+        "caption": "Remote image smoke test",
+        "poster": "",
+        "autoplay": false,
+        "loop": false
+      }
+    },
+    {
+      "id": "asset_scene_003_media",
+      "presentationId": "pres_1773749514466_p1smoke",
+      "type": "video",
+      "source": {
+        "kind": "remote",
+        "path": "",
+        "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+      },
+      "mimeType": "",
+      "status": "ready",
+      "meta": {
+        "alt": "",
+        "caption": "Remote video smoke test",
+        "poster": "",
+        "autoplay": false,
+        "loop": false
+      }
+    }
+  ]
+}

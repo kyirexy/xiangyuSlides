@@ -1,0 +1,160 @@
+body[data-visual-family="showcase"] .runtime-deck {
+    padding-inline: clamp(18px, 4vw, 52px);
+}
+
+body[data-visual-family="showcase"] .scene-panel {
+    width: min(1500px, 100%);
+    min-height: calc(100vh - 24px);
+    padding: clamp(28px, 5vw, 60px);
+    border-radius: 34px;
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(15, 23, 42, 0.02) 100%),
+        var(--bg-surface);
+}
+
+body[data-visual-family="showcase"] .scene-panel.layout-mixed {
+    grid-template-columns: minmax(0, 0.86fr) minmax(480px, 1.14fr);
+    gap: clamp(22px, 3vw, 42px);
+}
+
+body[data-visual-family="showcase"] .scene-text {
+    max-width: 74ch;
+}
+
+body[data-visual-family="showcase"] .scene-kind-title .scene-text {
+    max-width: 14ch;
+}
+
+body[data-visual-family="showcase"] .scene-heading {
+    font-size: clamp(54px, 8vw, 110px);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+}
+
+body[data-visual-family="showcase"] .scene-text p,
+body[data-visual-family="showcase"] .scene-bullets,
+body[data-visual-family="showcase"] .scene-quote,
+body[data-visual-family="showcase"] .scene-empty {
+    font-size: clamp(18px, 1.8vw, 28px);
+}
+
+body[data-visual-family="showcase"] .scene-media-card {
+    min-height: min(76vh, 860px);
+    border-radius: 30px;
+}
+
+body[data-visual-family="showcase"] .scene-media-card img,
+body[data-visual-family="showcase"] .scene-media-card video {
+    min-height: min(76vh, 860px);
+    max-height: min(76vh, 860px);
+}
+
+body[data-output-intent="short-video"] .scene-panel {
+    width: min(1420px, 100%);
+}
+
+body[data-output-intent="short-video"] .scene-panel.layout-mixed {
+    grid-template-columns: minmax(0, 0.74fr) minmax(520px, 1.26fr);
+}
+
+body[data-output-intent="short-video"] .scene-heading {
+    max-width: 11ch;
+}
+
+body[data-output-intent="short-video"] .scene-media-card img,
+body[data-output-intent="short-video"] .scene-media-card video {
+    object-fit: cover;
+}
+
+body[data-visual-family="editorial"] .scene-panel {
+    width: min(1380px, 100%);
+    padding: clamp(24px, 4vw, 52px);
+    border-radius: 30px;
+}
+
+body[data-visual-family="editorial"] .scene-panel.layout-text {
+    grid-template-columns: minmax(0, 0.9fr);
+    justify-content: start;
+}
+
+body[data-visual-family="editorial"] .scene-text {
+    max-width: 70ch;
+}
+
+body[data-visual-family="editorial"] .scene-heading {
+    font-size: clamp(42px, 6vw, 78px);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+}
+
+body[data-visual-family="editorial"] .scene-panel.layout-mixed {
+    grid-template-columns: minmax(0, 0.94fr) minmax(360px, 0.96fr);
+}
+
+body[data-visual-family="briefing"] .runtime-deck {
+    padding-inline: clamp(14px, 2vw, 24px);
+}
+
+body[data-visual-family="briefing"] .scene-panel {
+    width: min(1360px, 100%);
+    min-height: calc(100vh - 32px);
+    padding: clamp(24px, 3.2vw, 40px);
+    border-radius: 24px;
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12);
+}
+
+body[data-visual-family="briefing"] .scene-panel.layout-mixed {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
+    gap: 24px;
+}
+
+body[data-visual-family="briefing"] .scene-heading {
+    font-size: clamp(38px, 4.8vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+}
+
+body[data-visual-family="briefing"] .scene-text {
+    max-width: 68ch;
+}
+
+body[data-visual-family="briefing"] .scene-text p,
+body[data-visual-family="briefing"] .scene-bullets,
+body[data-visual-family="briefing"] .scene-quote,
+body[data-visual-family="briefing"] .scene-empty {
+    font-size: clamp(17px, 1.4vw, 22px);
+}
+
+body[data-visual-family="briefing"] .scene-media-card {
+    border-radius: 22px;
+}
+
+@media (max-width: 960px) {
+    body[data-visual-family="showcase"] .scene-panel,
+    body[data-visual-family="editorial"] .scene-panel,
+    body[data-visual-family="briefing"] .scene-panel {
+        width: 100%;
+        min-height: calc(100vh - 36px);
+        padding: 22px;
+        border-radius: 26px;
+    }
+
+    body[data-visual-family="showcase"] .scene-panel.layout-mixed,
+    body[data-output-intent="short-video"] .scene-panel.layout-mixed,
+    body[data-visual-family="editorial"] .scene-panel.layout-mixed,
+    body[data-visual-family="briefing"] .scene-panel.layout-mixed {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body[data-visual-family="showcase"] .scene-heading {
+        font-size: clamp(42px, 12vw, 62px);
+    }
+
+    body[data-visual-family="showcase"] .scene-media-card,
+    body[data-visual-family="showcase"] .scene-media-card img,
+    body[data-visual-family="showcase"] .scene-media-card video {
+        min-height: 320px;
+        max-height: 54vh;
+    }
+}

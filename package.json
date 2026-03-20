@@ -9,7 +9,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "mcp": "node mcp-server.js"
+    "mcp": "node mcp-server.js",
+    "smoke:frontend": "node scripts/frontend-smoke.js",
+    "smoke:mvp": "node scripts/mvp-smoke.js"
   },
   "dependencies": {
     "body-parser": "^1.20.2",

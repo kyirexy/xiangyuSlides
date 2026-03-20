@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Runtime</title>
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=clash-display@400,500,600,700&f[]=jet-brains-mono@400,500&display=swap">
+    <link rel="stylesheet" href="/css/presentation-runtime.css">
+    <link rel="stylesheet" href="/css/presentation-runtime-families.css">
+</head>
+<body>
+    <section class="runtime-loading" id="runtimeLoading">
+        <div class="runtime-status-card">
+            <span class="runtime-kicker" id="runtimeLoadingKicker">Scene Runtime</span>
+            <h1 id="runtimeLoadingTitle">正在加载结构化演示</h1>
+            <p id="runtimeLoadingMessage">正在读取场景数据并准备预览运行时...</p>
+        </div>
+    </section>
+
+    <section class="runtime-error" id="runtimeError" hidden>
+        <div class="runtime-status-card runtime-status-card-error">
+            <span class="runtime-kicker" id="runtimeErrorKicker">Runtime Error</span>
+            <h1 id="runtimeErrorTitle">无法加载场景预览</h1>
+            <p id="runtimeErrorMessage">运行时初始化失败。</p>
+        </div>
+    </section>
+
+    <div class="runtime-shell" id="runtimeShell" hidden>
+        <div class="progress-rail" aria-hidden="true">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+        <div class="deck-chrome" id="deckChrome" aria-hidden="true">
+            <span class="deck-counter"><span id="currentSlideNum">1</span> / <span id="totalSlides">1</span></span>
+            <span class="deck-theme" id="deckThemeName">Scene Runtime</span>
+            <span class="deck-timing" id="deckTiming">0s / 0s</span>
+            <span class="deck-audio" id="deckAudioStatus" hidden>No Audio</span>
+            <button class="deck-toggle" id="runtimeAudioToggle" type="button">Audio Off</button>
+            <button class="deck-toggle" id="runtimeAutoplayToggle" type="button">Auto-play Off</button>
+            <button class="deck-toggle" id="runtimeSubtitleToggle" type="button">Subtitles: Voiceover</button>
+        </div>
+        <nav class="marker-rail" id="timelineMarkers" aria-label="Timeline markers" hidden></nav>
+        <div class="edit-cue-bar" id="editCueBar" hidden>
+            <span class="edit-cue-title" id="editCueTitle">Edit Cues</span>
+            <div class="edit-cue-list" id="editCueList"></div>
+        </div>
+        <main class="runtime-deck" id="runtimeDeck"></main>
+        <div class="subtitle-bar" id="subtitleBar" hidden>
+            <p id="subtitleText"></p>
+        </div>
+    </div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/presentation-runtime.js"></script>
+    <script src="/js/presentation-runtime-families.js"></script>
+</body>
+</html>

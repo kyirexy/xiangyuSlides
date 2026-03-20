@@ -1,0 +1,23 @@
+{
+  "presentationId": "pres_1773751960022_audio_preview",
+  "assets": [
+    {
+      "id": "asset_audio_track_1",
+      "presentationId": "pres_1773751960022_audio_preview",
+      "type": "audio",
+      "source": {
+        "kind": "remote",
+        "path": "",
+        "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+      },
+      "mimeType": "",
+      "status": "ready",
+      "meta": {
+        "label": "Ambient Bed",
+        "autoplay": true,
+        "loop": false,
+        "gain": 0.25
+      }
+    }
+  ]
+}
