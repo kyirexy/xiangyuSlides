@@ -52,23 +52,9 @@ async function runChecks() {
             url: `${BASE_URL}/`,
             validate: async (response) => {
                 const body = await response.text();
-                if (!body.includes('Xiangyu Slides')) {
-                    throw new Error('Missing Xiangyu Slides branding.');
-                }
-            }
-        },
-        {
-            label: 'Create page',
-            url: `${BASE_URL}/create?lang=en`,
-            validate: async (response) => {
-                const body = await response.text();
                 const required = [
-                    'fastModeShell',
-                    'copilotInput',
-                    'copilotDeckLocale',
-                    'toggleAdvancedModeBtn',
-                    '/js/create-page.js',
-                    '/js/create-page-copilot.js'
+                    'data-xiangyu-react-root="true"',
+                    'Xiangyu Slides'
                 ];
 
                 required.forEach((needle) => {
@@ -79,7 +65,60 @@ async function runChecks() {
             }
         },
         {
-            label: 'Preview shell',
+            label: 'Legacy create page',
+            url: `${BASE_URL}/create-classic?lang=en`,
+            validate: async (response) => {
+                const body = await response.text();
+                const required = [
+                    'toggleAdvancedModeBtn',
+                    'copilotInput',
+                    '/js/create-page.js'
+                ];
+
+                required.forEach((needle) => {
+                    if (!body.includes(needle)) {
+                        throw new Error(`Missing ${needle}`);
+                    }
+                });
+            }
+        },
+        {
+            label: 'React create page',
+            url: `${BASE_URL}/create?lang=en`,
+            validate: async (response) => {
+                const body = await response.text();
+                const required = [
+                    'data-xiangyu-react-root="true"',
+                    '/app-assets/'
+                ];
+
+                required.forEach((needle) => {
+                    if (!body.includes(needle)) {
+                        throw new Error(`Missing ${needle}`);
+                    }
+                });
+            }
+        },
+        {
+            label: 'Preview page route',
+            url: `${BASE_URL}/presentations/demo?lang=en`,
+            validate: async (response) => {
+                const body = await response.text();
+                const required = [
+                    'preview-frame',
+                    'toolbarTitle',
+                    '/js/presentation-viewer.js'
+                ];
+
+                required.forEach((needle) => {
+                    if (!body.includes(needle)) {
+                        throw new Error(`Missing ${needle}`);
+                    }
+                });
+            }
+        },
+        {
+            label: 'Preview shell alias',
             url: `${BASE_URL}/preview?id=demo&lang=en`,
             validate: async (response) => {
                 const body = await response.text();

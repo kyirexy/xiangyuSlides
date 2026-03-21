@@ -145,7 +145,15 @@ function createPresentationRoutes({
     });
 
     router.post('/copilot/plan', authenticateApiKey, async (req, res) => {
-        const { messages, locale, uiLocale, outputIntent, visualPreference, allowClarification } = req.body || {};
+        const {
+            messages,
+            locale,
+            uiLocale,
+            outputIntent,
+            visualPreference,
+            allowClarification,
+            threadId
+        } = req.body || {};
         if (!Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({ error: 'messages are required' });
         }
@@ -157,7 +165,8 @@ function createPresentationRoutes({
                 uiLocale,
                 outputIntent,
                 visualPreference,
-                allowClarification: allowClarification !== false
+                allowClarification: allowClarification !== false,
+                threadId
             });
 
             res.json(result);
@@ -168,7 +177,7 @@ function createPresentationRoutes({
     });
 
     router.post('/copilot/build/stream', authenticateApiKey, async (req, res) => {
-        const { draftBrief, locale, presentationId } = req.body || {};
+        const { draftBrief, locale, presentationId, threadId } = req.body || {};
 
         if (!draftBrief || typeof draftBrief !== 'object') {
             return res.status(400).json({ error: 'draftBrief is required' });
@@ -190,6 +199,7 @@ function createPresentationRoutes({
                 locale,
                 ownerId: req.userId,
                 presentationId: resolvedPresentationId,
+                threadId,
                 onProgress(payload) {
                     writeSseEvent(res, payload);
                 }
@@ -199,6 +209,7 @@ function createPresentationRoutes({
         } catch (error) {
             console.error('Error in copilot build:', error);
             writeSseEvent(res, {
+                threadId: threadId || '',
                 presentationId: resolvedPresentationId,
                 progress: -1,
                 step: 1,

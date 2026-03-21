@@ -1,0 +1,62 @@
+{
+  "id": "thread_mmz7ko38_c3939751",
+  "createdAt": "2026-03-20T18:04:32.289Z",
+  "updatedAt": "2026-03-20T18:05:20.955Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "failed",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个融资路演，偏 Apple 发布会风格，8 页左右，中文现场展示。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我来为你生成一个 Apple 发布会风格的融资路演 PPT，预计 8 页左右，包含开场、背景、核心亮点、数据证明和收尾等结构。请稍等片刻～"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "length": "medium",
+    "audience": "现场投资人",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强、简洁有力",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "product",
+        "proof",
+        "team",
+        "closing"
+      ],
+      "keywords": [
+        "融资路演",
+        "Apple发布会风格",
+        "8页",
+        "中文现场展示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我来为你生成一个 Apple 发布会风格的融资路演 PPT，预计 8 页左右，包含开场、背景、核心亮点、数据证明和收尾等结构。请稍等片刻～",
+  "clarification": "",
+  "presentationId": "pres_mmz7ky3p_a0cb0876",
+  "meta": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "plannedAt": "2026-03-20T18:04:32.289Z",
+    "buildStartedAt": "2026-03-20T18:04:32.305Z",
+    "buildFailedAt": "2026-03-20T18:05:20.955Z",
+    "lastError": "Expected ',' or ']' after array element in JSON at position 607 (line 32 column 6)"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "id": "thread_mmzslite_5d9a7d9e",
+  "createdAt": "2026-03-21T03:52:56.880Z",
+  "updatedAt": "2026-03-21T03:53:51.783Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个融资路演，偏 Apple 发布会风格，8 页左右，中文现场展示。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我来帮你制作一个 Apple 发布会风格的融资路演 Deck，约 8 页，现场展示。我已根据你的需求预设好整体框架，可直接开始生成。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "length": "medium",
+    "audience": "投资人",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "融资路演",
+        "Apple 发布会风格",
+        "8 页",
+        "中文现场展示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我来帮你制作一个 Apple 发布会风格的融资路演 Deck，约 8 页，现场展示。我已根据你的需求预设好整体框架，可直接开始生成。",
+  "clarification": "",
+  "presentationId": "pres_mmzslnat_162d151b",
+  "meta": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "plannedAt": "2026-03-21T03:52:56.880Z",
+    "buildStartedAt": "2026-03-21T03:52:56.897Z",
+    "buildCompletedAt": "2026-03-21T03:53:51.783Z"
+  }
+}

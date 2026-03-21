@@ -98,16 +98,20 @@ async function postJson(url, payload) {
 }
 
 async function runChecks() {
-    await assertHtmlPage('Create page (zh-CN)', `${BASE_URL}/create`, [
-        'fastModeShell',
-        'copilotInput',
-        'toggleAdvancedModeBtn'
+    await assertHtmlPage('Home page (React)', `${BASE_URL}/`, [
+        'data-xiangyu-react-root="true"',
+        'Xiangyu Slides'
     ]);
 
-    await assertHtmlPage('Create page (en)', `${BASE_URL}/create?lang=en`, [
-        'fastModeShell',
+    await assertHtmlPage('Create page (React)', `${BASE_URL}/create?lang=en`, [
+        'data-xiangyu-react-root="true"',
+        '/app-assets/'
+    ]);
+
+    await assertHtmlPage('Legacy create page', `${BASE_URL}/create-classic?lang=en`, [
+        'toggleAdvancedModeBtn',
         'copilotInput',
-        'copilotDeckLocale'
+        '/js/create-page.js'
     ]);
 
     await assertJson('Styles API', `${BASE_URL}/api/styles`, async (payload) => {
@@ -138,6 +142,9 @@ async function runChecks() {
     if (!planPayload.draftBrief || typeof planPayload.draftBrief !== 'object') {
         throw new Error('Copilot plan returned no draftBrief.');
     }
+    if (!planPayload.threadId) {
+        throw new Error('Copilot plan returned no threadId.');
+    }
     if (planPayload.draftBrief.locale !== 'zh-CN') {
         throw new Error(`Copilot plan returned wrong locale: ${planPayload.draftBrief.locale}`);
     }
@@ -148,7 +155,8 @@ async function runChecks() {
 
     const buildResponse = await postJson(`${BASE_URL}/api/copilot/build/stream`, {
         draftBrief: planPayload.draftBrief,
-        locale: 'zh-CN'
+        locale: 'zh-CN',
+        threadId: planPayload.threadId
     });
 
     if (!buildResponse.ok) {
@@ -161,6 +169,9 @@ async function runChecks() {
     }
 
     const finalEvent = buildEvents[buildEvents.length - 1];
+    if (finalEvent.threadId !== planPayload.threadId) {
+        throw new Error('Copilot build returned mismatched threadId.');
+    }
     if (finalEvent.status !== 'ready') {
         throw new Error(`Copilot build did not finish ready. Final status: ${finalEvent.status}`);
     }

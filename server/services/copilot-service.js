@@ -1,4 +1,6 @@
-const crypto = require('crypto');
+﻿const crypto = require('crypto');
+const { createCopilotBuildGraph } = require('../agents/graphs/copilot-build-graph');
+const { createCopilotPlanGraph } = require('../agents/graphs/copilot-plan-graph');
 const {
     DEFAULT_STYLE_ID,
     getStyleInfo,
@@ -37,22 +39,11 @@ function normalizeLocale(locale, fallback = 'zh-CN') {
         return normalizeLocale(fallback, 'zh-CN');
     }
 
-    if (
-        normalized.startsWith('zh')
-        || normalized.includes('chinese')
-        || normalized.includes('中文')
-        || normalized.includes('简体')
-        || normalized.includes('繁体')
-    ) {
+    if (normalized.startsWith('zh') || normalized.includes('chinese')) {
         return 'zh-CN';
     }
 
-    if (
-        normalized === 'en'
-        || normalized.startsWith('en-')
-        || normalized.includes('english')
-        || normalized.includes('英文')
-    ) {
+    if (normalized === 'en' || normalized.startsWith('en-') || normalized.includes('english')) {
         return 'en';
     }
 
@@ -108,7 +99,7 @@ function normalizeAudience(audience, locale) {
         return value.slice(0, 120);
     }
 
-    return locale === 'zh-CN' ? '现场演示观众' : 'Live presentation audience';
+    return locale === 'zh-CN' ? '鐜板満婕旂ず瑙備紬' : 'Live presentation audience';
 }
 
 function lastUserMessage(messages) {
@@ -117,6 +108,17 @@ function lastUserMessage(messages) {
         .map((item) => asString(item.content, '').trim())
         .filter(Boolean)
         .pop() || '';
+}
+
+function normalizeMessages(messages) {
+    return Array.isArray(messages)
+        ? messages
+            .map((item) => ({
+                role: item?.role === 'assistant' ? 'assistant' : 'user',
+                content: asString(item?.content, '').trim()
+            }))
+            .filter((item) => item.content)
+        : [];
 }
 
 function extractJSONObject(text) {
@@ -135,31 +137,31 @@ function generatePresentationId() {
 function inferPurposeFromText(text) {
     const normalized = text.toLowerCase();
 
-    if (/融资|路演|投资人|融资演讲|pitch|fundraising|investor/.test(normalized)) {
+    if (/铻嶈祫|璺紨|鎶曡祫浜簗铻嶈祫婕旇|pitch|fundraising|investor/.test(normalized)) {
         return 'pitch';
     }
-    if (/教学|课程|培训|课堂|learn|teaching|lesson|workshop/.test(normalized)) {
+    if (/鏁欏|璇剧▼|鍩硅|璇惧爞|learn|teaching|lesson|workshop/.test(normalized)) {
         return 'teaching';
     }
-    if (/产品|发布会|发布|功能|launch|product/.test(normalized)) {
+    if (/浜у搧|鍙戝竷浼殀鍙戝竷|鍔熻兘|launch|product/.test(normalized)) {
         return 'product';
     }
-    if (/技术|架构|工程|code|developer|tech|architecture/.test(normalized)) {
+    if (/鎶€鏈瘄鏋舵瀯|宸ョ▼|code|developer|tech|architecture/.test(normalized)) {
         return 'tech';
     }
-    if (/营销|品牌|campaign|marketing|增长|投放/.test(normalized)) {
+    if (/钀ラ攢|鍝佺墝|campaign|marketing|澧為暱|鎶曟斁/.test(normalized)) {
         return 'marketing';
     }
-    if (/会议|汇报|周会|review|meeting|briefing/.test(normalized)) {
+    if (/浼氳|姹囨姤|鍛ㄤ細|review|meeting|briefing/.test(normalized)) {
         return 'meeting';
     }
-    if (/故事|叙事|story|journey/.test(normalized)) {
+    if (/鏁呬簨|鍙欎簨|story|journey/.test(normalized)) {
         return 'story';
     }
-    if (/公司|团队介绍|company|about us/.test(normalized)) {
+    if (/鍏徃|鍥㈤槦浠嬬粛|company|about us/.test(normalized)) {
         return 'company';
     }
-    if (/活动|峰会|论坛|event|conference/.test(normalized)) {
+    if (/娲诲姩|宄颁細|璁哄潧|event|conference/.test(normalized)) {
         return 'event';
     }
 
@@ -169,10 +171,10 @@ function inferPurposeFromText(text) {
 function inferLengthFromText(text) {
     const normalized = text.toLowerCase();
 
-    if (/3页|4页|5页|短一点|short|brief|quick/.test(normalized)) {
+    if (/3椤祙4椤祙5椤祙鐭竴鐐箌short|brief|quick/.test(normalized)) {
         return 'short';
     }
-    if (/10页|12页|详细|深入|long|deep dive|detailed/.test(normalized)) {
+    if (/10椤祙12椤祙璇︾粏|娣卞叆|long|deep dive|detailed/.test(normalized)) {
         return 'long';
     }
 
@@ -186,10 +188,10 @@ function inferOutputIntent(text, requestedOutputIntent) {
     }
 
     const normalized = text.toLowerCase();
-    if (/短视频|视频|reel|short video|social video/.test(normalized)) {
+    if (/鐭棰憒瑙嗛|reel|short video|social video/.test(normalized)) {
         return 'short-video';
     }
-    if (/汇报|briefing|board|review|exec/.test(normalized)) {
+    if (/姹囨姤|briefing|board|review|exec/.test(normalized)) {
         return 'briefing';
     }
 
@@ -198,24 +200,24 @@ function inferOutputIntent(text, requestedOutputIntent) {
 
 function inferVisualFamily(text, requestedVisualPreference, outputIntent) {
     const requested = asString(requestedVisualPreference, '').trim().toLowerCase();
-    if (requested === 'cinematic' || requested === 'showcase' || requested === '电影感') {
+    if (requested === 'cinematic' || requested === 'showcase') {
         return 'showcase';
     }
-    if (requested === 'editorial' || requested === '编辑感') {
+    if (requested === 'editorial') {
         return 'editorial';
     }
-    if (requested === 'briefing' || requested === '商务感') {
+    if (requested === 'briefing') {
         return 'briefing';
     }
 
     const normalized = text.toLowerCase();
-    if (/杂志|编辑|editorial|magazine/.test(normalized)) {
+    if (/鏉傚織|缂栬緫|editorial|magazine/.test(normalized)) {
         return 'editorial';
     }
-    if (/商务|briefing|board|汇报/.test(normalized)) {
+    if (/鍟嗗姟|briefing|board|姹囨姤/.test(normalized)) {
         return 'briefing';
     }
-    if (/电影|舞台|cinematic|apple 发布会|apple keynote|showcase/.test(normalized)) {
+    if (/鐢靛奖|鑸炲彴|cinematic|apple 鍙戝竷浼殀apple keynote|showcase/.test(normalized)) {
         return 'showcase';
     }
 
@@ -269,7 +271,7 @@ function buildHeuristicBrief({ messages, locale, outputIntent, visualPreference 
                 ? ['hook', 'setup', 'payoff', 'cta']
                 : ['opening', 'context', 'proof', 'closing'],
             keywords: latestMessage
-                .split(/[，。,.!?！？\s]+/)
+                .split(/[锛屻€?.!?锛侊紵\s]+/)
                 .map((item) => item.trim())
                 .filter(Boolean)
                 .slice(0, 8)
@@ -336,7 +338,7 @@ function isVaguePrompt(prompt) {
         return true;
     }
 
-    return /^(做个ppt|做个演示|presentation|slides?|deck)$/i.test(normalized);
+    return /^(鍋氫釜ppt|鍋氫釜婕旂ず|presentation|slides?|deck)$/i.test(normalized);
 }
 
 function buildPlanPrompt({ messages, locale, uiLocale, outputIntent, visualPreference, allowClarification, fallbackBrief }) {
@@ -388,8 +390,8 @@ function buildAssistantAck(brief, uiLocale) {
     if (uiLocale === 'zh-CN') {
         const outputLabel = brief.outputIntent === 'briefing'
             ? '汇报型'
-            : (brief.outputIntent === 'short-video' ? '短视频友好' : '展示型');
-        return `我已整理好你的需求，将按${outputLabel}、${brief.visualFamily}风格生成一份${brief.locale === 'zh-CN' ? '中文' : '英文'}演示稿。`;
+            : (brief.outputIntent === 'short-video' ? '短视频友好型' : '展示型');
+        return `我已经整理好你的需求，将按${outputLabel}、${brief.visualFamily}视觉家族生成一份${brief.locale === 'zh-CN' ? '中文' : '英文'}演示稿。`;
     }
 
     const outputLabel = brief.outputIntent === 'briefing'
@@ -586,152 +588,389 @@ function buildSsePayload(presentationId, progress, step, message, overrides = {}
     };
 }
 
-function createCopilotService({ miniMaxClient, outlineService, presentationService }) {
+function createFallbackThreadStore() {
+    const records = new Map();
+
+    return {
+        createThreadId() {
+            return `thread_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+        },
+        getById(threadId) {
+            return records.get(asString(threadId, '')) || null;
+        },
+        isValidId(threadId) {
+            return /^thread_[a-zA-Z0-9_-]{6,128}$/.test(asString(threadId, ''));
+        },
+        save(threadInput) {
+            const nextId = this.isValidId(threadInput?.id) ? threadInput.id : this.createThreadId();
+            const previous = records.get(nextId) || {};
+            const now = new Date().toISOString();
+            const normalized = {
+                id: nextId,
+                createdAt: previous.createdAt || now,
+                updatedAt: now,
+                locale: asString(threadInput?.locale || previous.locale, 'zh-CN'),
+                uiLocale: asString(threadInput?.uiLocale || previous.uiLocale, 'zh-CN'),
+                status: asString(threadInput?.status || previous.status, 'idle'),
+                messages: normalizeMessages(threadInput?.messages ?? previous.messages),
+                clarificationCount: Number.isFinite(Number(threadInput?.clarificationCount))
+                    ? Number(threadInput.clarificationCount)
+                    : Number(previous.clarificationCount) || 0,
+                draftBrief: threadInput?.draftBrief || previous.draftBrief || null,
+                lastAssistantMessage: asString(threadInput?.lastAssistantMessage || previous.lastAssistantMessage, ''),
+                clarification: asString(threadInput?.clarification || previous.clarification, ''),
+                presentationId: asString(threadInput?.presentationId || previous.presentationId, ''),
+                meta: {
+                    ...(previous.meta && typeof previous.meta === 'object' ? previous.meta : {}),
+                    ...(threadInput?.meta && typeof threadInput.meta === 'object' ? threadInput.meta : {})
+                }
+            };
+
+            records.set(nextId, normalized);
+            return normalized;
+        }
+    };
+}
+
+function appendAssistantMessage(messages, assistantMessage) {
+    const normalizedMessages = normalizeMessages(messages);
+    const nextMessage = asString(assistantMessage, '').trim();
+
+    if (!nextMessage) {
+        return normalizedMessages;
+    }
+
+    return [
+        ...normalizedMessages,
+        {
+            role: 'assistant',
+            content: nextMessage
+        }
+    ];
+}
+
+function buildThreadMeta(brief, overrides = {}) {
+    const normalizedBrief = brief && typeof brief === 'object' ? brief : {};
+
+    return {
+        topic: asString(normalizedBrief.topic, ''),
+        purpose: asString(normalizedBrief.purpose, ''),
+        outputIntent: asString(normalizedBrief.outputIntent, ''),
+        visualFamily: asString(normalizedBrief.visualFamily, ''),
+        styleId: asString(normalizedBrief.styleId, ''),
+        ...overrides
+    };
+}
+
+function createCopilotService({ miniMaxClient, outlineService, presentationService, threadStore }) {
+    const resolvedThreadStore = threadStore || createFallbackThreadStore();
+    const planGraph = createCopilotPlanGraph({
+        bootstrapPlan(state) {
+            const fallbackBrief = buildHeuristicBrief({
+                messages: state.messages,
+                locale: state.locale,
+                outputIntent: state.outputIntent,
+                visualPreference: state.visualPreference
+            });
+
+            return {
+                latestPrompt: lastUserMessage(state.messages),
+                fallbackBrief
+            };
+        },
+        async callModelPlan(state) {
+            try {
+                const completion = await miniMaxClient.chat([
+                    {
+                        role: 'user',
+                        content: buildPlanPrompt({
+                            messages: state.messages,
+                            locale: state.locale,
+                            uiLocale: state.uiLocale,
+                            outputIntent: state.outputIntent,
+                            visualPreference: state.visualPreference,
+                            allowClarification: state.allowClarification !== false,
+                            fallbackBrief: state.fallbackBrief
+                        })
+                    }
+                ], {
+                    temperature: 0.25,
+                    maxTokens: 2200
+                });
+
+                return {
+                    parsedPlan: extractJSONObject(completion)
+                };
+            } catch (error) {
+                return {
+                    parsedPlan: null
+                };
+            }
+        },
+        finalizePlan(state) {
+            const deckLocale = normalizeLocale(state.locale);
+            const messageLocale = normalizeLocale(state.uiLocale || deckLocale);
+            const draftBrief = sanitizeDraftBrief(state.parsedPlan?.draftBrief, state.fallbackBrief, {
+                lockedLocale: deckLocale
+            });
+            const prompt = state.latestPrompt;
+            const aiWantsClarification = state.parsedPlan?.readyToBuild === false
+                && asString(state.parsedPlan?.clarification, '').trim();
+            const heuristicClarification = state.allowClarification !== false && isVaguePrompt(prompt);
+            const shouldClarify = state.allowClarification !== false && (aiWantsClarification || heuristicClarification);
+
+            if (shouldClarify) {
+                const clarification = asString(state.parsedPlan?.clarification, '').trim()
+                    || buildClarificationMessage(messageLocale, deckLocale);
+
+                return {
+                    draftBrief,
+                    readyToBuild: false,
+                    shouldClarify: true,
+                    clarification,
+                    assistantMessage: asString(state.parsedPlan?.assistantMessage, '').trim() || clarification
+                };
+            }
+
+            return {
+                draftBrief,
+                readyToBuild: true,
+                shouldClarify: false,
+                clarification: '',
+                assistantMessage: asString(state.parsedPlan?.assistantMessage, '').trim()
+                    || buildAssistantAck(draftBrief, messageLocale)
+            };
+        }
+    });
+
     async function plan({
         messages,
         locale,
         uiLocale,
         outputIntent,
         visualPreference,
-        allowClarification = true
+        allowClarification = true,
+        threadId
     }) {
-        const normalizedMessages = Array.isArray(messages)
-            ? messages
-                .map((item) => ({
-                    role: item?.role === 'assistant' ? 'assistant' : 'user',
-                    content: asString(item?.content, '').trim()
-                }))
-                .filter((item) => item.content)
-            : [];
-
+        const normalizedMessages = normalizeMessages(messages);
         const deckLocale = normalizeLocale(locale);
         const messageLocale = normalizeLocale(uiLocale || deckLocale);
-        const fallbackBrief = buildHeuristicBrief({
+        const existingThread = resolvedThreadStore.isValidId(threadId)
+            ? resolvedThreadStore.getById(threadId)
+            : null;
+        const resolvedThreadId = existingThread?.id
+            || (resolvedThreadStore.isValidId(threadId) ? threadId : resolvedThreadStore.createThreadId());
+
+        const planState = await planGraph.invoke({
+            threadId: resolvedThreadId,
             messages: normalizedMessages,
             locale: deckLocale,
+            uiLocale: messageLocale,
             outputIntent,
-            visualPreference
-        });
-
-        let parsed = null;
-        try {
-            const completion = await miniMaxClient.chat([
-                {
-                    role: 'user',
-                    content: buildPlanPrompt({
-                        messages: normalizedMessages,
-                        locale: deckLocale,
-                        uiLocale: messageLocale,
-                        outputIntent,
-                        visualPreference,
-                        allowClarification,
-                        fallbackBrief
-                    })
-                }
-            ], {
-                temperature: 0.25,
-                maxTokens: 2200
-            });
-
-            parsed = extractJSONObject(completion);
-        } catch (error) {
-            parsed = null;
-        }
-
-        const draftBrief = sanitizeDraftBrief(parsed?.draftBrief, fallbackBrief, {
-            lockedLocale: deckLocale
-        });
-        const prompt = lastUserMessage(normalizedMessages);
-        const aiWantsClarification = parsed?.readyToBuild === false && asString(parsed?.clarification, '').trim();
-        const heuristicClarification = allowClarification && isVaguePrompt(prompt);
-        const shouldClarify = allowClarification && (aiWantsClarification || heuristicClarification);
-
-        if (shouldClarify) {
-            const clarification = asString(parsed?.clarification, '').trim()
-                || buildClarificationMessage(messageLocale, deckLocale);
-
-            return {
-                assistantMessage: asString(parsed?.assistantMessage, '').trim() || clarification,
-                draftBrief,
-                readyToBuild: false,
-                clarification
-            };
-        }
-
-        return {
-            assistantMessage: asString(parsed?.assistantMessage, '').trim() || buildAssistantAck(draftBrief, messageLocale),
-            draftBrief,
-            readyToBuild: true,
-            clarification: ''
-        };
-    }
-
-    async function buildStream({ draftBrief, locale, ownerId, presentationId, onProgress }) {
-        const normalizedBrief = sanitizeDraftBrief(draftBrief, buildHeuristicBrief({
-            messages: [{ role: 'user', content: asString(draftBrief?.topic, '') }],
-            locale,
-            outputIntent: draftBrief?.outputIntent,
-            visualPreference: draftBrief?.visualFamily
-        }), {
-            lockedLocale: locale || draftBrief?.locale
-        });
-        const resolvedPresentationId = asString(presentationId, '') || generatePresentationId();
-
-        onProgress?.(buildSsePayload(
-            resolvedPresentationId,
-            4,
-            1,
-            normalizedBrief.locale === 'zh-CN'
-                ? 'Copilot 正在整理需求并补全生成参数...'
-                : 'Copilot is structuring your request and filling missing build parameters...'
-        ));
-
-        const outline = await outlineService.generateStableOutline({
-            topic: normalizedBrief.topic,
-            purpose: normalizedBrief.purpose,
-            length: normalizedBrief.length,
-            content: buildTopicContext(normalizedBrief)
-        });
-
-        onProgress?.(buildSsePayload(
-            resolvedPresentationId,
-            18,
-            1,
-            normalizedBrief.locale === 'zh-CN'
-                ? `已生成 ${outline.slides.length} 页的基础提纲，正在补全节奏与展示风格...`
-                : `A base outline with ${outline.slides.length} scenes is ready. Refining pacing and presentation style...`
-        ));
-
-        const enrichedOutline = enrichOutlineForCopilot(outline, normalizedBrief);
-        const result = await presentationService.buildPresentation({
-            outline: enrichedOutline,
-            ownerId,
-            presentationId: resolvedPresentationId,
-            style: normalizedBrief.styleId,
-            onProgress,
-            metaOverrides: {
-                purpose: normalizedBrief.purpose,
-                length: normalizedBrief.length
-            },
-            legacyData: {
-                copilot: {
-                    draftBrief: normalizedBrief,
-                    visualFamily: normalizedBrief.visualFamily,
-                    outputIntent: normalizedBrief.outputIntent,
-                    plannedAt: new Date().toISOString()
-                }
+            visualPreference,
+            allowClarification
+        }, {
+            configurable: {
+                thread_id: resolvedThreadId
             }
         });
 
+        const savedThread = resolvedThreadStore.save({
+            id: resolvedThreadId,
+            locale: deckLocale,
+            uiLocale: messageLocale,
+            status: planState.readyToBuild ? 'planned' : 'clarifying',
+            messages: appendAssistantMessage(normalizedMessages, planState.assistantMessage),
+            clarificationCount: planState.readyToBuild
+                ? Number(existingThread?.clarificationCount) || 0
+                : (Number(existingThread?.clarificationCount) || 0) + 1,
+            draftBrief: planState.draftBrief,
+            lastAssistantMessage: planState.assistantMessage,
+            clarification: planState.clarification,
+            presentationId: existingThread?.presentationId || '',
+            meta: buildThreadMeta(planState.draftBrief, {
+                plannedAt: new Date().toISOString()
+            })
+        });
+
         return {
-            presentationId: resolvedPresentationId,
-            ...result
+            threadId: savedThread.id,
+            assistantMessage: planState.assistantMessage,
+            draftBrief: planState.draftBrief,
+            readyToBuild: planState.readyToBuild === true,
+            clarification: planState.clarification || '',
+            shouldAutoBuild: planState.readyToBuild === true
         };
+    }
+
+    async function buildStream({ draftBrief, locale, ownerId, presentationId, onProgress, threadId }) {
+        const existingThread = resolvedThreadStore.isValidId(threadId)
+            ? resolvedThreadStore.getById(threadId)
+            : null;
+        const resolvedThreadId = existingThread?.id
+            || (resolvedThreadStore.isValidId(threadId) ? threadId : resolvedThreadStore.createThreadId());
+        const resolvedPresentationId = asString(presentationId, '')
+            || asString(existingThread?.presentationId, '')
+            || generatePresentationId();
+        const buildLocale = normalizeLocale(locale || draftBrief?.locale || existingThread?.locale);
+        const buildUiLocale = normalizeLocale(existingThread?.uiLocale || buildLocale);
+        const progressWriter = (payload) => {
+            onProgress?.({
+                threadId: resolvedThreadId,
+                ...payload
+            });
+        };
+        const buildGraph = createCopilotBuildGraph({
+            normalizeBriefNode(state) {
+                return {
+                    normalizedBrief: sanitizeDraftBrief(state.draftBrief, buildHeuristicBrief({
+                        messages: [{ role: 'user', content: asString(state.draftBrief?.topic, '') }],
+                        locale: state.locale,
+                        outputIntent: state.draftBrief?.outputIntent,
+                        visualPreference: state.draftBrief?.visualFamily
+                    }), {
+                        lockedLocale: state.locale || state.draftBrief?.locale
+                    })
+                };
+            },
+            async generateOutlineNode(state) {
+                progressWriter(buildSsePayload(
+                    state.presentationId,
+                    4,
+                    1,
+                    state.locale === 'zh-CN'
+                        ? 'AI 正在整理需求并补全生成参数...'
+                        : 'The agent is structuring your request and filling missing build parameters...'
+                ));
+
+                const outline = await outlineService.generateStableOutline({
+                    topic: state.normalizedBrief.topic,
+                    purpose: state.normalizedBrief.purpose,
+                    length: state.normalizedBrief.length,
+                    content: buildTopicContext(state.normalizedBrief)
+                });
+
+                progressWriter(buildSsePayload(
+                    state.presentationId,
+                    18,
+                    1,
+                    state.locale === 'zh-CN'
+                        ? `已生成 ${outline.slides.length} 页的基础提纲，正在补全节奏与展示风格...`
+                        : `A base outline with ${outline.slides.length} scenes is ready. Refining pacing and presentation style...`
+                ));
+
+                return {
+                    outline
+                };
+            },
+            enrichOutlineNode(state) {
+                return {
+                    enrichedOutline: enrichOutlineForCopilot(state.outline, state.normalizedBrief)
+                };
+            },
+            async buildPresentationNode(state) {
+                return {
+                    buildResult: await presentationService.buildPresentation({
+                        outline: state.enrichedOutline,
+                        ownerId: state.ownerId,
+                        presentationId: state.presentationId,
+                        style: state.normalizedBrief.styleId,
+                        onProgress: progressWriter,
+                        metaOverrides: {
+                            purpose: state.normalizedBrief.purpose,
+                            length: state.normalizedBrief.length
+                        },
+                        legacyData: {
+                            copilot: {
+                                draftBrief: state.normalizedBrief,
+                                visualFamily: state.normalizedBrief.visualFamily,
+                                outputIntent: state.normalizedBrief.outputIntent,
+                                plannedAt: new Date().toISOString()
+                            }
+                        }
+                    })
+                };
+            }
+        });
+
+        resolvedThreadStore.save({
+            id: resolvedThreadId,
+            locale: buildLocale,
+            uiLocale: buildUiLocale,
+            status: 'building',
+            messages: existingThread?.messages || [],
+            clarificationCount: existingThread?.clarificationCount || 0,
+            draftBrief,
+            lastAssistantMessage: existingThread?.lastAssistantMessage || '',
+            clarification: '',
+            presentationId: resolvedPresentationId,
+            meta: buildThreadMeta(draftBrief, {
+                buildStartedAt: new Date().toISOString()
+            })
+        });
+
+        try {
+            const buildState = await buildGraph.invoke({
+                threadId: resolvedThreadId,
+                presentationId: resolvedPresentationId,
+                ownerId,
+                locale: buildLocale,
+                draftBrief
+            }, {
+                configurable: {
+                    thread_id: `${resolvedThreadId}:${resolvedPresentationId}`
+                }
+            });
+
+            const normalizedBrief = buildState.normalizedBrief || draftBrief;
+            const result = buildState.buildResult || {};
+
+            resolvedThreadStore.save({
+                id: resolvedThreadId,
+                locale: buildLocale,
+                uiLocale: buildUiLocale,
+                status: 'ready',
+                messages: existingThread?.messages || [],
+                clarificationCount: existingThread?.clarificationCount || 0,
+                draftBrief: normalizedBrief,
+                lastAssistantMessage: existingThread?.lastAssistantMessage || '',
+                clarification: '',
+                presentationId: resolvedPresentationId,
+                meta: buildThreadMeta(normalizedBrief, {
+                    buildCompletedAt: new Date().toISOString()
+                })
+            });
+
+            return {
+                threadId: resolvedThreadId,
+                presentationId: resolvedPresentationId,
+                ...result
+            };
+        } catch (error) {
+            resolvedThreadStore.save({
+                id: resolvedThreadId,
+                locale: buildLocale,
+                uiLocale: buildUiLocale,
+                status: 'failed',
+                messages: existingThread?.messages || [],
+                clarificationCount: existingThread?.clarificationCount || 0,
+                draftBrief,
+                lastAssistantMessage: existingThread?.lastAssistantMessage || '',
+                clarification: '',
+                presentationId: resolvedPresentationId,
+                meta: buildThreadMeta(draftBrief, {
+                    buildFailedAt: new Date().toISOString(),
+                    lastError: error.message
+                })
+            });
+            throw error;
+        }
     }
 
     return {
         buildStream,
         generatePresentationId,
+        generateThreadId: () => resolvedThreadStore.createThreadId(),
         plan
     };
 }

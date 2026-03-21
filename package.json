@@ -7,18 +7,31 @@
     "xiangyu-slides": "./bin/cli.js"
   },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "start": "npm run build:client && node server.js",
+    "dev": "npm run build:client && node server.js",
+    "dev:client": "vite --config client/vite.config.mjs --host 0.0.0.0 --port 5173",
+    "build:client": "vite build --config client/vite.config.mjs",
     "mcp": "node mcp-server.js",
-    "smoke:frontend": "node scripts/frontend-smoke.js",
-    "smoke:mvp": "node scripts/mvp-smoke.js"
+    "smoke:frontend": "npm run build:client && node scripts/frontend-smoke.js",
+    "smoke:mvp": "npm run build:client && node scripts/mvp-smoke.js"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.34",
+    "@langchain/langgraph": "^1.2.4",
+    "@langchain/langgraph-checkpoint": "^1.0.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "pptxgenjs": "^4.0.1"
+    "lucide-react": "^0.547.0",
+    "pptxgenjs": "^4.0.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
+    "vite": "^7.1.5"
   },
   "optionalDependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"

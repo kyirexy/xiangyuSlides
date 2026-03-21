@@ -1,0 +1,61 @@
+{
+  "id": "thread_mmz7dfes_8137858c",
+  "createdAt": "2026-03-20T17:58:48.321Z",
+  "updatedAt": "2026-03-20T17:59:17.338Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我已理解你的需求。这是一个关于 Claude Code 多 Agent 协调的技术教学演示，偏展示型，适合现场分享。我会为你构建一个节奏感强、适合演示的幻灯片。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "如何用 Claude Code 协调多个 Agent",
+    "purpose": "tech",
+    "length": "medium",
+    "audience": "技术团队/开发者",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "demo",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "Claude Code",
+        "多 Agent",
+        "协调",
+        "工作流",
+        "自动化"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我已理解你的需求。这是一个关于 Claude Code 多 Agent 协调的技术教学演示，偏展示型，适合现场分享。我会为你构建一个节奏感强、适合演示的幻灯片。",
+  "clarification": "",
+  "presentationId": "pres_mmz7dkp0_8462f1c9",
+  "meta": {
+    "topic": "如何用 Claude Code 协调多个 Agent",
+    "purpose": "tech",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "plannedAt": "2026-03-20T17:58:48.321Z",
+    "buildStartedAt": "2026-03-20T17:58:48.329Z",
+    "buildCompletedAt": "2026-03-20T17:59:17.338Z"
+  }
+}

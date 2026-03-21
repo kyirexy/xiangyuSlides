@@ -26,8 +26,11 @@ function createRuntimeConfig(options = {}) {
         PORT: Number(process.env.PORT || options.port || 3001),
         DATA_FILE: path.join(rootDir, 'data.json'),
         PUBLIC_DIR: path.join(rootDir, 'public'),
+        CLIENT_DIR: path.join(rootDir, 'client'),
+        CLIENT_DIST_DIR: path.join(rootDir, 'client', 'dist'),
         PRESENTATIONS_DIR: path.join(rootDir, 'presentations'),
         ASSETS_DIR: path.join(rootDir, 'assets'),
+        THREADS_DIR: path.join(rootDir, 'threads'),
         SKILLS_FILE: path.join(rootDir, 'skills.json')
     };
 }
@@ -37,7 +40,7 @@ function ensureRuntimeDirs(config) {
         return;
     }
 
-    [config.PRESENTATIONS_DIR, config.ASSETS_DIR].forEach((dirPath) => {
+    [config.PRESENTATIONS_DIR, config.ASSETS_DIR, config.THREADS_DIR].forEach((dirPath) => {
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });
         }

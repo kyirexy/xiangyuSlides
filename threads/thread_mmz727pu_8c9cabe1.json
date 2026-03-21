@@ -1,0 +1,60 @@
+{
+  "id": "thread_mmz727pu_8c9cabe1",
+  "createdAt": "2026-03-20T17:50:05.483Z",
+  "updatedAt": "2026-03-20T17:50:18.514Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的！我已经理解你的需求：制作一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，采用展示型风格，适合现场分享。我这就为你生成演示框架。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。",
+    "purpose": "tech",
+    "length": "medium",
+    "audience": "现场分享",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "Claude Code",
+        "多 agent 协调",
+        "AI 编程",
+        "工作流",
+        "现场演示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的！我已经理解你的需求：制作一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，采用展示型风格，适合现场分享。我这就为你生成演示框架。",
+  "clarification": "",
+  "presentationId": "pres_mmz72d9r_a4550867",
+  "meta": {
+    "topic": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。",
+    "purpose": "tech",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "plannedAt": "2026-03-20T17:50:05.483Z",
+    "buildStartedAt": "2026-03-20T17:50:05.490Z",
+    "buildCompletedAt": "2026-03-20T17:50:18.514Z"
+  }
+}
