@@ -1,0 +1,222 @@
+{
+  "id": "thread_mn0ev5i2_beb59ff0",
+  "createdAt": "2026-03-21T14:16:21.018Z",
+  "updatedAt": "2026-03-21T14:16:56.098Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个融资路演，偏 Apple 发布会风格，8 页左右，中文现场展示。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我已理解您的需求：融资路演、Apple 发布会风格、约 8 页、中文现场展示。我将为您创建一份高视觉冲击力的路演演示文稿。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "length": "medium",
+    "audience": "投资人",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强、专业自信",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "product",
+        "market",
+        "team",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "融资路演",
+        "Apple 发布会风格",
+        "8页",
+        "中文现场展示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我已理解您的需求：融资路演、Apple 发布会风格、约 8 页、中文现场展示。我将为您创建一份高视觉冲击力的路演演示文稿。",
+  "clarification": "",
+  "presentationId": "pres_mn0evcm4_284e3de9",
+  "activePresentationId": "pres_mn0evcm4_284e3de9",
+  "lastBuildArtifacts": [
+    {
+      "type": "presentation",
+      "label": "preview",
+      "url": "/presentations/pres_mn0evcm4_284e3de9",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "spec",
+      "label": "spec",
+      "url": "/api/presentations/pres_mn0evcm4_284e3de9/spec",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "html",
+      "label": "html",
+      "url": "/api/presentations/pres_mn0evcm4_284e3de9/html",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "pptx",
+      "label": "pptx",
+      "url": "/api/presentations/pres_mn0evcm4_284e3de9/export.pptx",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "image_generation",
+      "label": "封面与场景图生成",
+      "url": "/presentations/pres_mn0evcm4_284e3de9",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "taskId": "media_mn0ew1v8_cedc9d8b",
+      "status": "ready",
+      "providerTaskId": ""
+    },
+    {
+      "type": "tts_generation",
+      "label": "旁白音频生成",
+      "url": "/presentations/pres_mn0evcm4_284e3de9",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "taskId": "media_mn0ew1v8_22afe5be",
+      "status": "ready",
+      "providerTaskId": ""
+    }
+  ],
+  "editIntent": null,
+  "pendingAction": "continue",
+  "agentSteps": [
+    {
+      "eventType": "intent_parsed",
+      "stepLabel": "已解析需求",
+      "message": "已解析需求，主题锁定为“融资路演”。",
+      "status": "info",
+      "artifact": null
+    },
+    {
+      "eventType": "brief_locked",
+      "stepLabel": "已锁定 brief",
+      "message": "已锁定 pitch / medium / showcase。",
+      "status": "ready",
+      "artifact": {
+        "type": "brief",
+        "label": "",
+        "url": "",
+        "presentationId": "",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "presentation_ready",
+      "stepLabel": "演示已就绪",
+      "message": "演示已生成完成，可以继续对话或直接预览。",
+      "status": "success",
+      "artifact": {
+        "type": "presentation",
+        "label": "preview",
+        "url": "/presentations/pres_mn0evcm4_284e3de9",
+        "presentationId": "pres_mn0evcm4_284e3de9",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "封面与场景图生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "",
+        "presentationId": "pres_mn0evcm4_284e3de9",
+        "taskId": "media_mn0ew1v8_cedc9d8b",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "旁白音频生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "",
+        "presentationId": "pres_mn0evcm4_284e3de9",
+        "taskId": "media_mn0ew1v8_22afe5be",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_ready",
+      "stepLabel": "媒体任务已完成",
+      "message": "封面与场景图生成 ready",
+      "status": "success",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "/presentations/pres_mn0evcm4_284e3de9",
+        "presentationId": "pres_mn0evcm4_284e3de9",
+        "taskId": "media_mn0ew1v8_cedc9d8b",
+        "status": "ready",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_ready",
+      "stepLabel": "媒体任务已完成",
+      "message": "旁白音频生成 ready",
+      "status": "success",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "/presentations/pres_mn0evcm4_284e3de9",
+        "presentationId": "pres_mn0evcm4_284e3de9",
+        "taskId": "media_mn0ew1v8_22afe5be",
+        "status": "ready",
+        "providerTaskId": ""
+      }
+    }
+  ],
+  "meta": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "plannedAt": "2026-03-21T14:16:21.018Z",
+    "lastEditIntent": "",
+    "buildStartedAt": "2026-03-21T14:16:21.148Z",
+    "buildCompletedAt": "2026-03-21T14:16:53.884Z",
+    "lastMediaTaskUpdateAt": "2026-03-21T14:16:56.098Z"
+  }
+}

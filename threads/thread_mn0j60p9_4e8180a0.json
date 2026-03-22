@@ -1,0 +1,28 @@
+{
+  "id": "thread_mn0j60p9_4e8180a0",
+  "createdAt": "2026-03-21T16:16:37.390Z",
+  "updatedAt": "2026-03-21T16:16:37.390Z",
+  "locale": "en",
+  "uiLocale": "en",
+  "status": "idle",
+  "messages": [],
+  "clarificationCount": 0,
+  "draftBrief": null,
+  "lastAssistantMessage": "",
+  "clarification": "",
+  "presentationId": "",
+  "activePresentationId": "",
+  "lastBuildArtifacts": [],
+  "editIntent": null,
+  "pendingAction": "",
+  "agentSteps": [],
+  "reasoningMode": "fast",
+  "webSearchEnabled": false,
+  "selectedModelId": "nano-banana-pro",
+  "uiRunState": {
+    "runId": "run_mn0j60p9_8d31081c",
+    "lastEventType": "RUN_STARTED",
+    "lastSnapshotAt": "2026-03-21T16:16:37.390Z"
+  },
+  "meta": {}
+}

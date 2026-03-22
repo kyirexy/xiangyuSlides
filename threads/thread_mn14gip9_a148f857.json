@@ -1,0 +1,232 @@
+{
+  "id": "thread_mn14gip9_a148f857",
+  "createdAt": "2026-03-22T02:12:39.213Z",
+  "updatedAt": "2026-03-22T02:13:42.017Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个融资路演，偏 Apple 发布会风格，8 页左右，中文现场展示。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我马上为你制作一份 Apple 风格的融资路演 PPT，约 8 页，支持中文现场展示。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "length": "medium",
+    "audience": "投资人",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "开场",
+        "项目概述",
+        "市场机会",
+        "产品/解决方案",
+        "商业模式",
+        "业绩/数据",
+        "团队介绍",
+        "融资需求与结束"
+      ],
+      "keywords": [
+        "融资路演",
+        "Apple 风格",
+        "投资",
+        "产品演示",
+        "现场展示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我马上为你制作一份 Apple 风格的融资路演 PPT，约 8 页，支持中文现场展示。",
+  "clarification": "",
+  "presentationId": "pres_mn14gxic_bafd3982",
+  "activePresentationId": "pres_mn14gxic_bafd3982",
+  "lastBuildArtifacts": [
+    {
+      "type": "presentation",
+      "label": "preview",
+      "url": "/presentations/pres_mn14gxic_bafd3982",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "spec",
+      "label": "spec",
+      "url": "/api/presentations/pres_mn14gxic_bafd3982/spec",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "html",
+      "label": "html",
+      "url": "/api/presentations/pres_mn14gxic_bafd3982/html",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "pptx",
+      "label": "pptx",
+      "url": "/api/presentations/pres_mn14gxic_bafd3982/export.pptx",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "image_generation",
+      "label": "封面与场景图生成",
+      "url": "/presentations/pres_mn14gxic_bafd3982",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "taskId": "media_mn14htfk_23645e44",
+      "status": "ready",
+      "providerTaskId": ""
+    },
+    {
+      "type": "tts_generation",
+      "label": "旁白音频生成",
+      "url": "/presentations/pres_mn14gxic_bafd3982",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "taskId": "media_mn14htfl_874f80d6",
+      "status": "ready",
+      "providerTaskId": ""
+    }
+  ],
+  "editIntent": null,
+  "pendingAction": "continue",
+  "agentSteps": [
+    {
+      "eventType": "intent_parsed",
+      "stepLabel": "已解析需求",
+      "message": "已解析需求，主题锁定为“融资路演”。",
+      "status": "info",
+      "artifact": null
+    },
+    {
+      "eventType": "brief_locked",
+      "stepLabel": "已锁定 brief",
+      "message": "已锁定 pitch / medium / showcase。",
+      "status": "ready",
+      "artifact": {
+        "type": "brief",
+        "label": "",
+        "url": "",
+        "presentationId": "",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "presentation_ready",
+      "stepLabel": "演示已就绪",
+      "message": "演示已生成完成，可以继续对话或直接预览。",
+      "status": "success",
+      "artifact": {
+        "type": "presentation",
+        "label": "preview",
+        "url": "/presentations/pres_mn14gxic_bafd3982",
+        "presentationId": "pres_mn14gxic_bafd3982",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "封面与场景图生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "",
+        "presentationId": "pres_mn14gxic_bafd3982",
+        "taskId": "media_mn14htfk_23645e44",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "旁白音频生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "",
+        "presentationId": "pres_mn14gxic_bafd3982",
+        "taskId": "media_mn14htfl_874f80d6",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_ready",
+      "stepLabel": "媒体任务已完成",
+      "message": "封面与场景图生成 ready",
+      "status": "success",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "/presentations/pres_mn14gxic_bafd3982",
+        "presentationId": "pres_mn14gxic_bafd3982",
+        "taskId": "media_mn14htfk_23645e44",
+        "status": "ready",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_ready",
+      "stepLabel": "媒体任务已完成",
+      "message": "旁白音频生成 ready",
+      "status": "success",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "/presentations/pres_mn14gxic_bafd3982",
+        "presentationId": "pres_mn14gxic_bafd3982",
+        "taskId": "media_mn14htfl_874f80d6",
+        "status": "ready",
+        "providerTaskId": ""
+      }
+    }
+  ],
+  "reasoningMode": "thinking",
+  "webSearchEnabled": false,
+  "selectedModelId": "nano-banana-pro",
+  "uiRunState": {
+    "runId": "run_mn14gip9_dcb832e3",
+    "lastEventType": "RUN_FINISHED",
+    "lastSnapshotAt": "2026-03-22T02:13:40.508Z"
+  },
+  "meta": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "plannedAt": "2026-03-22T02:12:58.049Z",
+    "lastEditIntent": "",
+    "buildStartedAt": "2026-03-22T02:12:58.404Z",
+    "buildCompletedAt": "2026-03-22T02:13:39.785Z",
+    "lastMediaTaskUpdateAt": "2026-03-22T02:13:42.017Z"
+  }
+}

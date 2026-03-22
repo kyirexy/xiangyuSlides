@@ -4,6 +4,11 @@ function writeSseEvent(res, payload) {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
+function wantsStream(req) {
+    const accept = String(req.headers.accept || '');
+    return accept.includes('text/event-stream') || req.body?.stream === true;
+}
+
 function createPresentationRoutes({
     authenticateApiKey,
     copilotService,
@@ -152,13 +157,43 @@ function createPresentationRoutes({
             outputIntent,
             visualPreference,
             allowClarification,
-            threadId
+            threadId,
+            reasoningMode,
+            webSearchEnabled,
+            selectedModelId,
+            stream
         } = req.body || {};
         if (!Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({ error: 'messages are required' });
         }
 
         try {
+            if (wantsStream(req) || stream === true) {
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
+                res.setHeader('Access-Control-Allow-Origin', '*');
+
+                await copilotService.planStream({
+                    messages,
+                    locale,
+                    uiLocale,
+                    outputIntent,
+                    visualPreference,
+                    allowClarification: allowClarification !== false,
+                    threadId,
+                    reasoningMode,
+                    webSearchEnabled,
+                    selectedModelId,
+                    onProgress(payload) {
+                        writeSseEvent(res, payload);
+                    }
+                });
+
+                setTimeout(() => res.end(), 120);
+                return;
+            }
+
             const result = await copilotService.plan({
                 messages,
                 locale,
@@ -166,18 +201,96 @@ function createPresentationRoutes({
                 outputIntent,
                 visualPreference,
                 allowClarification: allowClarification !== false,
-                threadId
+                threadId,
+                reasoningMode,
+                webSearchEnabled,
+                selectedModelId
             });
 
             res.json(result);
         } catch (error) {
             console.error('Error planning copilot draft:', error);
+            if (res.headersSent) {
+                writeSseEvent(res, {
+                    eventType: 'build_failed',
+                    stepLabel: 'Planning failed',
+                    message: error.message,
+                    status: 'failed',
+                    error: error.message
+                });
+                res.end();
+                return;
+            }
             res.status(500).json({ error: error.message });
         }
     });
 
+    router.post('/copilot/agui', authenticateApiKey, async (req, res) => {
+        const {
+            messages,
+            locale,
+            uiLocale,
+            outputIntent,
+            visualPreference,
+            allowClarification,
+            threadId,
+            reasoningMode,
+            webSearchEnabled,
+            selectedModelId
+        } = req.body || {};
+
+        if (!Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: 'messages are required' });
+        }
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        try {
+            await copilotService.aguiStream({
+                messages,
+                locale,
+                uiLocale,
+                outputIntent,
+                visualPreference,
+                allowClarification: allowClarification !== false,
+                threadId,
+                reasoningMode,
+                webSearchEnabled,
+                selectedModelId,
+                onEvent(payload) {
+                    writeSseEvent(res, payload);
+                }
+            });
+
+            setTimeout(() => res.end(), 120);
+        } catch (error) {
+            console.error('Error in copilot AG-UI stream:', error);
+            res.end();
+        }
+    });
+
+    router.get('/copilot/threads/:id', authenticateApiKey, async (req, res) => {
+        const thread = copilotService.getThread(req.params.id);
+        if (!thread) {
+            return res.status(404).json({ error: 'Thread not found' });
+        }
+
+        res.json(thread);
+    });
+
     router.post('/copilot/build/stream', authenticateApiKey, async (req, res) => {
-        const { draftBrief, locale, presentationId, threadId } = req.body || {};
+        const {
+            draftBrief,
+            locale,
+            presentationId,
+            threadId,
+            reasoningMode,
+            webSearchEnabled,
+            selectedModelId
+        } = req.body || {};
 
         if (!draftBrief || typeof draftBrief !== 'object') {
             return res.status(400).json({ error: 'draftBrief is required' });
@@ -200,6 +313,9 @@ function createPresentationRoutes({
                 ownerId: req.userId,
                 presentationId: resolvedPresentationId,
                 threadId,
+                reasoningMode,
+                webSearchEnabled,
+                selectedModelId,
                 onProgress(payload) {
                     writeSseEvent(res, payload);
                 }
@@ -215,6 +331,8 @@ function createPresentationRoutes({
                 step: 1,
                 message: `Generation failed: ${error.message}`,
                 status: 'failed',
+                eventType: 'build_failed',
+                stepLabel: 'Build failed',
                 url: `/presentations/${resolvedPresentationId}`,
                 pptxUrl: `/api/presentations/${resolvedPresentationId}/export.pptx`,
                 error: error.message

@@ -93,6 +93,11 @@ function normalizeMediaIntent(mediaIntent, fallback = 'balanced') {
     return SUPPORTED_MEDIA_INTENTS.has(normalized) ? normalized : fallback;
 }
 
+function normalizeReasoningMode(mode, fallback = 'thinking') {
+    const normalized = asString(mode, fallback).trim().toLowerCase();
+    return normalized === 'fast' ? 'fast' : 'thinking';
+}
+
 function normalizeAudience(audience, locale) {
     const value = asString(audience, '').trim();
     if (value) {
@@ -588,6 +593,639 @@ function buildSsePayload(presentationId, progress, step, message, overrides = {}
     };
 }
 
+function createEventId(prefix = 'evt') {
+    return `${prefix}_${Date.now().toString(36)}_${crypto.randomBytes(3).toString('hex')}`;
+}
+
+function normalizeArtifacts(artifacts) {
+    if (!Array.isArray(artifacts)) {
+        return [];
+    }
+
+    return artifacts
+        .map((item) => ({
+            type: asString(item?.type, '').trim(),
+            label: asString(item?.label, '').trim(),
+            url: asString(item?.url, '').trim(),
+            presentationId: asString(item?.presentationId, '').trim(),
+            taskId: asString(item?.taskId, '').trim(),
+            status: asString(item?.status, '').trim(),
+            providerTaskId: asString(item?.providerTaskId, '').trim()
+        }))
+        .filter((item) => item.type || item.url || item.presentationId || item.taskId);
+}
+
+function normalizeAgentSteps(agentSteps) {
+    if (!Array.isArray(agentSteps)) {
+        return [];
+    }
+
+    return agentSteps
+        .map((item) => ({
+            id: asString(item?.id, createEventId('step')),
+            eventType: asString(item?.eventType, '').trim(),
+            stepLabel: asString(item?.stepLabel, '').trim(),
+            message: asString(item?.message, '').trim(),
+            status: asString(item?.status, '').trim() || 'info',
+            artifact: item?.artifact && typeof item.artifact === 'object' ? item.artifact : null
+        }))
+        .filter((item) => item.eventType || item.stepLabel || item.message);
+}
+
+function buildBriefArtifact(draftBrief) {
+    if (!draftBrief || typeof draftBrief !== 'object') {
+        return null;
+    }
+
+    return {
+        type: 'brief',
+        topic: asString(draftBrief.topic, ''),
+        purpose: asString(draftBrief.purpose, ''),
+        length: asString(draftBrief.length, ''),
+        visualFamily: asString(draftBrief.visualFamily, ''),
+        styleId: asString(draftBrief.styleId, ''),
+        outputIntent: asString(draftBrief.outputIntent, ''),
+        locale: asString(draftBrief.locale, '')
+    };
+}
+
+function buildPresentationArtifacts(presentationId) {
+    if (!presentationId) {
+        return [];
+    }
+
+    return normalizeArtifacts([
+        {
+            type: 'presentation',
+            label: 'preview',
+            url: `/presentations/${presentationId}`,
+            presentationId
+        },
+        {
+            type: 'spec',
+            label: 'spec',
+            url: `/api/presentations/${presentationId}/spec`,
+            presentationId
+        },
+        {
+            type: 'html',
+            label: 'html',
+            url: `/api/presentations/${presentationId}/html`,
+            presentationId
+        },
+        {
+            type: 'pptx',
+            label: 'pptx',
+            url: `/api/presentations/${presentationId}/export.pptx`,
+            presentationId
+        }
+    ]);
+}
+
+function buildStepLabel(eventType, locale) {
+    const zh = locale === 'zh-CN';
+    const labels = {
+        planning_started: zh ? '开始理解需求' : 'Planning started',
+        intent_parsed: zh ? '已解析需求' : 'Intent parsed',
+        clarification_requested: zh ? '等待补充信息' : 'Clarification requested',
+        brief_locked: zh ? '已锁定 brief' : 'Brief locked',
+        outline_generating: zh ? '正在生成大纲' : 'Generating outline',
+        slides_rendering: zh ? '正在渲染演示' : 'Rendering slides',
+        presentation_ready: zh ? '演示已就绪' : 'Presentation ready',
+        media_task_queued: zh ? '媒体任务已排队' : 'Media task queued',
+        media_task_running: zh ? '媒体任务进行中' : 'Media task running',
+        media_task_ready: zh ? '媒体任务已完成' : 'Media task ready',
+        media_task_failed: zh ? '媒体任务失败' : 'Media task failed',
+        build_failed: zh ? '生成失败' : 'Build failed',
+        workspace_restored: zh ? '已恢复工作台' : 'Workspace restored'
+    };
+
+    return labels[eventType] || (zh ? '执行步骤' : 'Execution');
+}
+
+function buildStepEvent({ eventType, locale, message, status = 'info', artifact = null }) {
+    return {
+        id: createEventId('step'),
+        eventType,
+        stepLabel: buildStepLabel(eventType, locale),
+        message,
+        status,
+        artifact
+    };
+}
+
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createRunId() {
+    return `run_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+}
+
+function createAguiEvent({ type, threadId, runId, presentationId = '', payload = {} }) {
+    return {
+        type,
+        threadId,
+        runId,
+        presentationId: asString(presentationId, '').trim() || undefined,
+        timestamp: new Date().toISOString(),
+        payload
+    };
+}
+
+function mapAguiStepPhase(eventType) {
+    const value = asString(eventType, '').trim();
+
+    if (
+        value === 'planning_started'
+        || value === 'intent_parsed'
+        || value === 'brief_locked'
+        || value === 'clarification_requested'
+        || value === 'workspace_restored'
+    ) {
+        return 'reasoning';
+    }
+
+    if (
+        value === 'media_task_queued'
+        || value === 'media_task_running'
+        || value === 'media_task_ready'
+        || value === 'media_task_failed'
+    ) {
+        return 'tool';
+    }
+
+    if (
+        value === 'presentation_ready'
+        || value === 'build_failed'
+    ) {
+        return 'result';
+    }
+
+    return 'execution';
+}
+
+function buildAguiThreadSnapshot(thread) {
+    if (!thread || typeof thread !== 'object') {
+        return {};
+    }
+
+    return {
+        threadId: thread.id,
+        status: thread.status,
+        pendingAction: thread.pendingAction,
+        presentationId: thread.presentationId || '',
+        activePresentationId: thread.activePresentationId || '',
+        draftBrief: thread.draftBrief || null,
+        clarification: thread.clarification || '',
+        messages: Array.isArray(thread.messages) ? thread.messages.slice(-8) : [],
+        lastBuildArtifacts: normalizeArtifacts(thread.lastBuildArtifacts),
+        agentSteps: normalizeAgentSteps(thread.agentSteps).slice(-6),
+        reasoningMode: thread.reasoningMode || 'thinking',
+        webSearchEnabled: Boolean(thread.webSearchEnabled),
+        selectedModelId: thread.selectedModelId || '',
+        uiRunState: thread.uiRunState || null
+    };
+}
+
+function splitTextForStreaming(text) {
+    const source = asString(text, '').trim();
+    if (!source) {
+        return [];
+    }
+
+    const chunks = [];
+    let cursor = 0;
+    while (cursor < source.length) {
+        const next = source.slice(cursor, cursor + 18);
+        chunks.push(next);
+        cursor += next.length;
+    }
+    return chunks;
+}
+
+async function streamAguiAssistantMessage(writer, { threadId, runId, presentationId = '', message }) {
+    const content = asString(message, '').trim();
+    if (!content) {
+        return;
+    }
+
+    const messageId = createEventId('assistant');
+    writer(createAguiEvent({
+        type: 'TEXT_MESSAGE_START',
+        threadId,
+        runId,
+        presentationId,
+        payload: {
+            messageId,
+            role: 'assistant'
+        }
+    }));
+
+    for (const chunk of splitTextForStreaming(content)) {
+        await wait(22);
+        writer(createAguiEvent({
+            type: 'TEXT_MESSAGE_CONTENT',
+            threadId,
+            runId,
+            presentationId,
+            payload: {
+                messageId,
+                delta: chunk
+            }
+        }));
+    }
+
+    writer(createAguiEvent({
+        type: 'TEXT_MESSAGE_END',
+        threadId,
+        runId,
+        presentationId,
+        payload: {
+            messageId,
+            role: 'assistant',
+            content
+        }
+    }));
+}
+
+async function emitAguiStep(writer, { threadId, runId, presentationId = '', step }) {
+    const phase = mapAguiStepPhase(step?.eventType);
+    const basePayload = {
+        stepId: step?.id || createEventId('step'),
+        phase,
+        eventType: step?.eventType || '',
+        title: step?.stepLabel || '',
+        message: step?.message || '',
+        status: step?.status || 'info',
+        artifact: step?.artifact || null
+    };
+
+    if (phase === 'tool') {
+        writer(createAguiEvent({
+            type: 'TOOL_CALL_START',
+            threadId,
+            runId,
+            presentationId,
+            payload: {
+                ...basePayload,
+                toolCallId: basePayload.stepId,
+                toolName: step?.artifact?.type || step?.eventType || 'tool'
+            }
+        }));
+        await wait(120);
+        writer(createAguiEvent({
+            type: 'TOOL_CALL_END',
+            threadId,
+            runId,
+            presentationId,
+            payload: {
+                ...basePayload,
+                toolCallId: basePayload.stepId,
+                toolName: step?.artifact?.type || step?.eventType || 'tool'
+            }
+        }));
+        return;
+    }
+
+    writer(createAguiEvent({
+        type: 'STEP_STARTED',
+        threadId,
+        runId,
+        presentationId,
+        payload: basePayload
+    }));
+    await wait(120);
+    writer(createAguiEvent({
+        type: 'STEP_FINISHED',
+        threadId,
+        runId,
+        presentationId,
+        payload: basePayload
+    }));
+}
+
+function buildMediaTaskBlueprints(draftBrief, presentationId, threadId, locale) {
+    const normalizedBrief = draftBrief && typeof draftBrief === 'object' ? draftBrief : {};
+    const tasks = [];
+    const mediaIntent = asString(normalizedBrief.mediaIntent, 'balanced');
+    const voiceoverMode = asString(normalizedBrief.voiceoverMode, 'placeholder');
+    const outputIntent = asString(normalizedBrief.outputIntent, 'showcase');
+
+    if (mediaIntent !== 'text-first') {
+        tasks.push({
+            kind: 'image_generation',
+            label: locale === 'zh-CN' ? '封面与场景图生成' : 'Scene image generation',
+            threadId,
+            presentationId,
+            payload: {
+                topic: normalizedBrief.topic,
+                visualFamily: normalizedBrief.visualFamily,
+                styleId: normalizedBrief.styleId
+            }
+        });
+    }
+
+    if (voiceoverMode !== 'off') {
+        tasks.push({
+            kind: 'tts_generation',
+            label: locale === 'zh-CN' ? '旁白音频生成' : 'Voiceover generation',
+            threadId,
+            presentationId,
+            payload: {
+                topic: normalizedBrief.topic,
+                locale: normalizedBrief.locale
+            }
+        });
+    }
+
+    if (outputIntent === 'short-video') {
+        tasks.push({
+            kind: 'video_generation',
+            label: locale === 'zh-CN' ? '短视频合成' : 'Short video assembly',
+            threadId,
+            presentationId,
+            payload: {
+                topic: normalizedBrief.topic,
+                locale: normalizedBrief.locale
+            }
+        });
+    }
+
+    return tasks;
+}
+
+function buildMediaTaskArtifact(task) {
+    return {
+        type: task.kind,
+        label: task.label || task.payload?.label || task.kind,
+        presentationId: task.presentationId,
+        taskId: task.id,
+        status: task.status,
+        providerTaskId: asString(task.providerTaskId, ''),
+        url: asString(task.result?.previewUrl || task.result?.assetUrl, '')
+    };
+}
+
+function buildMediaTaskMessage(task, locale) {
+    const label = task.label || task.payload?.label || task.kind || 'task';
+    const status = asString(task.status, 'queued').toLowerCase();
+
+    if (locale === 'zh-CN') {
+        if (status === 'running') {
+            return `${label} 正在执行。`;
+        }
+        if (status === 'ready') {
+            return task.result?.message || `${label} 已完成，可以继续使用。`;
+        }
+        if (status === 'failed') {
+            return `${label} 执行失败：${task.error || 'unknown error'}`;
+        }
+        return `${label} 已加入任务队列。`;
+    }
+
+    if (status === 'running') {
+        return `${label} is running.`;
+    }
+    if (status === 'ready') {
+        return task.result?.message || `${label} is ready.`;
+    }
+    if (status === 'failed') {
+        return `${label} failed: ${task.error || 'unknown error'}`;
+    }
+    return `${label} has been queued.`;
+}
+
+function mergeArtifactsWithTask(artifacts, task) {
+    const nextArtifact = buildMediaTaskArtifact(task);
+    const current = normalizeArtifacts(artifacts).filter((item) => item.taskId !== task.id);
+    current.push(nextArtifact);
+    return current;
+}
+
+function parseSceneTarget(prompt) {
+    const match = asString(prompt, '').match(/(?:第\s*(\d+)\s*页|slide\s*(\d+))/i);
+    if (!match) {
+        return null;
+    }
+
+    return Number(match[1] || match[2] || 0) || null;
+}
+
+function detectEditIntent(prompt, existingThread, locale) {
+    const activePresentationId = asString(
+        existingThread?.activePresentationId || existingThread?.presentationId,
+        ''
+    );
+    const latestPrompt = asString(prompt, '').trim();
+    if (!activePresentationId || !latestPrompt) {
+        return null;
+    }
+
+    const normalized = latestPrompt.toLowerCase();
+    const looksLikeEdit = /(改|调整|重新|优化|增加|新增|删掉|删除|更像|换成|改成|补充|再加|refine|revise|update|change|adjust|make it|add|remove|short video|reel)/i
+        .test(latestPrompt);
+
+    if (!looksLikeEdit) {
+        return null;
+    }
+
+    const directives = {};
+    if (/apple|keynote/.test(normalized)) {
+        directives.visualFamily = 'showcase';
+        directives.styleId = pickStyleId('showcase', existingThread?.draftBrief?.purpose || 'pitch', locale);
+    } else if (/editorial|杂志|编辑感/.test(normalized)) {
+        directives.visualFamily = 'editorial';
+        directives.styleId = pickStyleId('editorial', existingThread?.draftBrief?.purpose || 'product', locale);
+    } else if (/briefing|汇报|board/.test(normalized)) {
+        directives.visualFamily = 'briefing';
+        directives.styleId = pickStyleId('briefing', existingThread?.draftBrief?.purpose || 'meeting', locale);
+    }
+
+    if (/短视频|short video|reel|视频版/.test(normalized)) {
+        directives.outputIntent = 'short-video';
+        directives.mediaIntent = 'media-forward';
+    } else if (/现场展示|showcase|stage|现场/.test(normalized)) {
+        directives.outputIntent = 'showcase';
+    }
+
+    if (/英文|english/.test(normalized)) {
+        directives.locale = 'en';
+    } else if (/中文|chinese/.test(normalized)) {
+        directives.locale = 'zh-CN';
+    }
+
+    if (/12页|10页|更详细|更完整|deep dive|detailed|longer|more detailed/.test(normalized)) {
+        directives.length = 'long';
+    } else if (/4页|5页|精简|更短|summary|shorter|tighter/.test(normalized)) {
+        directives.length = 'short';
+    }
+
+    const targetScene = parseSceneTarget(latestPrompt);
+    const scope = targetScene ? 'scene' : 'deck';
+    const kind = targetScene ? 'deck-level' : 'brief-level';
+
+    return {
+        kind,
+        scope,
+        targetScene,
+        summary: latestPrompt,
+        directives
+    };
+}
+
+function mergeBriefForEdit(existingBrief, nextBrief, editIntent, locale) {
+    const baseBrief = existingBrief && typeof existingBrief === 'object'
+        ? { ...existingBrief }
+        : {};
+    const generatedBrief = nextBrief && typeof nextBrief === 'object'
+        ? { ...nextBrief }
+        : {};
+
+    if (!editIntent) {
+        return sanitizeDraftBrief(generatedBrief, existingBrief || generatedBrief, {
+            lockedLocale: locale
+        });
+    }
+
+    const merged = {
+        ...baseBrief,
+        audience: generatedBrief.audience || baseBrief.audience || '',
+        voiceoverMode: generatedBrief.voiceoverMode || baseBrief.voiceoverMode || 'placeholder',
+        mediaIntent: generatedBrief.mediaIntent || baseBrief.mediaIntent || 'balanced',
+        outlineHints: {
+            ...(baseBrief.outlineHints || {}),
+            ...(generatedBrief.outlineHints || {})
+        }
+    };
+
+    if (editIntent.directives.visualFamily) {
+        merged.visualFamily = editIntent.directives.visualFamily;
+    }
+    if (editIntent.directives.styleId) {
+        merged.styleId = editIntent.directives.styleId;
+    }
+    if (editIntent.directives.outputIntent) {
+        merged.outputIntent = editIntent.directives.outputIntent;
+    }
+    if (editIntent.directives.length) {
+        merged.length = editIntent.directives.length;
+    }
+    if (editIntent.directives.locale) {
+        merged.locale = editIntent.directives.locale;
+    }
+    if (editIntent.directives.mediaIntent) {
+        merged.mediaIntent = editIntent.directives.mediaIntent;
+    }
+
+    const flow = Array.isArray(merged.outlineHints?.flow) ? merged.outlineHints.flow : [];
+    const keywords = Array.isArray(merged.outlineHints?.keywords) ? merged.outlineHints.keywords : [];
+    merged.outlineHints = {
+        ...(merged.outlineHints || {}),
+        flow: flow.slice(0, 8),
+        keywords: Array.from(new Set([
+            ...keywords,
+            editIntent.scope === 'scene' && editIntent.targetScene ? `scene:${editIntent.targetScene}` : '',
+            editIntent.summary
+        ].filter(Boolean))).slice(0, 12)
+    };
+
+    return sanitizeDraftBrief(merged, baseBrief || generatedBrief, {
+        lockedLocale: merged.locale || locale
+    });
+}
+
+function buildEditAssistantAck(editIntent, locale) {
+    if (!editIntent) {
+        return '';
+    }
+
+    if (locale === 'zh-CN') {
+        if (editIntent.scope === 'scene' && editIntent.targetScene) {
+            return `收到，我会基于当前演示继续调整第 ${editIntent.targetScene} 页，并沿用已有结构重新生成结果。`;
+        }
+
+        return '收到，我会基于当前演示继续调整整体结构与风格，再为你生成更新版本。';
+    }
+
+    if (editIntent.scope === 'scene' && editIntent.targetScene) {
+        return `Understood. I will revise slide ${editIntent.targetScene} in the current deck and regenerate an updated version.`;
+    }
+
+    return 'Understood. I will refine the current deck direction and regenerate an updated version.';
+}
+
+function buildPlanAgentSteps({ draftBrief, locale, shouldClarify, clarification, editIntent }) {
+    const steps = [];
+
+    steps.push(buildStepEvent({
+        eventType: 'intent_parsed',
+        locale,
+        message: editIntent
+            ? (locale === 'zh-CN'
+                ? `已识别为继续编辑当前演示：${editIntent.summary}`
+                : `Continuing from the current deck: ${editIntent.summary}`)
+            : (locale === 'zh-CN'
+                ? `已解析需求，主题锁定为“${asString(draftBrief?.topic, '新演示')}”。`
+                : `Request parsed. Topic locked as "${asString(draftBrief?.topic, 'New presentation')}".`)
+    }));
+
+    if (shouldClarify) {
+        steps.push(buildStepEvent({
+            eventType: 'clarification_requested',
+            locale,
+            message: clarification,
+            status: 'needs_input'
+        }));
+        return steps;
+    }
+
+    steps.push(buildStepEvent({
+        eventType: 'brief_locked',
+        locale,
+        message: locale === 'zh-CN'
+            ? `已锁定 ${asString(draftBrief?.purpose, 'product')} / ${asString(draftBrief?.length, 'medium')} / ${asString(draftBrief?.visualFamily, 'showcase')}。`
+            : `Brief locked as ${asString(draftBrief?.purpose, 'product')} / ${asString(draftBrief?.length, 'medium')} / ${asString(draftBrief?.visualFamily, 'showcase')}.`,
+        status: 'ready',
+        artifact: buildBriefArtifact(draftBrief)
+    }));
+
+    return normalizeAgentSteps(steps);
+}
+
+function mapBuildEventPayload(payload, locale) {
+    const event = {
+        ...payload
+    };
+
+    if (!event.eventType) {
+        if (event.status === 'failed') {
+            event.eventType = 'build_failed';
+        } else if (event.status === 'ready') {
+            event.eventType = 'presentation_ready';
+        } else if (Number(event.step) <= 1) {
+            event.eventType = 'outline_generating';
+        } else {
+            event.eventType = 'slides_rendering';
+        }
+    }
+
+    if (!event.stepLabel) {
+        event.stepLabel = buildStepLabel(event.eventType, locale);
+    }
+
+    if (!event.artifact && event.status === 'ready' && event.presentationId) {
+        event.artifact = {
+            type: 'presentation',
+            label: 'preview',
+            url: `/presentations/${event.presentationId}`,
+            presentationId: event.presentationId
+        };
+    }
+
+    return event;
+}
+
 function createFallbackThreadStore() {
     const records = new Map();
 
@@ -620,6 +1258,17 @@ function createFallbackThreadStore() {
                 lastAssistantMessage: asString(threadInput?.lastAssistantMessage || previous.lastAssistantMessage, ''),
                 clarification: asString(threadInput?.clarification || previous.clarification, ''),
                 presentationId: asString(threadInput?.presentationId || previous.presentationId, ''),
+                activePresentationId: asString(
+                    threadInput?.activePresentationId
+                    || threadInput?.presentationId
+                    || previous.activePresentationId
+                    || previous.presentationId,
+                    ''
+                ),
+                lastBuildArtifacts: normalizeArtifacts(threadInput?.lastBuildArtifacts ?? previous.lastBuildArtifacts),
+                editIntent: threadInput?.editIntent || previous.editIntent || null,
+                pendingAction: asString(threadInput?.pendingAction || previous.pendingAction, ''),
+                agentSteps: normalizeAgentSteps(threadInput?.agentSteps ?? previous.agentSteps),
                 meta: {
                     ...(previous.meta && typeof previous.meta === 'object' ? previous.meta : {}),
                     ...(threadInput?.meta && typeof threadInput.meta === 'object' ? threadInput.meta : {})
@@ -662,8 +1311,44 @@ function buildThreadMeta(brief, overrides = {}) {
     };
 }
 
-function createCopilotService({ miniMaxClient, outlineService, presentationService, threadStore }) {
+function createCopilotService({
+    miniMaxClient,
+    outlineService,
+    presentationService,
+    threadStore,
+    observability,
+    execution,
+    mediaTaskStore
+}) {
     const resolvedThreadStore = threadStore || createFallbackThreadStore();
+    const resolvedObservability = observability || {
+        startSpan() {
+            return {
+                record() {},
+                update() {},
+                end() {},
+                fail() {}
+            };
+        }
+    };
+    const resolvedExecution = execution || {
+        provider: 'local',
+        enabled: false,
+        describe() {
+            return {
+                provider: 'local',
+                enabled: false
+            };
+        },
+        async enqueueMediaTask(task) {
+            return {
+                id: createEventId('task'),
+                status: 'queued',
+                provider: 'local',
+                task
+            };
+        }
+    };
     const planGraph = createCopilotPlanGraph({
         bootstrapPlan(state) {
             const fallbackBrief = buildHeuristicBrief({
@@ -743,6 +1428,201 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
         }
     });
 
+    async function handleMediaTaskUpdate({
+        taskId,
+        status,
+        result = {},
+        error = '',
+        provider = '',
+        providerTaskId = ''
+    }) {
+        if (!mediaTaskStore) {
+            return null;
+        }
+
+        const currentTask = mediaTaskStore.getById(taskId);
+        if (!currentTask) {
+            return null;
+        }
+
+        const nextStatus = asString(status, currentTask.status).trim().toLowerCase();
+        const nextError = asString(error, '').trim();
+        const nextResult = result && typeof result === 'object' ? result : {};
+        if (
+            currentTask.status === nextStatus
+            && currentTask.error === nextError
+            && JSON.stringify(currentTask.result || {}) === JSON.stringify(nextResult)
+        ) {
+            return currentTask;
+        }
+
+        const nextTask = mediaTaskStore.update(taskId, {
+            status: nextStatus,
+            provider: provider || currentTask.provider,
+            providerTaskId: providerTaskId || currentTask.providerTaskId || '',
+            result: nextResult,
+            error: nextError
+        });
+
+        if (!nextTask) {
+            return null;
+        }
+
+        const taskTrace = resolvedObservability.startSpan('copilot.media_task', {
+            threadId: nextTask.threadId,
+            presentationId: nextTask.presentationId,
+            taskId: nextTask.id,
+            input: {
+                kind: nextTask.kind,
+                status: nextTask.status,
+                provider: nextTask.provider
+            }
+        });
+
+        try {
+            taskTrace.record('media_task.persisted', {
+                output: {
+                    status: nextTask.status,
+                    result: nextTask.result
+                },
+                metadata: {
+                    providerTaskId: nextTask.providerTaskId || ''
+                }
+            });
+
+            const thread = resolvedThreadStore.isValidId(nextTask.threadId)
+                ? resolvedThreadStore.getById(nextTask.threadId)
+                : null;
+
+            if (thread) {
+                const uiLocale = normalizeLocale(thread.uiLocale || thread.locale || 'zh-CN');
+                const nextStep = buildStepEvent({
+                    eventType: nextTask.status === 'running'
+                        ? 'media_task_running'
+                        : nextTask.status === 'ready'
+                            ? 'media_task_ready'
+                            : nextTask.status === 'failed'
+                                ? 'media_task_failed'
+                                : 'media_task_queued',
+                    locale: uiLocale,
+                    message: buildMediaTaskMessage(nextTask, uiLocale),
+                    status: nextTask.status === 'failed'
+                        ? 'error'
+                        : nextTask.status === 'ready'
+                            ? 'success'
+                            : 'info',
+                    artifact: buildMediaTaskArtifact(nextTask)
+                });
+
+                resolvedThreadStore.save({
+                    ...thread,
+                    id: thread.id,
+                    lastBuildArtifacts: mergeArtifactsWithTask(thread.lastBuildArtifacts, nextTask),
+                    agentSteps: normalizeAgentSteps([
+                        ...(thread.agentSteps || []),
+                        nextStep
+                    ]),
+                    meta: {
+                        ...(thread.meta || {}),
+                        lastMediaTaskUpdateAt: new Date().toISOString()
+                    }
+                });
+            }
+
+            taskTrace.end({
+                output: {
+                    taskId: nextTask.id,
+                    status: nextTask.status
+                }
+            });
+
+            return nextTask;
+        } catch (callbackError) {
+            taskTrace.fail(callbackError, {
+                metadata: {
+                    taskId: nextTask.id
+                }
+            });
+            throw callbackError;
+        }
+    }
+
+    function scheduleLocalMediaTaskLifecycle(task) {
+        if (!mediaTaskStore || resolvedExecution.provider !== 'local') {
+            return;
+        }
+
+        const runningDelay = task.kind === 'video_generation' ? 1600 : 900;
+        const readyDelay = task.kind === 'video_generation' ? 4200 : 2200;
+
+        setTimeout(() => {
+            handleMediaTaskUpdate({
+                taskId: task.id,
+                status: 'running',
+                provider: 'local',
+                result: {
+                    message: `${task.label || task.payload?.label || task.kind} is running`
+                }
+            }).catch(() => {});
+        }, runningDelay);
+
+        setTimeout(() => {
+            handleMediaTaskUpdate({
+                taskId: task.id,
+                status: 'ready',
+                provider: 'local',
+                result: {
+                    message: `${task.label || task.payload?.label || task.kind} ready`,
+                    previewUrl: `/presentations/${task.presentationId}`
+                }
+            }).catch(() => {});
+        }, readyDelay);
+    }
+
+    async function enqueueMediaTasks({ draftBrief, presentationId, threadId, locale }) {
+        if (!mediaTaskStore) {
+            return [];
+        }
+
+        const blueprints = buildMediaTaskBlueprints(draftBrief, presentationId, threadId, locale);
+        const tasks = [];
+
+        for (const blueprint of blueprints) {
+            const queued = await resolvedExecution.enqueueMediaTask(blueprint);
+            const savedTask = mediaTaskStore.save({
+                id: queued.id,
+                kind: blueprint.kind,
+                label: blueprint.label,
+                status: queued.status || 'queued',
+                threadId,
+                presentationId,
+                provider: queued.provider || resolvedExecution.provider || 'local',
+                providerTaskId: queued.providerTaskId || '',
+                payload: blueprint.payload,
+                result: {},
+                error: ''
+            });
+            tasks.push(savedTask);
+            resolvedObservability.startSpan('copilot.media_task.enqueue', {
+                threadId,
+                presentationId,
+                taskId: savedTask.id,
+                input: {
+                    kind: savedTask.kind,
+                    provider: savedTask.provider
+                }
+            }).end({
+                output: {
+                    providerTaskId: savedTask.providerTaskId || '',
+                    status: savedTask.status
+                }
+            });
+            scheduleLocalMediaTaskLifecycle(savedTask);
+        }
+
+        return tasks;
+    }
+
     async function plan({
         messages,
         locale,
@@ -750,7 +1630,10 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
         outputIntent,
         visualPreference,
         allowClarification = true,
-        threadId
+        threadId,
+        reasoningMode,
+        webSearchEnabled,
+        selectedModelId
     }) {
         const normalizedMessages = normalizeMessages(messages);
         const deckLocale = normalizeLocale(locale);
@@ -760,50 +1643,221 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
             : null;
         const resolvedThreadId = existingThread?.id
             || (resolvedThreadStore.isValidId(threadId) ? threadId : resolvedThreadStore.createThreadId());
-
-        const planState = await planGraph.invoke({
+        const resolvedReasoningMode = normalizeReasoningMode(reasoningMode ?? existingThread?.reasoningMode);
+        const resolvedWebSearchEnabled = typeof webSearchEnabled === 'boolean'
+            ? webSearchEnabled
+            : Boolean(existingThread?.webSearchEnabled);
+        const resolvedSelectedModelId = asString(
+            selectedModelId || existingThread?.selectedModelId,
+            ''
+        ).trim();
+        const planTrace = resolvedObservability.startSpan('copilot.plan', {
             threadId: resolvedThreadId,
-            messages: normalizedMessages,
+            input: {
+                messageCount: normalizedMessages.length,
+                locale: deckLocale,
+                outputIntent,
+                visualPreference,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId
+            }
+        });
+
+        try {
+            const planState = await planGraph.invoke({
+                threadId: resolvedThreadId,
+                messages: normalizedMessages,
+                locale: deckLocale,
+                uiLocale: messageLocale,
+                outputIntent,
+                visualPreference,
+                allowClarification
+            }, {
+                configurable: {
+                    thread_id: resolvedThreadId
+                }
+            });
+
+            const latestPrompt = lastUserMessage(normalizedMessages);
+            const editIntent = detectEditIntent(latestPrompt, existingThread, deckLocale);
+            const mergedDraftBrief = mergeBriefForEdit(
+                existingThread?.draftBrief || null,
+                planState.draftBrief,
+                editIntent,
+                deckLocale
+            );
+            const assistantMessage = editIntent && planState.readyToBuild === true
+                ? buildEditAssistantAck(editIntent, messageLocale)
+                : planState.assistantMessage;
+            const agentSteps = buildPlanAgentSteps({
+                draftBrief: mergedDraftBrief,
+                locale: messageLocale,
+                shouldClarify: planState.readyToBuild !== true,
+                clarification: planState.clarification || '',
+                editIntent
+            });
+
+            const savedThread = resolvedThreadStore.save({
+                id: resolvedThreadId,
+                locale: deckLocale,
+                uiLocale: messageLocale,
+                status: planState.readyToBuild ? 'planned' : 'clarifying',
+                messages: appendAssistantMessage(normalizedMessages, assistantMessage),
+                clarificationCount: planState.readyToBuild
+                    ? Number(existingThread?.clarificationCount) || 0
+                    : (Number(existingThread?.clarificationCount) || 0) + 1,
+                draftBrief: mergedDraftBrief,
+                lastAssistantMessage: assistantMessage,
+                clarification: planState.clarification,
+                presentationId: existingThread?.presentationId || '',
+                activePresentationId: existingThread?.activePresentationId || existingThread?.presentationId || '',
+                lastBuildArtifacts: existingThread?.lastBuildArtifacts || [],
+                editIntent,
+                pendingAction: planState.readyToBuild ? 'build' : 'clarification',
+                agentSteps,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                uiRunState: existingThread?.uiRunState || null,
+                meta: buildThreadMeta(mergedDraftBrief, {
+                    plannedAt: new Date().toISOString(),
+                    lastEditIntent: editIntent?.kind || ''
+                })
+            });
+
+            agentSteps.forEach((step) => {
+                planTrace.record(step.eventType || 'plan_step', {
+                    output: {
+                        status: step.status,
+                        message: step.message
+                    },
+                    metadata: {
+                        stepLabel: step.stepLabel,
+                        artifact: step.artifact || null
+                    }
+                });
+            });
+            planTrace.record('plan.finalized', {
+                output: {
+                    readyToBuild: planState.readyToBuild === true,
+                    pendingAction: savedThread.pendingAction,
+                    editIntent: editIntent?.kind || ''
+                },
+                metadata: {
+                    agentSteps: agentSteps.map((item) => item.eventType)
+                }
+            });
+            planTrace.end({
+                output: {
+                    draftBrief: buildBriefArtifact(mergedDraftBrief),
+                    pendingAction: savedThread.pendingAction
+                }
+            });
+
+            return {
+                threadId: savedThread.id,
+                assistantMessage,
+                draftBrief: mergedDraftBrief,
+                readyToBuild: planState.readyToBuild === true,
+                clarification: planState.clarification || '',
+                shouldAutoBuild: planState.readyToBuild === true,
+                agentSteps,
+                pendingAction: savedThread.pendingAction,
+                activePresentationId: savedThread.activePresentationId || ''
+            };
+        } catch (error) {
+            planTrace.fail(error, {
+                metadata: {
+                    threadId: resolvedThreadId
+                }
+            });
+            throw error;
+        }
+    }
+
+    async function planStream({
+        messages,
+        locale,
+        uiLocale,
+        outputIntent,
+        visualPreference,
+        allowClarification = true,
+        threadId,
+        reasoningMode,
+        webSearchEnabled,
+        selectedModelId,
+        onProgress
+    }) {
+        const deckLocale = normalizeLocale(locale);
+        const messageLocale = normalizeLocale(uiLocale || deckLocale);
+        const writer = (payload) => {
+            onProgress?.(payload);
+        };
+
+        writer({
+            eventType: 'planning_started',
+            stepLabel: buildStepLabel('planning_started', messageLocale),
+            message: messageLocale === 'zh-CN'
+                ? 'AI 正在理解你的需求并整理关键信息。'
+                : 'The agent is understanding your request and extracting the key intent.',
+            status: 'building'
+        });
+
+        const result = await plan({
+            messages,
             locale: deckLocale,
             uiLocale: messageLocale,
             outputIntent,
             visualPreference,
-            allowClarification
-        }, {
-            configurable: {
-                thread_id: resolvedThreadId
-            }
+            allowClarification,
+            threadId,
+            reasoningMode,
+            webSearchEnabled,
+            selectedModelId
         });
 
-        const savedThread = resolvedThreadStore.save({
-            id: resolvedThreadId,
-            locale: deckLocale,
-            uiLocale: messageLocale,
-            status: planState.readyToBuild ? 'planned' : 'clarifying',
-            messages: appendAssistantMessage(normalizedMessages, planState.assistantMessage),
-            clarificationCount: planState.readyToBuild
-                ? Number(existingThread?.clarificationCount) || 0
-                : (Number(existingThread?.clarificationCount) || 0) + 1,
-            draftBrief: planState.draftBrief,
-            lastAssistantMessage: planState.assistantMessage,
-            clarification: planState.clarification,
-            presentationId: existingThread?.presentationId || '',
-            meta: buildThreadMeta(planState.draftBrief, {
-                plannedAt: new Date().toISOString()
-            })
+        const streamedSteps = Array.isArray(result.agentSteps) ? result.agentSteps : [];
+        for (const [index, step] of streamedSteps.entries()) {
+            await wait(index === 0 ? 120 : 160);
+            writer({
+                threadId: result.threadId,
+                kind: 'step',
+                ...step
+            });
+        }
+
+        await wait(streamedSteps.length ? 120 : 60);
+
+        writer({
+            threadId: result.threadId,
+            kind: 'result',
+            assistantMessage: result.assistantMessage,
+            message: result.assistantMessage,
+            draftBrief: result.draftBrief,
+            readyToBuild: result.readyToBuild,
+            clarification: result.clarification,
+            shouldAutoBuild: result.shouldAutoBuild,
+            agentSteps: result.agentSteps,
+            pendingAction: result.pendingAction,
+            activePresentationId: result.activePresentationId || '',
+            status: result.readyToBuild ? 'ready' : 'clarifying'
         });
 
-        return {
-            threadId: savedThread.id,
-            assistantMessage: planState.assistantMessage,
-            draftBrief: planState.draftBrief,
-            readyToBuild: planState.readyToBuild === true,
-            clarification: planState.clarification || '',
-            shouldAutoBuild: planState.readyToBuild === true
-        };
+        return result;
     }
 
-    async function buildStream({ draftBrief, locale, ownerId, presentationId, onProgress, threadId }) {
+    async function buildStream({
+        draftBrief,
+        locale,
+        ownerId,
+        presentationId,
+        onProgress,
+        threadId,
+        reasoningMode,
+        webSearchEnabled,
+        selectedModelId
+    }) {
         const existingThread = resolvedThreadStore.isValidId(threadId)
             ? resolvedThreadStore.getById(threadId)
             : null;
@@ -814,10 +1868,40 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
             || generatePresentationId();
         const buildLocale = normalizeLocale(locale || draftBrief?.locale || existingThread?.locale);
         const buildUiLocale = normalizeLocale(existingThread?.uiLocale || buildLocale);
+        const resolvedReasoningMode = normalizeReasoningMode(reasoningMode ?? existingThread?.reasoningMode);
+        const resolvedWebSearchEnabled = typeof webSearchEnabled === 'boolean'
+            ? webSearchEnabled
+            : Boolean(existingThread?.webSearchEnabled);
+        const resolvedSelectedModelId = asString(
+            selectedModelId || existingThread?.selectedModelId,
+            ''
+        ).trim();
+        const buildTrace = resolvedObservability.startSpan('copilot.build', {
+            threadId: resolvedThreadId,
+            presentationId: resolvedPresentationId,
+            input: {
+                draftBrief: buildBriefArtifact(draftBrief),
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId
+            }
+        });
         const progressWriter = (payload) => {
+            const event = mapBuildEventPayload(payload, buildUiLocale);
+            buildTrace.record(event.eventType || 'build_event', {
+                output: {
+                    progress: event.progress,
+                    step: event.step,
+                    status: event.status
+                },
+                metadata: {
+                    stepLabel: event.stepLabel,
+                    message: event.message
+                }
+            });
             onProgress?.({
                 threadId: resolvedThreadId,
-                ...payload
+                ...event
             });
         };
         const buildGraph = createCopilotBuildGraph({
@@ -840,7 +1924,11 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
                     1,
                     state.locale === 'zh-CN'
                         ? 'AI 正在整理需求并补全生成参数...'
-                        : 'The agent is structuring your request and filling missing build parameters...'
+                        : 'The agent is structuring your request and filling missing build parameters...',
+                    {
+                        eventType: 'outline_generating',
+                        stepLabel: buildStepLabel('outline_generating', buildUiLocale)
+                    }
                 ));
 
                 const outline = await outlineService.generateStableOutline({
@@ -856,7 +1944,16 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
                     1,
                     state.locale === 'zh-CN'
                         ? `已生成 ${outline.slides.length} 页的基础提纲，正在补全节奏与展示风格...`
-                        : `A base outline with ${outline.slides.length} scenes is ready. Refining pacing and presentation style...`
+                        : `A base outline with ${outline.slides.length} scenes is ready. Refining pacing and presentation style...`,
+                    {
+                        eventType: 'outline_generating',
+                        stepLabel: buildStepLabel('outline_generating', buildUiLocale),
+                        artifact: {
+                            type: 'outline',
+                            label: 'outline',
+                            presentationId: state.presentationId
+                        }
+                    }
                 ));
 
                 return {
@@ -864,6 +1961,18 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
                 };
             },
             enrichOutlineNode(state) {
+                progressWriter(buildSsePayload(
+                    state.presentationId,
+                    32,
+                    2,
+                    state.locale === 'zh-CN'
+                        ? '已锁定结构和节奏，正在准备渲染演示内容...'
+                        : 'Structure and pacing locked. Preparing to render the presentation...',
+                    {
+                        eventType: 'slides_rendering',
+                        stepLabel: buildStepLabel('slides_rendering', buildUiLocale)
+                    }
+                ));
                 return {
                     enrichedOutline: enrichOutlineForCopilot(state.outline, state.normalizedBrief)
                 };
@@ -904,6 +2013,15 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
             lastAssistantMessage: existingThread?.lastAssistantMessage || '',
             clarification: '',
             presentationId: resolvedPresentationId,
+            activePresentationId: resolvedPresentationId,
+            lastBuildArtifacts: existingThread?.lastBuildArtifacts || [],
+            editIntent: existingThread?.editIntent || null,
+            pendingAction: 'building',
+            agentSteps: existingThread?.agentSteps || [],
+            reasoningMode: resolvedReasoningMode,
+            webSearchEnabled: resolvedWebSearchEnabled,
+            selectedModelId: resolvedSelectedModelId,
+            uiRunState: existingThread?.uiRunState || null,
             meta: buildThreadMeta(draftBrief, {
                 buildStartedAt: new Date().toISOString()
             })
@@ -924,6 +2042,13 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
 
             const normalizedBrief = buildState.normalizedBrief || draftBrief;
             const result = buildState.buildResult || {};
+            const lastBuildArtifacts = buildPresentationArtifacts(resolvedPresentationId);
+            const mediaTasks = await enqueueMediaTasks({
+                draftBrief: normalizedBrief,
+                presentationId: resolvedPresentationId,
+                threadId: resolvedThreadId,
+                locale: buildUiLocale
+            });
 
             resolvedThreadStore.save({
                 id: resolvedThreadId,
@@ -936,9 +2061,64 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
                 lastAssistantMessage: existingThread?.lastAssistantMessage || '',
                 clarification: '',
                 presentationId: resolvedPresentationId,
+                activePresentationId: resolvedPresentationId,
+                lastBuildArtifacts: [
+                    ...lastBuildArtifacts,
+                    ...mediaTasks.map((task) => buildMediaTaskArtifact(task))
+                ],
+                editIntent: null,
+                pendingAction: 'continue',
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                uiRunState: existingThread?.uiRunState || null,
+                agentSteps: normalizeAgentSteps([
+                    ...(existingThread?.agentSteps || []),
+                    buildStepEvent({
+                        eventType: 'presentation_ready',
+                        locale: buildUiLocale,
+                        message: buildUiLocale === 'zh-CN'
+                            ? '演示已生成完成，可以继续对话或直接预览。'
+                            : 'The presentation is ready. You can keep chatting or open the preview.',
+                        status: 'success',
+                        artifact: {
+                            type: 'presentation',
+                            label: 'preview',
+                            url: `/presentations/${resolvedPresentationId}`,
+                            presentationId: resolvedPresentationId
+                        }
+                    })
+                ]),
                 meta: buildThreadMeta(normalizedBrief, {
                     buildCompletedAt: new Date().toISOString()
                 })
+            });
+
+            mediaTasks.forEach((task) => {
+                progressWriter(buildSsePayload(
+                    resolvedPresentationId,
+                    100,
+                    4,
+                    buildUiLocale === 'zh-CN'
+                        ? `${task.label} 已加入任务队列。`
+                        : `${task.label} has been queued.`,
+                    {
+                        status: 'ready',
+                        eventType: 'media_task_queued',
+                        stepLabel: buildStepLabel('media_task_queued', buildUiLocale),
+                        artifact: buildMediaTaskArtifact(task)
+                    }
+                ));
+            });
+
+            buildTrace.end({
+                output: {
+                    presentationId: resolvedPresentationId,
+                    artifacts: [
+                        ...lastBuildArtifacts,
+                        ...mediaTasks.map((task) => buildMediaTaskArtifact(task))
+                    ]
+                }
             });
 
             return {
@@ -958,19 +2138,403 @@ function createCopilotService({ miniMaxClient, outlineService, presentationServi
                 lastAssistantMessage: existingThread?.lastAssistantMessage || '',
                 clarification: '',
                 presentationId: resolvedPresentationId,
+                activePresentationId: resolvedPresentationId,
+                lastBuildArtifacts: existingThread?.lastBuildArtifacts || [],
+                editIntent: existingThread?.editIntent || null,
+                pendingAction: 'retry',
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                uiRunState: existingThread?.uiRunState || null,
+                agentSteps: normalizeAgentSteps([
+                    ...(existingThread?.agentSteps || []),
+                    buildStepEvent({
+                        eventType: 'build_failed',
+                        locale: buildUiLocale,
+                        message: error.message,
+                        status: 'error'
+                    })
+                ]),
                 meta: buildThreadMeta(draftBrief, {
                     buildFailedAt: new Date().toISOString(),
                     lastError: error.message
                 })
             });
+            buildTrace.fail(error, {
+                metadata: {
+                    threadId: resolvedThreadId,
+                    presentationId: resolvedPresentationId
+                }
+            });
             throw error;
         }
+    }
+
+    async function aguiStream({
+        messages,
+        locale,
+        uiLocale,
+        outputIntent,
+        visualPreference,
+        allowClarification = true,
+        threadId,
+        reasoningMode,
+        webSearchEnabled,
+        selectedModelId,
+        onEvent
+    }) {
+        const normalizedMessages = normalizeMessages(messages);
+        const deckLocale = normalizeLocale(locale);
+        const messageLocale = normalizeLocale(uiLocale || deckLocale);
+        const existingThread = resolvedThreadStore.isValidId(threadId)
+            ? resolvedThreadStore.getById(threadId)
+            : null;
+        const resolvedThreadId = existingThread?.id
+            || (resolvedThreadStore.isValidId(threadId) ? threadId : resolvedThreadStore.createThreadId());
+        const resolvedReasoningMode = normalizeReasoningMode(reasoningMode ?? existingThread?.reasoningMode);
+        const resolvedWebSearchEnabled = typeof webSearchEnabled === 'boolean'
+            ? webSearchEnabled
+            : Boolean(existingThread?.webSearchEnabled);
+        const resolvedSelectedModelId = asString(
+            selectedModelId || existingThread?.selectedModelId,
+            ''
+        ).trim();
+        const runId = createRunId();
+        const writer = (payload) => {
+            onEvent?.(payload);
+        };
+        const aguiTrace = resolvedObservability.startSpan('copilot.agui', {
+            threadId: resolvedThreadId,
+            presentationId: existingThread?.activePresentationId || existingThread?.presentationId || '',
+            input: {
+                messageCount: normalizedMessages.length,
+                locale: deckLocale,
+                uiLocale: messageLocale,
+                outputIntent,
+                visualPreference,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId
+            }
+        });
+
+        const persistUiRunState = (lastEventType) => {
+            const latestThread = resolvedThreadStore.getById(resolvedThreadId) || existingThread || {};
+            resolvedThreadStore.save({
+                ...latestThread,
+                id: resolvedThreadId,
+                locale: latestThread.locale || deckLocale,
+                uiLocale: latestThread.uiLocale || messageLocale,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                uiRunState: {
+                    runId,
+                    lastEventType,
+                    lastSnapshotAt: new Date().toISOString()
+                }
+            });
+        };
+
+        try {
+            persistUiRunState('RUN_STARTED');
+            writer(createAguiEvent({
+                type: 'RUN_STARTED',
+                threadId: resolvedThreadId,
+                runId,
+                presentationId: existingThread?.activePresentationId || existingThread?.presentationId || '',
+                payload: {
+                    mode: resolvedReasoningMode,
+                    webSearchEnabled: resolvedWebSearchEnabled,
+                    selectedModelId: resolvedSelectedModelId
+                }
+            }));
+
+            if (existingThread) {
+                writer(createAguiEvent({
+                    type: 'STATE_SNAPSHOT',
+                    threadId: resolvedThreadId,
+                    runId,
+                    presentationId: existingThread.activePresentationId || existingThread.presentationId || '',
+                    payload: buildAguiThreadSnapshot(existingThread)
+                }));
+                aguiTrace.record('agui.snapshot', {
+                    metadata: {
+                        runId,
+                        status: existingThread.status || ''
+                    }
+                });
+            }
+
+            await emitAguiStep(writer, {
+                threadId: resolvedThreadId,
+                runId,
+                presentationId: existingThread?.activePresentationId || existingThread?.presentationId || '',
+                step: buildStepEvent({
+                    eventType: 'planning_started',
+                    locale: messageLocale,
+                    message: messageLocale === 'zh-CN'
+                        ? 'AI 正在理解你的需求并整理关键信息。'
+                        : 'The agent is understanding your request and extracting the key intent.',
+                    status: 'running'
+                })
+            });
+            aguiTrace.record('agui.planning_started', {
+                metadata: {
+                    runId,
+                    stepType: 'reasoning'
+                }
+            });
+
+            const planResult = await plan({
+                messages: normalizedMessages,
+                locale: deckLocale,
+                uiLocale: messageLocale,
+                outputIntent,
+                visualPreference,
+                allowClarification,
+                threadId: resolvedThreadId,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId
+            });
+
+            writer(createAguiEvent({
+                type: 'STATE_DELTA',
+                threadId: planResult.threadId,
+                runId,
+                presentationId: planResult.activePresentationId || '',
+                payload: {
+                    status: planResult.readyToBuild ? 'planned' : 'clarifying',
+                    pendingAction: planResult.pendingAction,
+                    draftBrief: planResult.draftBrief,
+                    clarification: planResult.clarification || '',
+                    activePresentationId: planResult.activePresentationId || '',
+                    reasoningMode: resolvedReasoningMode,
+                    webSearchEnabled: resolvedWebSearchEnabled,
+                    selectedModelId: resolvedSelectedModelId
+                }
+            }));
+            persistUiRunState('STATE_DELTA');
+
+            const planSteps = Array.isArray(planResult.agentSteps) ? planResult.agentSteps : [];
+            for (const step of planSteps) {
+                await emitAguiStep(writer, {
+                    threadId: planResult.threadId,
+                    runId,
+                    presentationId: planResult.activePresentationId || '',
+                    step
+                });
+                aguiTrace.record('agui.plan_step', {
+                    metadata: {
+                        runId,
+                        eventType: step.eventType || '',
+                        stepType: mapAguiStepPhase(step.eventType)
+                    }
+                });
+            }
+
+            await streamAguiAssistantMessage(writer, {
+                threadId: planResult.threadId,
+                runId,
+                presentationId: planResult.activePresentationId || '',
+                message: planResult.assistantMessage
+            });
+            aguiTrace.record('agui.assistant_message', {
+                output: {
+                    length: asString(planResult.assistantMessage, '').length
+                },
+                metadata: {
+                    runId
+                }
+            });
+
+            if (planResult.readyToBuild !== true) {
+                persistUiRunState('RUN_FINISHED');
+                writer(createAguiEvent({
+                    type: 'RUN_FINISHED',
+                    threadId: planResult.threadId,
+                    runId,
+                    presentationId: planResult.activePresentationId || '',
+                    payload: {
+                        status: 'clarifying',
+                        draftBrief: planResult.draftBrief,
+                        clarification: planResult.clarification || '',
+                        pendingAction: planResult.pendingAction
+                    }
+                }));
+                aguiTrace.end({
+                    output: {
+                        status: 'clarifying',
+                        pendingAction: planResult.pendingAction
+                    },
+                    metadata: {
+                        runId
+                    }
+                });
+                return planResult;
+            }
+
+            let buildEventQueue = Promise.resolve();
+            const chainBuildEvent = (event) => {
+                buildEventQueue = buildEventQueue.then(async () => {
+                    const buildEvent = event?.eventType
+                        ? event
+                        : mapBuildEventPayload(event, messageLocale);
+                    const currentPresentationId = buildEvent.presentationId
+                        || planResult.activePresentationId
+                        || existingThread?.activePresentationId
+                        || '';
+                    await emitAguiStep(writer, {
+                        threadId: planResult.threadId,
+                        runId,
+                        presentationId: currentPresentationId,
+                        step: {
+                            id: createEventId('step'),
+                            eventType: buildEvent.eventType,
+                            stepLabel: buildEvent.stepLabel,
+                            message: buildEvent.message,
+                            status: buildEvent.status,
+                            artifact: buildEvent.artifact || null
+                        }
+                    });
+                    aguiTrace.record('agui.build_step', {
+                        output: {
+                            progress: buildEvent.progress,
+                            status: buildEvent.status
+                        },
+                        metadata: {
+                            runId,
+                            eventType: buildEvent.eventType,
+                            stepType: mapAguiStepPhase(buildEvent.eventType)
+                        }
+                    });
+                });
+                return buildEventQueue;
+            };
+
+            const buildResult = await buildStream({
+                draftBrief: planResult.draftBrief,
+                locale: deckLocale,
+                presentationId: planResult.activePresentationId || existingThread?.activePresentationId || '',
+                threadId: planResult.threadId,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                onProgress(event) {
+                    void chainBuildEvent(event);
+                }
+            });
+
+            await buildEventQueue;
+
+            const finalThread = getThread(planResult.threadId) || {};
+            const finalPresentationId = buildResult.presentationId
+                || finalThread.activePresentationId
+                || finalThread.presentationId
+                || '';
+
+            writer(createAguiEvent({
+                type: 'STATE_DELTA',
+                threadId: planResult.threadId,
+                runId,
+                presentationId: finalPresentationId,
+                payload: {
+                    status: 'ready',
+                    pendingAction: finalThread.pendingAction || 'continue',
+                    draftBrief: finalThread.draftBrief || planResult.draftBrief,
+                    clarification: '',
+                    activePresentationId: finalPresentationId,
+                    lastBuildArtifacts: normalizeArtifacts(finalThread.lastBuildArtifacts),
+                    mediaTaskSummary: Array.isArray(finalThread.mediaTaskSummary) ? finalThread.mediaTaskSummary : []
+                }
+            }));
+            persistUiRunState('RUN_FINISHED');
+
+            writer(createAguiEvent({
+                type: 'RUN_FINISHED',
+                threadId: planResult.threadId,
+                runId,
+                presentationId: finalPresentationId,
+                payload: {
+                    status: 'ready',
+                    pendingAction: finalThread.pendingAction || 'continue',
+                    draftBrief: finalThread.draftBrief || planResult.draftBrief,
+                    presentationId: finalPresentationId,
+                    previewUrl: finalPresentationId ? `/presentations/${finalPresentationId}` : '',
+                    pptxUrl: finalPresentationId ? `/api/presentations/${finalPresentationId}/export.pptx` : '',
+                    artifact: finalPresentationId
+                        ? {
+                            type: 'presentation',
+                            label: 'preview',
+                            url: `/presentations/${finalPresentationId}`,
+                            presentationId: finalPresentationId
+                        }
+                        : null
+                }
+            }));
+            aguiTrace.end({
+                output: {
+                    status: 'ready',
+                    presentationId: finalPresentationId
+                },
+                metadata: {
+                    runId
+                }
+            });
+            return {
+                ...planResult,
+                presentationId: finalPresentationId
+            };
+        } catch (error) {
+            persistUiRunState('RUN_ERROR');
+            writer(createAguiEvent({
+                type: 'RUN_ERROR',
+                threadId: resolvedThreadId,
+                runId,
+                presentationId: existingThread?.activePresentationId || existingThread?.presentationId || '',
+                payload: {
+                    message: error.message || String(error),
+                    status: 'failed'
+                }
+            }));
+            aguiTrace.fail(error, {
+                metadata: {
+                    runId
+                }
+            });
+            throw error;
+        }
+    }
+
+    function getThread(threadId) {
+        const thread = resolvedThreadStore.isValidId(threadId)
+            ? resolvedThreadStore.getById(threadId)
+            : null;
+
+        if (!thread) {
+            return null;
+        }
+
+        return {
+            ...thread,
+            agentSteps: normalizeAgentSteps(thread.agentSteps),
+            lastBuildArtifacts: normalizeArtifacts(thread.lastBuildArtifacts),
+            execution: resolvedExecution.describe(),
+            mediaTaskSummary: thread.activePresentationId && mediaTaskStore?.listByPresentationId
+                ? mediaTaskStore.listByPresentationId(thread.activePresentationId)
+                : []
+        };
     }
 
     return {
         buildStream,
         generatePresentationId,
         generateThreadId: () => resolvedThreadStore.createThreadId(),
+        handleMediaTaskCallback: handleMediaTaskUpdate,
+        getThread,
+        aguiStream,
+        planStream,
         plan
     };
 }

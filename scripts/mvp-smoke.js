@@ -97,6 +97,39 @@ async function postJson(url, payload) {
     return response;
 }
 
+async function postSse(url, payload) {
+    const response = await fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream'
+        },
+        body: JSON.stringify({
+            ...payload,
+            stream: true
+        })
+    });
+
+    return response;
+}
+
+async function waitFor(checkFn, timeoutMs = 10000, intervalMs = 500) {
+    const startedAt = Date.now();
+    let lastError = null;
+
+    while (Date.now() - startedAt < timeoutMs) {
+        try {
+            return await checkFn();
+        } catch (error) {
+            lastError = error;
+        }
+
+        await sleep(intervalMs);
+    }
+
+    throw lastError || new Error('waitFor timed out');
+}
+
 async function runChecks() {
     await assertHtmlPage('Home page (React)', `${BASE_URL}/`, [
         'data-xiangyu-react-root="true"',
@@ -120,7 +153,7 @@ async function runChecks() {
         }
     });
 
-    const planResponse = await postJson(`${BASE_URL}/api/copilot/plan`, {
+    const planResponse = await postSse(`${BASE_URL}/api/copilot/plan`, {
         messages: [
             {
                 role: 'user',
@@ -138,12 +171,22 @@ async function runChecks() {
         throw new Error(`Copilot plan failed with status ${planResponse.status}`);
     }
 
-    const planPayload = await planResponse.json();
+    const planEvents = parseSsePayload(await planResponse.text());
+    if (!planEvents.some((event) => event.kind === 'step')) {
+        throw new Error('Copilot plan stream returned no step events.');
+    }
+    const planPayload = planEvents[planEvents.length - 1];
+    if (!planPayload || planPayload.kind !== 'result') {
+        throw new Error('Copilot plan stream returned no final result.');
+    }
     if (!planPayload.draftBrief || typeof planPayload.draftBrief !== 'object') {
         throw new Error('Copilot plan returned no draftBrief.');
     }
     if (!planPayload.threadId) {
         throw new Error('Copilot plan returned no threadId.');
+    }
+    if (!Array.isArray(planPayload.agentSteps) || planPayload.agentSteps.length === 0) {
+        throw new Error('Copilot plan returned no agentSteps.');
     }
     if (planPayload.draftBrief.locale !== 'zh-CN') {
         throw new Error(`Copilot plan returned wrong locale: ${planPayload.draftBrief.locale}`);
@@ -172,6 +215,9 @@ async function runChecks() {
     if (finalEvent.threadId !== planPayload.threadId) {
         throw new Error('Copilot build returned mismatched threadId.');
     }
+    if (!finalEvent.eventType || !finalEvent.stepLabel) {
+        throw new Error('Copilot build returned no structured event fields.');
+    }
     if (finalEvent.status !== 'ready') {
         throw new Error(`Copilot build did not finish ready. Final status: ${finalEvent.status}`);
     }
@@ -182,6 +228,42 @@ async function runChecks() {
         throw new Error('Copilot build is missing output URLs.');
     }
     console.log('PASS Copilot build stream');
+
+    await assertJson(
+        'Copilot thread restore',
+        `${BASE_URL}/api/copilot/threads/${planPayload.threadId}`,
+        async (payload) => {
+            if (payload.id !== planPayload.threadId) {
+                throw new Error('Thread restore returned mismatched id.');
+            }
+            if (!payload.activePresentationId) {
+                throw new Error('Thread restore is missing activePresentationId.');
+            }
+            if (!Array.isArray(payload.lastBuildArtifacts) || payload.lastBuildArtifacts.length === 0) {
+                throw new Error('Thread restore is missing lastBuildArtifacts.');
+            }
+            if (!Array.isArray(payload.mediaTaskSummary) || payload.mediaTaskSummary.length === 0) {
+                throw new Error('Thread restore is missing mediaTaskSummary.');
+            }
+        }
+    );
+
+    await waitFor(async () => {
+        const response = await fetchWithTimeout(`${BASE_URL}/api/copilot/threads/${planPayload.threadId}`);
+        if (!response.ok) {
+            throw new Error(`Thread poll failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const statuses = Array.isArray(payload.mediaTaskSummary)
+            ? payload.mediaTaskSummary.map((item) => item.status)
+            : [];
+        if (!statuses.some((status) => status === 'running' || status === 'ready')) {
+            throw new Error('Media tasks did not advance past queued.');
+        }
+        return payload;
+    }, 12000, 800);
+    console.log('PASS Media task status writeback');
 
     const presentationId = finalEvent.presentationId;
     const metadata = await assertJson(

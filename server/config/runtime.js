@@ -19,11 +19,16 @@ function detectVercel(rootDir) {
 function createRuntimeConfig(options = {}) {
     const rootDir = options.rootDir || path.resolve(__dirname, '../..');
     const isVercel = detectVercel(rootDir);
+    const port = Number(process.env.PORT || options.port || 3001);
 
     return {
         rootDir,
         isVercel,
-        PORT: Number(process.env.PORT || options.port || 3001),
+        PORT: port,
+        APP_BASE_URL: process.env.APP_BASE_URL || process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${port}`,
+        MEDIA_TASK_CALLBACK_SECRET: process.env.MEDIA_TASK_CALLBACK_SECRET || '',
+        TRIGGER_PROJECT_REF: process.env.TRIGGER_PROJECT_REF || '',
+        TRIGGER_API_URL: process.env.TRIGGER_API_URL || '',
         DATA_FILE: path.join(rootDir, 'data.json'),
         PUBLIC_DIR: path.join(rootDir, 'public'),
         CLIENT_DIR: path.join(rootDir, 'client'),
@@ -31,6 +36,7 @@ function createRuntimeConfig(options = {}) {
         PRESENTATIONS_DIR: path.join(rootDir, 'presentations'),
         ASSETS_DIR: path.join(rootDir, 'assets'),
         THREADS_DIR: path.join(rootDir, 'threads'),
+        MEDIA_TASKS_FILE: path.join(rootDir, 'media-tasks.json'),
         SKILLS_FILE: path.join(rootDir, 'skills.json')
     };
 }

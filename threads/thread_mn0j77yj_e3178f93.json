@@ -1,0 +1,94 @@
+{
+  "id": "thread_mn0j77yj_e3178f93",
+  "createdAt": "2026-03-21T16:17:33.451Z",
+  "updatedAt": "2026-03-21T16:17:46.123Z",
+  "locale": "en",
+  "uiLocale": "en",
+  "status": "planned",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Create a concise English product demo for a live presentation."
+    },
+    {
+      "role": "assistant",
+      "content": "Your concise product demo deck for a live presentation is ready to build. Here's the brief:"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "Concise English product demo for a live presentation",
+    "purpose": "product",
+    "length": "medium",
+    "audience": "Live presentation audience",
+    "locale": "en",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "Showcase-oriented with strong pacing",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "product demo",
+        "live presentation",
+        "concise",
+        "English"
+      ]
+    }
+  },
+  "lastAssistantMessage": "Your concise product demo deck for a live presentation is ready to build. Here's the brief:",
+  "clarification": "",
+  "presentationId": "",
+  "activePresentationId": "",
+  "lastBuildArtifacts": [],
+  "editIntent": null,
+  "pendingAction": "build",
+  "agentSteps": [
+    {
+      "eventType": "intent_parsed",
+      "stepLabel": "Intent parsed",
+      "message": "Request parsed. Topic locked as \"Concise English product demo for a live presentation\".",
+      "status": "info",
+      "artifact": null
+    },
+    {
+      "eventType": "brief_locked",
+      "stepLabel": "Brief locked",
+      "message": "Brief locked as product / medium / showcase.",
+      "status": "ready",
+      "artifact": {
+        "type": "brief",
+        "label": "",
+        "url": "",
+        "presentationId": "",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    }
+  ],
+  "reasoningMode": "fast",
+  "webSearchEnabled": false,
+  "selectedModelId": "nano-banana-pro",
+  "uiRunState": {
+    "runId": "run_mn0j77yj_83dfaeef",
+    "lastEventType": "STATE_DELTA",
+    "lastSnapshotAt": "2026-03-21T16:17:46.123Z"
+  },
+  "meta": {
+    "topic": "Concise English product demo for a live presentation",
+    "purpose": "product",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "plannedAt": "2026-03-21T16:17:46.115Z",
+    "lastEditIntent": ""
+  }
+}

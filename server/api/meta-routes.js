@@ -2,7 +2,7 @@ const express = require('express');
 const { listStylePresets } = require('../generator/theme-registry');
 const { readJsonFile } = require('../storage/file-json-store');
 
-function createMetaRoutes({ config }) {
+function createMetaRoutes({ config, agentRuntime }) {
     const router = express.Router();
 
     router.get('/styles', (req, res) => {
@@ -24,6 +24,23 @@ function createMetaRoutes({ config }) {
         }
 
         res.json(skill);
+    });
+
+    router.get('/agent/runtime', (req, res) => {
+        res.json({
+            orchestration: 'langgraph-js',
+            execution: agentRuntime?.execution?.describe?.() || {
+                provider: 'local',
+                enabled: false
+            },
+            observability: agentRuntime?.observability?.describe?.() || {
+                provider: 'noop',
+                enabled: false
+            },
+            media: {
+                statuses: agentRuntime?.mediaTaskStore?.statuses || ['queued', 'running', 'ready', 'failed']
+            }
+        });
     });
 
     return router;

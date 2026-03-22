@@ -2,16 +2,29 @@
 import {
     ArrowRightToLine,
     ArrowUp,
+    Check,
     ChevronDown,
     Download,
     Globe,
     Home,
+    Lightbulb,
+    Mic,
     MonitorPlay,
+    Paperclip,
     Box,
+    Sparkles,
+    Zap,
     Wand2
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { buildCopilotStream, getPresentationRecord, getStyles, planCopilot } from '../lib/api';
+import {
+    buildCopilotStream,
+    getPresentationRecord,
+    getStyles,
+    planCopilot,
+    streamCopilotAgui
+} from '../lib/api';
+import { AgentRailMessages } from '../components/AgentRailMessages';
 import { buildLocalePath, formatDate, I18N, resolveLocale } from '../lib/locale';
 import { pushRecentPresentation } from '../lib/storage';
 
@@ -87,36 +100,106 @@ function getLogRoleLabel(entry, locale) {
     return locale === 'zh-CN' ? 'AI 助手' : 'AI Agent';
 }
 
-function buildAgentTraceSummary(brief, locale) {
-    if (!brief || typeof brief !== 'object') {
-        return '';
+function getRailMessageKind(entry) {
+    if (!entry) {
+        return 'assistant';
     }
 
-    const topic = String(brief.topic || '').trim();
-    const purpose = String(brief.purpose || '').trim() || 'product';
-    const length = String(brief.length || '').trim() || 'medium';
-    const visualFamily = String(brief.visualFamily || '').trim() || 'showcase';
-    const outputIntent = String(brief.outputIntent || '').trim() || 'showcase';
-
-    if (locale === 'zh-CN') {
-        return [
-            '已理解当前需求：',
-            `1. 类型：${purpose}`,
-            `2. 篇幅：${length}`,
-            `3. 视觉：${visualFamily}`,
-            `4. 输出：${outputIntent}`,
-            topic ? `5. 主题：${topic}` : ''
-        ].filter(Boolean).join('\n');
+    if (entry.role === 'user') {
+        return 'user';
     }
 
-    return [
-        'Interpreted request:',
-        `1. Purpose: ${purpose}`,
-        `2. Length: ${length}`,
-        `3. Visual: ${visualFamily}`,
-        `4. Output: ${outputIntent}`,
-        topic ? `5. Topic: ${topic}` : ''
-    ].filter(Boolean).join('\n');
+    if (entry.role === 'assistant' && entry.tone !== 'reasoning' && entry.tone !== 'execution' && entry.tone !== 'tool' && entry.tone !== 'result') {
+        return 'assistant';
+    }
+
+    if (entry.tone === 'tool') {
+        return 'tool';
+    }
+
+    if (entry.tone === 'result') {
+        return 'result';
+    }
+
+    if (entry.tone === 'error') {
+        return 'error';
+    }
+
+    if (entry.tone === 'reasoning') {
+        return 'thinking';
+    }
+
+    return 'execution';
+}
+
+function buildArtifactTags(artifact, locale) {
+    if (!artifact || typeof artifact !== 'object') {
+        return [];
+    }
+
+    const tags = [];
+    if (artifact.type) {
+        tags.push(String(artifact.type));
+    }
+    if (artifact.status) {
+        tags.push(String(artifact.status));
+    }
+    if (artifact.kind) {
+        tags.push(String(artifact.kind));
+    }
+    if (artifact.label && artifact.label !== artifact.type) {
+        tags.push(String(artifact.label));
+    }
+
+    return Array.from(new Set(tags.filter(Boolean))).slice(0, 4);
+}
+
+function mergeLogEntry(current, nextEntry) {
+    const index = current.findIndex((item) => item.id === nextEntry.id);
+    if (index === -1) {
+        return [...current, nextEntry];
+    }
+
+    const updated = [...current];
+    updated[index] = {
+        ...updated[index],
+        ...nextEntry,
+        content: typeof nextEntry.content === 'string' ? nextEntry.content : updated[index].content,
+        artifact: nextEntry.artifact ?? updated[index].artifact,
+        stepLabel: nextEntry.stepLabel || updated[index].stepLabel,
+        stepStatus: nextEntry.stepStatus || updated[index].stepStatus,
+        eventType: nextEntry.eventType || updated[index].eventType
+    };
+    return updated;
+}
+
+function buildAguiStepLog(event) {
+    const payload = event?.payload || {};
+    const phase = String(payload.phase || '').trim();
+    const status = String(payload.status || '').trim();
+
+    let tone = 'execution';
+    if (status === 'failed' || status === 'error') {
+        tone = 'error';
+    } else if (phase === 'reasoning') {
+        tone = 'reasoning';
+    } else if (phase === 'tool') {
+        tone = 'tool';
+    } else if (phase === 'result') {
+        tone = 'result';
+    }
+
+    return {
+        id: String(payload.stepId || event.type || `step_${Date.now()}`),
+        role: 'system',
+        tone,
+        content: String(payload.message || '').trim(),
+        createdAt: event.timestamp || new Date().toISOString(),
+        eventType: String(payload.eventType || '').trim(),
+        stepLabel: String(payload.title || '').trim(),
+        stepStatus: String(payload.status || '').trim() || (event.type === 'STEP_STARTED' ? 'running' : ''),
+        artifact: payload.artifact || null
+    };
 }
 
 export default function CreatePage() {
@@ -131,6 +214,9 @@ export default function CreatePage() {
     const shouldAutoStart = params.get('autostart') === '1';
     const startedRef = useRef(false);
     const logListRef = useRef(null);
+    const modeMenuRef = useRef(null);
+    const modelMenuRef = useRef(null);
+    const recognitionRef = useRef(null);
 
     const [prompt, setPrompt] = useState(initialPrompt);
     const [messages, setMessages] = useState([]);
@@ -151,6 +237,53 @@ export default function CreatePage() {
     const [switchingFamily, setSwitchingFamily] = useState('');
     const [activeStageView, setActiveStageView] = useState('live');
     const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+    const [sidebarWidth, setSidebarWidth] = useState(430);
+    const [agentMode, setAgentMode] = useState('agent');
+    const [modeMenuOpen, setModeMenuOpen] = useState(false);
+    const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+    const [reasoningMode, setReasoningMode] = useState('thinking');
+    const [modelPickerEnabled, setModelPickerEnabled] = useState(false);
+    const [selectedModelId, setSelectedModelId] = useState('balanced');
+    const [isListening, setIsListening] = useState(false);
+
+    const modeOptions = useMemo(() => ([
+        {
+            id: 'agent',
+            label: 'Agent',
+            icon: Sparkles
+        },
+        {
+            id: 'image',
+            label: locale === 'zh-CN' ? '图像生成器' : 'Image generator',
+            icon: Box
+        },
+        {
+            id: 'video',
+            label: locale === 'zh-CN' ? '视频生成器' : 'Video generator',
+            icon: MonitorPlay
+        }
+    ]), [locale]);
+
+    const modelOptions = useMemo(() => ([
+        {
+            id: 'balanced',
+            label: locale === 'zh-CN' ? '均衡模型' : 'Balanced model',
+            note: locale === 'zh-CN' ? '默认生成体验。' : 'Default generation mode.'
+        },
+        {
+            id: 'quality',
+            label: locale === 'zh-CN' ? '高质量模型' : 'Quality model',
+            note: locale === 'zh-CN' ? '更偏精细输出。' : 'More detailed outputs.'
+        },
+        {
+            id: 'fast',
+            label: locale === 'zh-CN' ? '极速模型' : 'Fast model',
+            note: locale === 'zh-CN' ? '更快返回结果。' : 'Faster turnaround.'
+        }
+    ]), [locale]);
+
+    const selectedMode = modeOptions.find((item) => item.id === agentMode) || modeOptions[0];
+    const SelectedModeIcon = selectedMode.icon;
 
     useEffect(() => {
         getStyles()
@@ -180,6 +313,31 @@ export default function CreatePage() {
 
         logListRef.current.scrollTop = logListRef.current.scrollHeight;
     }, [logs, clarification, isPlanning, isBuilding, isLoadingExisting, resultRecord]);
+
+    useEffect(() => {
+        function handlePointerDown(event) {
+            if (modeMenuRef.current && !modeMenuRef.current.contains(event.target)) {
+                setModeMenuOpen(false);
+            }
+
+            if (modelMenuRef.current && !modelMenuRef.current.contains(event.target)) {
+                setModelPickerEnabled(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown);
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+        };
+    }, []);
+
+    useEffect(() => () => {
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+            } catch {}
+        }
+    }, []);
 
     useEffect(() => {
         if (!initialPresentationId || shouldAutoStart || resultRecord || isBuilding) {
@@ -256,6 +414,31 @@ export default function CreatePage() {
         setLogs((current) => [...current, entry]);
     }
 
+    function startSidebarResize(event) {
+        event.preventDefault();
+        event.target.setPointerCapture(event.pointerId);
+
+        const startX = event.clientX;
+        const startWidth = sidebarWidth;
+
+        function onPointerMove(e) {
+            const delta = startX - e.clientX;
+            setSidebarWidth(Math.max(430, Math.min(560, startWidth + delta)));
+        }
+
+        function onPointerUp() {
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+    }
+
     async function handleSend() {
         const nextPrompt = prompt.trim();
         if (!nextPrompt) {
@@ -264,6 +447,57 @@ export default function CreatePage() {
         }
 
         await runCopilot(nextPrompt);
+    }
+
+    function handlePrimaryComposerAction() {
+        if (prompt.trim()) {
+            handleSend();
+            return;
+        }
+
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Recognition) {
+            setError(locale === 'zh-CN'
+                ? '当前浏览器还不支持语音输入，请先直接输入文本。'
+                : 'Voice input is not supported in this browser yet. Please type your request.');
+            return;
+        }
+
+        if (isListening && recognitionRef.current) {
+            recognitionRef.current.stop();
+            return;
+        }
+
+        const recognition = new Recognition();
+        recognition.lang = deckLocale === 'zh-CN' ? 'zh-CN' : 'en-US';
+        recognition.interimResults = true;
+        recognition.continuous = false;
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setError('');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = Array.from(event.results || [])
+                .map((result) => result?.[0]?.transcript || '')
+                .join('');
+            setPrompt(transcript.trim());
+        };
+
+        recognition.onerror = () => {
+            setIsListening(false);
+            setError(locale === 'zh-CN'
+                ? '语音输入没有成功，请再试一次或直接输入。'
+                : 'Voice capture did not succeed. Please try again or type directly.');
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
     }
 
     async function runCopilot(nextPrompt) {
@@ -281,6 +515,176 @@ export default function CreatePage() {
         setBuildEvents([]);
 
         try {
+            let aguiCompleted = false;
+
+            try {
+                await streamCopilotAgui({
+                    messages: nextMessages,
+                    locale: deckLocale,
+                    uiLocale: locale,
+                    outputIntent,
+                    visualPreference,
+                    allowClarification: true,
+                    threadId,
+                    reasoningMode,
+                    webSearchEnabled,
+                    selectedModelId
+                }, async (event) => {
+                    if (!event || typeof event !== 'object') {
+                        return;
+                    }
+
+                    if (event.threadId) {
+                        setThreadId(event.threadId);
+                    }
+
+                    if (event.presentationId) {
+                        setPresentationId(event.presentationId);
+                    }
+
+                    if (event.type === 'RUN_STARTED') {
+                        setIsPlanning(true);
+                        setIsBuilding(false);
+                        return;
+                    }
+
+                    if (event.type === 'STATE_SNAPSHOT' || event.type === 'STATE_DELTA') {
+                        const payload = event.payload || {};
+                        if (payload.draftBrief) {
+                            setDraftBrief(payload.draftBrief);
+                        }
+                        if (typeof payload.clarification === 'string') {
+                            setClarification(payload.clarification);
+                        }
+                        if (payload.activePresentationId) {
+                            setPresentationId(payload.activePresentationId);
+                        }
+                        if (payload.reasoningMode) {
+                            setReasoningMode(payload.reasoningMode);
+                        }
+                        if (typeof payload.webSearchEnabled === 'boolean') {
+                            setWebSearchEnabled(payload.webSearchEnabled);
+                        }
+                        if (typeof payload.selectedModelId === 'string' && payload.selectedModelId.trim()) {
+                            setSelectedModelId(payload.selectedModelId);
+                        }
+                        return;
+                    }
+
+                    if (event.type === 'TEXT_MESSAGE_START') {
+                        const messageId = String(event.payload?.messageId || `assistant_${Date.now()}`);
+                        setLogs((current) => mergeLogEntry(current, {
+                            id: messageId,
+                            role: 'assistant',
+                            tone: 'assistant',
+                            content: '',
+                            createdAt: event.timestamp || new Date().toISOString()
+                        }));
+                        setIsPlanning(false);
+                        return;
+                    }
+
+                    if (event.type === 'TEXT_MESSAGE_CONTENT') {
+                        const messageId = String(event.payload?.messageId || '');
+                        const delta = String(event.payload?.delta || '');
+                        if (!messageId) {
+                            return;
+                        }
+                        setLogs((current) => current.map((item) => (
+                            item.id === messageId
+                                ? { ...item, content: `${item.content || ''}${delta}` }
+                                : item
+                        )));
+                        return;
+                    }
+
+                    if (event.type === 'TEXT_MESSAGE_END') {
+                        const finalContent = String(event.payload?.content || '').trim();
+                        if (finalContent) {
+                            setMessages((current) => [...current, { role: 'assistant', content: finalContent }]);
+                        }
+                        return;
+                    }
+
+                    if (
+                        event.type === 'STEP_STARTED'
+                        || event.type === 'STEP_FINISHED'
+                        || event.type === 'TOOL_CALL_START'
+                        || event.type === 'TOOL_CALL_END'
+                    ) {
+                        const nextLog = buildAguiStepLog(event);
+                        setLogs((current) => mergeLogEntry(current, nextLog));
+
+                        if (nextLog.tone === 'execution' || nextLog.tone === 'tool' || nextLog.tone === 'result') {
+                            setIsPlanning(false);
+                            setIsBuilding(true);
+                        }
+                        return;
+                    }
+
+                    if (event.type === 'RUN_ERROR') {
+                        setIsPlanning(false);
+                        setIsBuilding(false);
+                        const message = String(event.payload?.message || 'Build failed');
+                        setError(message);
+                        setLogs((current) => mergeLogEntry(current, createLogEntry('system', message, 'error')));
+                        return;
+                    }
+
+                    if (event.type === 'RUN_FINISHED') {
+                        aguiCompleted = true;
+                        setIsPlanning(false);
+                        setIsBuilding(false);
+
+                        const payload = event.payload || {};
+                        if (payload.draftBrief) {
+                            setDraftBrief(payload.draftBrief);
+                        }
+
+                        if (payload.status === 'clarifying') {
+                            setClarification(String(payload.clarification || ''));
+                            return;
+                        }
+
+                        const finalPresentationId = String(
+                            payload.presentationId
+                            || event.presentationId
+                            || ''
+                        ).trim();
+
+                        if (!finalPresentationId) {
+                            return;
+                        }
+
+                        setPresentationId(finalPresentationId);
+                        const record = await getPresentationRecord(finalPresentationId);
+                        setResultRecord(record);
+                        setActiveStageView('live');
+                        pushRecentPresentation({
+                            id: finalPresentationId,
+                            title: record.title || payload.draftBrief?.topic || nextPrompt,
+                            styleName: record.style?.name || '',
+                            previewUrl: `/presentations/${finalPresentationId}`,
+                            workspaceUrl: buildLocalePath('/create', locale, {
+                                presentationId: finalPresentationId,
+                                threadId: event.threadId || threadId || ''
+                            }),
+                            threadId: event.threadId || threadId || '',
+                            updatedAt: record.updatedAt || new Date().toISOString()
+                        });
+                    }
+                });
+            } catch (aguiError) {
+                const message = aguiError?.message || String(aguiError);
+                if (!/404|AG-UI/i.test(message)) {
+                    throw aguiError;
+                }
+            }
+
+            if (aguiCompleted) {
+                return;
+            }
+
             const plan = await planCopilot({
                 messages: nextMessages,
                 locale: deckLocale,
@@ -307,7 +711,18 @@ export default function CreatePage() {
             setIsPlanning(false);
 
             if (plan.draftBrief) {
-                appendLog('system', buildAgentTraceSummary(plan.draftBrief, locale), 'trace');
+                setLogs((current) => mergeLogEntry(current, {
+                    id: `fallback_brief_${Date.now().toString(36)}`,
+                    role: 'system',
+                    tone: 'reasoning',
+                    content: locale === 'zh-CN'
+                        ? `已锁定 ${plan.draftBrief.purpose || 'product'} / ${plan.draftBrief.length || 'medium'} / ${plan.draftBrief.visualFamily || 'showcase'}。`
+                        : `Locked ${plan.draftBrief.purpose || 'product'} / ${plan.draftBrief.length || 'medium'} / ${plan.draftBrief.visualFamily || 'showcase'}.`,
+                    createdAt: new Date().toISOString(),
+                    eventType: 'brief_locked',
+                    stepLabel: locale === 'zh-CN' ? '已锁定 brief' : 'Brief locked',
+                    stepStatus: 'ready'
+                }));
             }
 
             if (plan.readyToBuild === false) {
@@ -473,19 +888,11 @@ export default function CreatePage() {
                 : isPlanning
                     ? copy.createStageAwaitingBody
                     : draftBrief
-                        ? copy.createBuildAutoStart
+                        ? copy.createStageAwaitingBody
                         : copy.createStageEmptyBody);
-    const showStageDock = stageMode === 'planning'
-        || stageMode === 'building'
-        || stageMode === 'loading'
-        || stageMode === 'clarify'
-        || stageMode === 'error';
-    const showStageTrack = stageMode === 'planning'
-        || stageMode === 'building'
-        || stageMode === 'loading';
-    const showStageProgress = stageMode === 'planning'
-        || stageMode === 'building'
-        || stageMode === 'loading';
+    const showStageDock = false;
+    const showStageTrack = false;
+    const showStageProgress = false;
     const showPromptPresets = !messages.length
         && !logs.length
         && !draftBrief
@@ -495,23 +902,6 @@ export default function CreatePage() {
         && !isLoadingExisting
         && !resultRecord;
     const canBrowseStageViews = Boolean(resultRecord);
-    const stageDockCards = [
-        {
-            label: copy.createMetaStyle,
-            value: resultRecord?.style?.name || draftBrief?.styleId || copy.createVisualAuto,
-            note: currentFamily
-        },
-        {
-            label: copy.createMetaSlides,
-            value: String(resultRecord?.outline?.slides?.length || stageScenes.length),
-            note: stageStatus
-        },
-        {
-            label: copy.createMetaExport,
-            value: resultRecord ? copy.buildStatusReady : copy.createStageOutputWaiting,
-            note: resultRecord?.pptxUrl ? copy.createActionPptx : copy.createStageModeSpec
-        }
-    ];
     const outlineSlides = resultRecord?.outline?.slides || [];
     const stageViewOptions = [
         { key: 'live', label: copy.createStageViewLive, icon: MonitorPlay },
@@ -576,35 +966,17 @@ export default function CreatePage() {
                             <div className="stage-head">
                                 <div>
                                     <span className="stage-label">{copy.createStageLabel}</span>
-                                    <strong>{stageStatus}</strong>
+                                    {resultRecord ? <strong>{stageStatus}</strong> : null}
                                 </div>
-                                <div className="stage-chips">
-                                    <span>{draftBrief?.visualFamily || copy.visualFamilyShowcase}</span>
-                                    <span>{draftBrief?.outputIntent || outputIntent || copy.createIntentAuto}</span>
-                                    <span>{deckLocale === 'zh-CN' ? copy.zhLabel : copy.enLabel}</span>
-                                </div>
+                                {resultRecord ? (
+                                    <div className="stage-chips">
+                                        <span>{draftBrief?.visualFamily || copy.visualFamilyShowcase}</span>
+                                        <span>{draftBrief?.outputIntent || outputIntent || copy.createIntentAuto}</span>
+                                        <span>{deckLocale === 'zh-CN' ? copy.zhLabel : copy.enLabel}</span>
+                                    </div>
+                                ) : null}
                             </div>
                             <div className="stage-workspace">
-                                <div className="stage-meta-panel">
-                                    <div className="stage-meta-copy">
-                                        <span className="stage-kicker">{resultRecord ? copy.createResultLabel : copy.createSubtitle}</span>
-                                        <h1>{stagePreviewTitle}</h1>
-                                        <p>{error || clarification || (isBuilding ? latestEvent?.message || copy.createBuildWorkspaceBody : stagePreviewBody)}</p>
-                                    </div>
-                                    <div className="stage-status-grid">
-                                        <article className="result-card stage-stat-card">
-                                            <span>{copy.createMetaStyle}</span>
-                                            <strong>{resultRecord?.style?.name || draftBrief?.styleId || copy.createVisualAuto}</strong>
-                                            <p>{resultRecord?.style?.vibe || copy.styleSwitchHint}</p>
-                                        </article>
-                                        <article className="result-card stage-stat-card">
-                                            <span>{copy.createMetaSlides}</span>
-                                            <strong>{resultRecord?.outline?.slides?.length || stageScenes.length}</strong>
-                                            <p>{copy.createMetaExport}: {resultRecord ? copy.buildStatusReady : stageStatus}</p>
-                                        </article>
-                                    </div>
-                                </div>
-
                                 <div className="stage-canvas-panel">
                                     {canBrowseStageViews ? (
                                         <div className="stage-view-switch">
@@ -624,12 +996,14 @@ export default function CreatePage() {
 
                                     {!canBrowseStageViews || activeStageView === 'live' ? (
                                         <div className={`presentation-frame ${resultRecord ? 'is-ready' : 'is-placeholder'}`}>
-                                            <div className="presentation-frame-topbar">
-                                                <span className="presentation-frame-badge">{resultRecord ? copy.createActionPreview : copy.createStageLabel}</span>
-                                                <span className="presentation-frame-route">
-                                                    {resultRecord ? buildLocalePath(`/presentations/${presentationId}`, locale) : copy.createBuildWorkspaceBody}
-                                                </span>
-                                            </div>
+                                            {resultRecord ? (
+                                                <div className="presentation-frame-topbar">
+                                                    <span className="presentation-frame-badge">{copy.createActionPreview}</span>
+                                                    <span className="presentation-frame-route">
+                                                        {buildLocalePath(`/presentations/${presentationId}`, locale)}
+                                                    </span>
+                                                </div>
+                                            ) : null}
 
                                             {resultRecord?.html ? (
                                                 <iframe
@@ -650,46 +1024,14 @@ export default function CreatePage() {
                                                                 <div className="presentation-stage-screen-frame">
                                                                     <div className="presentation-slide-copy">
                                                                         <span>{copy.createStageLabel}</span>
-                                                                        <strong>{stagePreviewTitle}</strong>
+                                                                        {(isPlanning || isBuilding || isLoadingExisting || clarification || error) ? (
+                                                                            <strong>{stageStatus}</strong>
+                                                                        ) : null}
                                                                         <p>{stagePrimaryMessage}</p>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {showStageDock ? (
-                                                            <div className="presentation-stage-dock">
-                                                                {stageDockCards
-                                                                    .slice(0, stageMode === 'clarify' ? 2 : 3)
-                                                                    .map((item) => (
-                                                                        <article className="stage-dock-card" key={`${item.label}_${item.value}`}>
-                                                                            <span>{item.label}</span>
-                                                                            <strong>{item.value}</strong>
-                                                                            <p>{item.note}</p>
-                                                                        </article>
-                                                                    ))}
-                                                            </div>
-                                                        ) : null}
-                                                        {showStageTrack ? (
-                                                            <div className="presentation-stage-track">
-                                                                {stageScenes.slice(0, 4).map((item) => (
-                                                                    <article className="stage-track-card" key={`track_${item.label}_${item.title}`}>
-                                                                        <span>{item.label}</span>
-                                                                        <strong>{item.title}</strong>
-                                                                    </article>
-                                                                ))}
-                                                            </div>
-                                                        ) : null}
-                                                        {showStageProgress ? (
-                                                            <div className="presentation-stage-progress">
-                                                                <div className="presentation-stage-progress-head">
-                                                                    <strong>{copy.createBuildLogTitle}</strong>
-                                                                    <span>{buildProgress}%</span>
-                                                                </div>
-                                                                <div className="stage-progress-bar">
-                                                                    <span style={{ width: `${buildProgress}%` }} />
-                                                                </div>
-                                                            </div>
-                                                        ) : null}
                                                     </div>
                                                 </div>
                                             )}
@@ -766,86 +1108,21 @@ export default function CreatePage() {
                                                     {copy.createActionPptx}
                                                 </button>
                                             </div>
-                                        </div>
-                                    ) : null}
-
-                                    {(draftBrief || resultRecord || isPlanning || isBuilding || isLoadingExisting || clarification) ? (
-                                        <div className="stage-sequence-rail">
-                                            {stageScenes.map((item) => (
-                                                <article className="stage-sequence-card" key={`${item.label}_${item.title}`}>
-                                                    <span>{item.label}</span>
-                                                    <strong>{item.title}</strong>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    ) : null}
-                                </div>
-
-                                <div className="stage-side-panel">
-                                    <div className="result-outline-panel stage-monitor-panel">
-                                        <div className="result-outline-head">
-                                            <strong>{copy.createStageMonitor}</strong>
-                                            <span>{buildProgress}%</span>
-                                        </div>
-                                        <div className="stage-progress-bar">
-                                            <span style={{ width: `${buildProgress}%` }} />
-                                        </div>
-                                        <div className="stage-monitor-list">
-                                            {stageActivity.map((item, index) => (
-                                                <article className="stage-monitor-item" key={`monitor_${index}_${item.message}`}>
-                                                    <span>{item.progress}%</span>
-                                                    <p>{item.message}</p>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="result-outline-panel stage-summary-panel">
-                                        <div className="result-outline-head">
-                                            <strong>{copy.createMetaOutline}</strong>
-                                            <span>{stageScenes.length}</span>
-                                        </div>
-                                        <div className="result-outline-list">
-                                            {stageScenes.map((item) => (
-                                                <article className="story-card compact" key={`summary_${item.label}_${item.title}`}>
-                                                    <span>{item.label}</span>
-                                                    <strong>{item.title}</strong>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="result-outline-panel stage-modes-panel">
-                                        <div className="result-outline-head">
-                                            <strong>{copy.createStageModes}</strong>
-                                            <span>4</span>
-                                        </div>
-                                        <div className="stage-mode-grid">
-                                            <span>{copy.createStageModeSlides}</span>
-                                            <span>{copy.createStageModeMedia}</span>
-                                            <span>{copy.createStageModeSpec}</span>
-                                            <span>{copy.createStageModeExports}</span>
-                                        </div>
-                                    </div>
-
-                                    {resultRecord ? (
-                                        <div className="stage-action-panel">
-                                            <div className="result-hero-actions stacked">
-                                                <button type="button" className="solid-action" onClick={() => { window.location.href = buildLocalePath(`/presentations/${presentationId}`, locale); }}>
-                                                    {copy.createActionPreview}
-                                                </button>
-                                                <button type="button" className="ghost-action" onClick={copyResultLink}>
-                                                    {copy.createActionCopy}
-                                                </button>
-                                                <button type="button" className="ghost-action" onClick={() => { window.location.href = buildLocalePath('/create-classic', locale, { presentationId }); }}>
-                                                    {copy.createActionAdvanced}
-                                                </button>
-                                            </div>
-                                            <div className="result-card stage-stat-card">
-                                                <span>{copy.createMetaRoute}</span>
-                                                <strong>{resultRecord.id}</strong>
-                                                <p>{formatDate(resultRecord.updatedAt, locale)}</p>
-                                            </div>
+                                            {resultRecord ? (
+                                                <div className="visual-switch-row">
+                                                    {['showcase', 'editorial', 'briefing'].map((family) => (
+                                                        <button
+                                                            key={family}
+                                                            type="button"
+                                                            className={`visual-family-btn ${currentFamily === family ? 'active' : ''}`}
+                                                            disabled={isBuilding || switchingFamily === family}
+                                                            onClick={() => handleVisualSwitch(family)}
+                                                        >
+                                                            {copy[`visualFamily${family[0].toUpperCase()}${family.slice(1)}`]}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : null}
                                         </div>
                                     ) : null}
                                 </div>
@@ -868,7 +1145,13 @@ export default function CreatePage() {
                     </div>
                 </section>
 
-                <aside className="editor-sidebar">
+                <aside className="editor-sidebar" style={{ width: `${sidebarWidth}px` }}>
+                    <button
+                        type="button"
+                        className="editor-sidebar-resize"
+                        aria-label={locale === "zh-CN" ? "调整右侧宽度" : "Resize sidebar"}
+                        onPointerDown={startSidebarResize}
+                    />
                     <div className="sidebar-head">
                         <div>
                             <span>{copy.createLogTitle}</span>
@@ -885,123 +1168,186 @@ export default function CreatePage() {
                     </div>
 
                     <div className="sidebar-scroll">
-                        {showPromptPresets ? (
-                            <section className="sidebar-block">
-                                <div className="sidebar-block-head">
-                                    <strong>{copy.createPresetTitle}</strong>
-                                    <span>{copy.createSidebarHint}</span>
-                                </div>
-                                <div className="preset-grid compact">
-                                    <button type="button" className="preset-tile" onClick={() => setPrompt(copy.homeQuickFinancePrompt)}>{copy.createPresetPitch}</button>
-                                    <button type="button" className="preset-tile" onClick={() => setPrompt(copy.homeQuickProductPrompt)}>{copy.createPresetProduct}</button>
-                                    <button type="button" className="preset-tile" onClick={() => setPrompt(copy.homeQuickTeachingPrompt)}>{copy.createPresetTeaching}</button>
-                                    <button type="button" className="preset-tile" onClick={() => setPrompt(copy.homeQuickShowcasePrompt)}>{copy.createPresetShowcase}</button>
-                                </div>
-                            </section>
-                        ) : null}
-
                         <section className="sidebar-block log-block">
-    <div className="sidebar-block-head">
-        <strong>{copy.createLogTitle}</strong>
-        <span>{copy.createAgentRailHint}</span>
-    </div>
-    <div className="log-list" ref={logListRef}>
-        {logs.length === 0 ? (
-            <article className="log-item assistant agent-message-card">
-                <div className="log-item-meta">
-                    <span>AI</span>
-                    <time>{locale === 'zh-CN' ? '等待中' : 'Waiting'}</time>
-                </div>
-                <p>{copy.createChatEmpty}</p>
-            </article>
-        ) : logs.map((entry) => (
-            <article
-                className={`log-item agent-message-card ${
-                    entry.role === 'user'
-                        ? 'user'
-                        : entry.tone === 'error'
-                            ? 'error'
-                            : entry.tone === 'trace' || entry.tone === 'system' || entry.tone === 'success'
-                                ? 'trace'
-                                : 'assistant'
-                }`}
-                key={entry.id}
-            >
-                <div className="log-item-meta">
-                    <span>{getLogRoleLabel(entry, locale)}</span>
-                    <time>{formatDate(entry.createdAt, locale)}</time>
-                </div>
-                <p>{entry.content}</p>
-            </article>
-        ))}
-    </div>
-</section>
-
-                        {resultRecord ? (
-                            <section className="sidebar-block result-chat-card">
-                                <div className="sidebar-block-head">
-                                    <strong>{copy.createResultLabel}</strong>
-                                    <span>{formatDate(resultRecord.updatedAt, locale)}</span>
-                                </div>
-                                <p className="agent-status-copy">{copy.createResultTitle}</p>
-                                <div className="build-ready-tags">
-                                    <span>{resultRecord.style?.name || copy.createVisualAuto}</span>
-                                    <span>{resultRecord.outline?.slides?.length || stageScenes.length} {copy.createMetaSlides}</span>
-                                    <span>{resultRecord.id}</span>
-                                </div>
-                                <div className="result-action-grid">
-                                    <button type="button" className="ghost-action" onClick={() => { window.location.href = buildLocalePath(`/presentations/${presentationId}`, locale); }}>
-                                        {copy.createActionPreview}
-                                    </button>
-                                    <button type="button" className="ghost-action" onClick={copyResultLink}>
-                                        {copy.createActionCopy}
-                                    </button>
-                                    <button type="button" className="ghost-action" onClick={() => { window.location.href = `/api/presentations/${presentationId}/html`; }}>
-                                        {copy.createActionOpenHtml}
-                                    </button>
-                                    <button type="button" className="ghost-action" onClick={() => { window.location.href = resultRecord?.pptxUrl || '#'; }}>
-                                        {copy.createActionPptx}
-                                    </button>
-                                </div>
-                                <div className="visual-switch-row">
-                                    {['showcase', 'editorial', 'briefing'].map((family) => (
-                                        <button
-                                            key={family}
-                                            type="button"
-                                            className={`visual-family-btn ${currentFamily === family ? 'active' : ''}`}
-                                            disabled={isBuilding || switchingFamily === family}
-                                            onClick={() => handleVisualSwitch(family)}
-                                        >
-                                            {copy[`visualFamily${family[0].toUpperCase()}${family.slice(1)}`]}
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-                        ) : null}
+                            <div className="sidebar-block-head">
+                                <strong>{copy.createLogTitle}</strong>
+                                <span>{copy.createAgentRailHint}</span>
+                            </div>
+                            <div className="log-list log-list-chat agent-rail-list" ref={logListRef}>
+                                {showPromptPresets ? (
+                                    <div className="chat-quickstart-empty-state">
+                                        <strong>{copy.createPresetTitle}</strong>
+                                        <div className="chat-quickstart-list">
+                                            <button type="button" className="chat-quickstart-item" onClick={() => setPrompt(copy.homeQuickFinancePrompt)}>
+                                                {copy.createPresetPitch}
+                                            </button>
+                                            <button type="button" className="chat-quickstart-item" onClick={() => setPrompt(copy.homeQuickProductPrompt)}>
+                                                {copy.createPresetProduct}
+                                            </button>
+                                            <button type="button" className="chat-quickstart-item" onClick={() => setPrompt(copy.homeQuickTeachingPrompt)}>
+                                                {copy.createPresetTeaching}
+                                            </button>
+                                            <button type="button" className="chat-quickstart-item" onClick={() => setPrompt(copy.homeQuickShowcasePrompt)}>
+                                                {copy.createPresetShowcase}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : logs.length ? (
+                                    <AgentRailMessages
+                                        logs={logs}
+                                        locale={locale}
+                                        getRailMessageKind={getRailMessageKind}
+                                        getLogRoleLabel={getLogRoleLabel}
+                                        buildArtifactTags={buildArtifactTags}
+                                        buildLocalePath={buildLocalePath}
+                                        previewLabel={copy.createActionPreview}
+                                        openLabel={copy.createActionOpenHtml}
+                                    />
+                                ) : (
+                                    <p className="log-empty">{copy.createChatEmpty}</p>
+                                )}
+                            </div>
+                        </section>
                     </div>
 
-                    <div className="sidebar-composer">
+                    <div className="sidebar-composer sidebar-composer-chat">
                         <textarea
                             value={prompt}
                             onChange={(event) => setPrompt(event.target.value)}
                             placeholder={clarification || copy.createPromptPlaceholder}
                             disabled={isPlanning || isBuilding}
                         />
-                        <div className="sidebar-composer-footer">
-                            <div className="composer-tools">
-                                <span className="composer-status-pill">{deckLocale === 'zh-CN' ? copy.zhLabel : copy.enLabel}</span>
-                                <span className="composer-status-pill subtle">{draftBrief?.visualFamily || copy.visualFamilyShowcase}</span>
-                                <span className="composer-status-pill subtle">{stageStatus}</span>
+                        <div className="sidebar-composer-footer composer-toolbar-row">
+                            <button
+                                type="button"
+                                className="composer-tool-icon composer-tool-attach composer-tooltip-anchor"
+                                aria-label={copy.createAttach || 'Attach'}
+                                title={copy.createAttach || 'Attach'}
+                                data-tooltip={copy.createAttach || 'Attach'}
+                            >
+                                <Paperclip size={15} />
+                            </button>
+                            <div className="composer-mode-wrap" ref={modeMenuRef}>
+                                <button
+                                    type="button"
+                                    className={`composer-mode-pill composer-tooltip-anchor ${modeMenuOpen ? 'active' : ''}`}
+                                    onClick={() => setModeMenuOpen((current) => !current)}
+                                    aria-label={selectedMode.label}
+                                    title={selectedMode.label}
+                                    data-tooltip={selectedMode.label}
+                                >
+                                    <SelectedModeIcon size={15} />
+                                    <span>{selectedMode.label}</span>
+                                    <ChevronDown size={14} />
+                                </button>
+                                {modeMenuOpen ? (
+                                    <div className="composer-popover composer-mode-menu">
+                                        {modeOptions.map((option) => {
+                                            const Icon = option.icon;
+                                            return (
+                                                <button
+                                                    key={option.id}
+                                                    type="button"
+                                                    className={`composer-menu-item ${agentMode === option.id ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        setAgentMode(option.id);
+                                                        setModeMenuOpen(false);
+                                                    }}
+                                                >
+                                                    <div className="composer-menu-item-main">
+                                                        <Icon size={15} />
+                                                        <span>{option.label}</span>
+                                                    </div>
+                                                    {agentMode === option.id ? <Check size={14} /> : null}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                ) : null}
+                            </div>
+                            <div className="composer-tool-group">
+                                <div className="composer-reasoning-switch" role="group" aria-label={locale === 'zh-CN' ? '模式切换' : 'Mode switch'}>
+                                    <button
+                                        type="button"
+                                        className={`composer-reasoning-btn composer-tooltip-anchor ${reasoningMode === 'thinking' ? 'active' : ''}`}
+                                        onClick={() => setReasoningMode('thinking')}
+                                        aria-label={copy.createThinkingMode || 'Thinking'}
+                                        title={copy.createThinkingMode || 'Thinking'}
+                                        data-tooltip={copy.createThinkingMode || 'Thinking'}
+                                    >
+                                        <Lightbulb size={14} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`composer-reasoning-btn composer-tooltip-anchor ${reasoningMode === 'fast' ? 'active' : ''}`}
+                                        onClick={() => setReasoningMode('fast')}
+                                        aria-label={copy.createFastMode || 'Fast'}
+                                        title={copy.createFastMode || 'Fast'}
+                                        data-tooltip={copy.createFastMode || 'Fast'}
+                                    >
+                                        <Zap size={14} />
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    className={`composer-tool-icon composer-tooltip-anchor ${webSearchEnabled ? 'active' : ''}`}
+                                    onClick={() => setWebSearchEnabled((current) => !current)}
+                                    aria-label={copy.createWebSearch || 'Web search'}
+                                    title={copy.createWebSearch || 'Web search'}
+                                    data-tooltip={copy.createWebSearch || 'Web search'}
+                                >
+                                    <Globe size={15} />
+                                </button>
+                                <div className="composer-model-wrap" ref={modelMenuRef}>
+                                    <button
+                                        type="button"
+                                        className={`composer-tool-icon composer-tooltip-anchor ${modelPickerEnabled ? 'active' : ''}`}
+                                        onClick={() => setModelPickerEnabled((current) => !current)}
+                                        aria-label={copy.createModelPicker || 'Model'}
+                                        title={copy.createModelPicker || 'Model'}
+                                        data-tooltip={copy.createModelPicker || 'Model'}
+                                    >
+                                        <Box size={15} />
+                                    </button>
+                                    {modelPickerEnabled ? (
+                                        <div className="composer-popover composer-model-menu composer-model-menu-compact">
+                                            <div className="composer-model-head">
+                                                <div>
+                                                    <strong>{copy.createModelPreference || '模型偏好'}</strong>
+                                                </div>
+                                            </div>
+                                            <div className="composer-model-list">
+                                                {modelOptions.map((model) => (
+                                                    <button
+                                                        key={model.id}
+                                                        type="button"
+                                                        className={`composer-model-card ${selectedModelId === model.id ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            setSelectedModelId(model.id);
+                                                            setModelPickerEnabled(false);
+                                                        }}
+                                                    >
+                                                        <div className="composer-model-card-main">
+                                                            <strong>{model.label}</strong>
+                                                            <p>{model.note}</p>
+                                                        </div>
+                                                        {selectedModelId === model.id ? <Check size={15} /> : null}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
                             <button
                                 type="button"
-                                className="composer-submit composer-submit-icon"
-                                onClick={handleSend}
-                                disabled={!prompt.trim() || isPlanning || isBuilding}
-                                aria-label={clarification ? copy.createContinue : copy.createSend}
-                                title={clarification ? copy.createContinue : copy.createSend}
+                                className={`composer-submit composer-submit-icon composer-submit-dark ${isListening ? 'is-listening' : ''}`}
+                                onClick={handlePrimaryComposerAction}
+                                disabled={isPlanning || isBuilding}
+                                aria-label={prompt.trim() ? (clarification ? copy.createContinue : copy.createSend) : (locale === 'zh-CN' ? '语音输入' : 'Voice input')}
+                                title={prompt.trim() ? (clarification ? copy.createContinue : copy.createSend) : (locale === 'zh-CN' ? '语音输入' : 'Voice input')}
                             >
-                                <ArrowUp size={16} />
+                                {prompt.trim() ? <ArrowUp size={16} /> : <Mic size={16} />}
                             </button>
                         </div>
                     </div>
@@ -1010,4 +1356,3 @@ export default function CreatePage() {
         </div>
     );
 }
-

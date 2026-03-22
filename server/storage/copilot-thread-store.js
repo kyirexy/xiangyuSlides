@@ -34,6 +34,71 @@ function normalizeMessages(messages) {
         .filter((item) => item.content);
 }
 
+function normalizeArtifacts(artifacts) {
+    if (!Array.isArray(artifacts)) {
+        return [];
+    }
+
+    return artifacts
+        .map((item) => ({
+            type: asString(item?.type, '').trim(),
+            label: asString(item?.label, '').trim(),
+            url: asString(item?.url, '').trim(),
+            presentationId: asString(item?.presentationId, '').trim(),
+            taskId: asString(item?.taskId, '').trim(),
+            status: asString(item?.status, '').trim(),
+            providerTaskId: asString(item?.providerTaskId, '').trim()
+        }))
+        .filter((item) => item.type || item.url || item.presentationId || item.taskId);
+}
+
+function normalizeAgentSteps(agentSteps) {
+    if (!Array.isArray(agentSteps)) {
+        return [];
+    }
+
+    return agentSteps
+        .map((item) => ({
+            eventType: asString(item?.eventType, '').trim(),
+            stepLabel: asString(item?.stepLabel, '').trim(),
+            message: asString(item?.message, '').trim(),
+            status: asString(item?.status, '').trim() || 'info',
+            artifact: item?.artifact && typeof item.artifact === 'object'
+                ? {
+                    type: asString(item.artifact.type, '').trim(),
+                    label: asString(item.artifact.label, '').trim(),
+                    url: asString(item.artifact.url, '').trim(),
+                    presentationId: asString(item.artifact.presentationId, '').trim(),
+                    taskId: asString(item.artifact.taskId, '').trim(),
+                    status: asString(item.artifact.status, '').trim(),
+                    providerTaskId: asString(item.artifact.providerTaskId, '').trim()
+                }
+                : null
+        }))
+        .filter((item) => item.eventType || item.stepLabel || item.message);
+}
+
+function normalizeReasoningMode(mode, fallback = 'thinking') {
+    const normalized = asString(mode, fallback).trim().toLowerCase();
+    return normalized === 'fast' ? 'fast' : 'thinking';
+}
+
+function normalizeUiRunState(uiRunState) {
+    if (!isPlainObject(uiRunState)) {
+        return {
+            runId: '',
+            lastEventType: '',
+            lastSnapshotAt: ''
+        };
+    }
+
+    return {
+        runId: asString(uiRunState.runId, '').trim(),
+        lastEventType: asString(uiRunState.lastEventType, '').trim(),
+        lastSnapshotAt: asString(uiRunState.lastSnapshotAt, '').trim()
+    };
+}
+
 function mergeThread(existing, incoming) {
     const previous = isPlainObject(existing) ? existing : {};
     const next = isPlainObject(incoming) ? incoming : {};
@@ -54,6 +119,21 @@ function mergeThread(existing, incoming) {
         lastAssistantMessage: asString(next.lastAssistantMessage || previous.lastAssistantMessage, ''),
         clarification: asString(next.clarification || previous.clarification, ''),
         presentationId: asString(next.presentationId || previous.presentationId, ''),
+        activePresentationId: asString(
+            next.activePresentationId
+            || next.presentationId
+            || previous.activePresentationId
+            || previous.presentationId,
+            ''
+        ),
+        lastBuildArtifacts: normalizeArtifacts(next.lastBuildArtifacts ?? previous.lastBuildArtifacts),
+        editIntent: isPlainObject(next.editIntent) ? next.editIntent : (isPlainObject(previous.editIntent) ? previous.editIntent : null),
+        pendingAction: asString(next.pendingAction || previous.pendingAction, ''),
+        agentSteps: normalizeAgentSteps(next.agentSteps ?? previous.agentSteps),
+        reasoningMode: normalizeReasoningMode(next.reasoningMode ?? previous.reasoningMode),
+        webSearchEnabled: Boolean(next.webSearchEnabled ?? previous.webSearchEnabled),
+        selectedModelId: asString(next.selectedModelId || previous.selectedModelId, '').trim(),
+        uiRunState: normalizeUiRunState(next.uiRunState ?? previous.uiRunState),
         meta: {
             ...(isPlainObject(previous.meta) ? previous.meta : {}),
             ...(isPlainObject(next.meta) ? next.meta : {})

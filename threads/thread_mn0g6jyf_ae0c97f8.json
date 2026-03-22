@@ -1,0 +1,85 @@
+{
+  "id": "thread_mn0g6jyf_ae0c97f8",
+  "createdAt": "2026-03-21T14:53:18.282Z",
+  "updatedAt": "2026-03-21T14:53:18.282Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "planned",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个产品演示，突出三大核心功能，适合现场介绍。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我来帮您构建一个突出三大核心功能的产品演示，适合现场介绍使用。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "产品演示，突出三大核心功能，适合现场介绍",
+    "purpose": "product",
+    "length": "medium",
+    "audience": "现场演示受众",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "产品演示",
+        "三大核心功能",
+        "现场介绍"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我来帮您构建一个突出三大核心功能的产品演示，适合现场介绍使用。",
+  "clarification": "",
+  "presentationId": "",
+  "activePresentationId": "",
+  "lastBuildArtifacts": [],
+  "editIntent": null,
+  "pendingAction": "build",
+  "agentSteps": [
+    {
+      "eventType": "intent_parsed",
+      "stepLabel": "已解析需求",
+      "message": "已解析需求，主题锁定为“产品演示，突出三大核心功能，适合现场介绍”。",
+      "status": "info",
+      "artifact": null
+    },
+    {
+      "eventType": "brief_locked",
+      "stepLabel": "已锁定 brief",
+      "message": "已锁定 product / medium / showcase。",
+      "status": "ready",
+      "artifact": {
+        "type": "brief",
+        "label": "",
+        "url": "",
+        "presentationId": "",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    }
+  ],
+  "meta": {
+    "topic": "产品演示，突出三大核心功能，适合现场介绍",
+    "purpose": "product",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "plannedAt": "2026-03-21T14:53:18.282Z",
+    "lastEditIntent": ""
+  }
+}

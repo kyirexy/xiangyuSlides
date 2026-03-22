@@ -1,0 +1,842 @@
+{
+  "tasks": [
+    {
+      "id": "media_mn1ecqcw_0869b182",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn1ec1p1_d0b0a176",
+      "presentationId": "pres_mn1ec9ci_837bbc5a",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn1ec9ci_837bbc5a"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T06:49:38.672Z",
+      "updatedAt": "2026-03-22T06:49:40.890Z"
+    },
+    {
+      "id": "media_mn1ecqcv_904d16ea",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn1ec1p1_d0b0a176",
+      "presentationId": "pres_mn1ec9ci_837bbc5a",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn1ec9ci_837bbc5a"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T06:49:38.671Z",
+      "updatedAt": "2026-03-22T06:49:40.874Z"
+    },
+    {
+      "id": "media_mn1e7n1j_772ed8d4",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn1e6kxr_86921752",
+      "presentationId": "pres_mn1e6qj8_2b134191",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T06:45:41.095Z",
+      "updatedAt": "2026-03-22T06:45:42.017Z"
+    },
+    {
+      "id": "media_mn1e7n1i_520ab923",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn1e6kxr_86921752",
+      "presentationId": "pres_mn1e6qj8_2b134191",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T06:45:41.094Z",
+      "updatedAt": "2026-03-22T06:45:42.008Z"
+    },
+    {
+      "id": "media_mn1dnw45_791a22f7",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn1dn4u6_c25e48dd",
+      "presentationId": "pres_mn1dna98_cd54acde",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 Agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T06:30:19.733Z",
+      "updatedAt": "2026-03-22T06:30:20.661Z"
+    },
+    {
+      "id": "media_mn1dnw44_9d9027e9",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn1dn4u6_c25e48dd",
+      "presentationId": "pres_mn1dna98_cd54acde",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 Agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T06:30:19.733Z",
+      "updatedAt": "2026-03-22T06:30:20.648Z"
+    },
+    {
+      "id": "media_mn14htfl_874f80d6",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn14gip9_a148f857",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "融资路演",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn14gxic_bafd3982"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T02:13:39.777Z",
+      "updatedAt": "2026-03-22T02:13:42.016Z"
+    },
+    {
+      "id": "media_mn14htfk_23645e44",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn14gip9_a148f857",
+      "presentationId": "pres_mn14gxic_bafd3982",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "融资路演",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn14gxic_bafd3982"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T02:13:39.776Z",
+      "updatedAt": "2026-03-22T02:13:41.993Z"
+    },
+    {
+      "id": "media_mn14a4r5_b7a009fa",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn1495sn_bdd32fdf",
+      "presentationId": "pres_mn149g5r_b0590768",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "融资路演",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn149g5r_b0590768"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T02:07:41.201Z",
+      "updatedAt": "2026-03-22T02:07:43.420Z"
+    },
+    {
+      "id": "media_mn14a4r3_d48d0f2f",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn1495sn_bdd32fdf",
+      "presentationId": "pres_mn149g5r_b0590768",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "融资路演",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn149g5r_b0590768"
+      },
+      "error": "",
+      "createdAt": "2026-03-22T02:07:41.199Z",
+      "updatedAt": "2026-03-22T02:07:43.410Z"
+    },
+    {
+      "id": "media_mn0mexb2_96263903",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn0mdliz_07130037",
+      "presentationId": "pres_mn0mdrfm_e0b29fbe",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示：突出三大核心功能，适合现场介绍",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn0mdrfm_e0b29fbe"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:47:31.742Z",
+      "updatedAt": "2026-03-21T17:47:33.959Z"
+    },
+    {
+      "id": "media_mn0mexb1_81614abb",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn0mdliz_07130037",
+      "presentationId": "pres_mn0mdrfm_e0b29fbe",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示：突出三大核心功能，适合现场介绍",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn0mdrfm_e0b29fbe"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:47:31.741Z",
+      "updatedAt": "2026-03-21T17:47:33.944Z"
+    },
+    {
+      "id": "media_mn0mcpru_958bbefe",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0mc6sw_907dc643",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:45:48.666Z",
+      "updatedAt": "2026-03-21T17:45:49.585Z"
+    },
+    {
+      "id": "media_mn0mcprt_9418eb77",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0mc6sw_907dc643",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:45:48.665Z",
+      "updatedAt": "2026-03-21T17:45:49.576Z"
+    },
+    {
+      "id": "media_mn0lrud2_6fe73fcc",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn0lqy9n_80a7d5ff",
+      "presentationId": "pres_mn0lr48y_0264a2da",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示，突出三大核心功能",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn0lr48y_0264a2da"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:29:34.838Z",
+      "updatedAt": "2026-03-21T17:29:37.055Z"
+    },
+    {
+      "id": "media_mn0lrud1_75ae6bb7",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn0lqy9n_80a7d5ff",
+      "presentationId": "pres_mn0lr48y_0264a2da",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示，突出三大核心功能",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn0lr48y_0264a2da"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:29:34.837Z",
+      "updatedAt": "2026-03-21T17:29:37.044Z"
+    },
+    {
+      "id": "media_mn0lptfm_62e69db1",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0lovtx_1ea84bfa",
+      "presentationId": "pres_mn0lp56k_4191e746",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 Agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:28:00.322Z",
+      "updatedAt": "2026-03-21T17:28:01.237Z"
+    },
+    {
+      "id": "media_mn0lptfl_c86039f8",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0lovtx_1ea84bfa",
+      "presentationId": "pres_mn0lp56k_4191e746",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 Agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:28:00.321Z",
+      "updatedAt": "2026-03-21T17:28:01.229Z"
+    },
+    {
+      "id": "media_mn0lfzz4_cebf20d7",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn0lf45e_1bfde7b2",
+      "presentationId": "pres_mn0lfhqa_dc603b51",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示，突出三大核心功能，适合现场介绍",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn0lfhqa_dc603b51"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:20:22.240Z",
+      "updatedAt": "2026-03-21T17:20:24.463Z"
+    },
+    {
+      "id": "media_mn0lfzz3_7164eb31",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn0lf45e_1bfde7b2",
+      "presentationId": "pres_mn0lfhqa_dc603b51",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示，突出三大核心功能，适合现场介绍",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn0lfhqa_dc603b51"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:20:22.239Z",
+      "updatedAt": "2026-03-21T17:20:24.456Z"
+    },
+    {
+      "id": "media_mn0lclks_9ef7810a",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0lbbs7_dc5c3a49",
+      "presentationId": "pres_mn0lbjki_73a4fe61",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "讲解如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:17:43.613Z",
+      "updatedAt": "2026-03-21T17:17:44.531Z"
+    },
+    {
+      "id": "media_mn0lclks_40944bd3",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0lbbs7_dc5c3a49",
+      "presentationId": "pres_mn0lbjki_73a4fe61",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "讲解如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T17:17:43.612Z",
+      "updatedAt": "2026-03-21T17:17:44.524Z"
+    },
+    {
+      "id": "media_mn0kfim5_358e7e24",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn0kebzg_a3491ea7",
+      "presentationId": "pres_mn0keij3_49cc174f",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示，突出三大核心功能，适合现场介绍",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn0keij3_49cc174f"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:52:00.125Z",
+      "updatedAt": "2026-03-21T16:52:02.346Z"
+    },
+    {
+      "id": "media_mn0kfim2_27f6bad8",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn0kebzg_a3491ea7",
+      "presentationId": "pres_mn0keij3_49cc174f",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示，突出三大核心功能，适合现场介绍",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn0keij3_49cc174f"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:52:00.122Z",
+      "updatedAt": "2026-03-21T16:52:02.329Z"
+    },
+    {
+      "id": "media_mn0kdbdm_3d56970c",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0kci9i_f1536f42",
+      "presentationId": "pres_mn0kcogk_297ec963",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:50:17.434Z",
+      "updatedAt": "2026-03-21T16:50:18.353Z"
+    },
+    {
+      "id": "media_mn0kdbdl_cfa4e823",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0kci9i_f1536f42",
+      "presentationId": "pres_mn0kcogk_297ec963",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:50:17.433Z",
+      "updatedAt": "2026-03-21T16:50:18.346Z"
+    },
+    {
+      "id": "media_mn0jvhvm_a964af63",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0juubu_79879fb0",
+      "presentationId": "pres_mn0jv1hz_05cf56ee",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:36:26.050Z",
+      "updatedAt": "2026-03-21T16:36:26.969Z"
+    },
+    {
+      "id": "media_mn0jvhvm_9f1d6ef3",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0juubu_79879fb0",
+      "presentationId": "pres_mn0jv1hz_05cf56ee",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:36:26.050Z",
+      "updatedAt": "2026-03-21T16:36:26.957Z"
+    },
+    {
+      "id": "media_mn0jjkki_d5371b68",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0ji2hb_5714a09c",
+      "presentationId": "pres_mn0ji8dc_85b55533",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 Agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:27:09.666Z",
+      "updatedAt": "2026-03-21T16:27:10.589Z"
+    },
+    {
+      "id": "media_mn0jjkkh_bbc2f556",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0ji2hb_5714a09c",
+      "presentationId": "pres_mn0ji8dc_85b55533",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 Agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:27:09.665Z",
+      "updatedAt": "2026-03-21T16:27:10.576Z"
+    },
+    {
+      "id": "media_mn0j55uw_ef66e9d5",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0j4n0f_8e6dc1d2",
+      "presentationId": "pres_mn0j4v51_9ecae8cf",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:15:57.417Z",
+      "updatedAt": "2026-03-21T16:15:58.338Z"
+    },
+    {
+      "id": "media_mn0j55uv_eb3aa591",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0j4n0f_8e6dc1d2",
+      "presentationId": "pres_mn0j4v51_9ecae8cf",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T16:15:57.415Z",
+      "updatedAt": "2026-03-21T16:15:58.326Z"
+    },
+    {
+      "id": "media_mn0g7nj2_b0448600",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn0g6qrr_331e23b1",
+      "presentationId": "pres_mn0g72ps_d0aee8de",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示：三大核心功能亮点展示",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn0g72ps_d0aee8de"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T14:53:54.782Z",
+      "updatedAt": "2026-03-21T14:53:56.997Z"
+    },
+    {
+      "id": "media_mn0g7niz_b5f39832",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn0g6qrr_331e23b1",
+      "presentationId": "pres_mn0g72ps_d0aee8de",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "产品演示：三大核心功能亮点展示",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn0g72ps_d0aee8de"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T14:53:54.781Z",
+      "updatedAt": "2026-03-21T14:53:56.982Z"
+    },
+    {
+      "id": "media_mn0f7cjv_395620bb",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0f6q0u_c28cf49b",
+      "presentationId": "pres_mn0f70ax_caadf9dc",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T14:25:40.939Z",
+      "updatedAt": "2026-03-21T14:25:41.857Z"
+    },
+    {
+      "id": "media_mn0f7cju_d94b3e20",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0f6q0u_c28cf49b",
+      "presentationId": "pres_mn0f70ax_caadf9dc",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "如何用 Claude Code 协调多个 agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T14:25:40.939Z",
+      "updatedAt": "2026-03-21T14:25:41.841Z"
+    },
+    {
+      "id": "media_mn0ew1v8_22afe5be",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "ready",
+      "threadId": "thread_mn0ev5i2_beb59ff0",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "融资路演",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 ready",
+        "previewUrl": "/presentations/pres_mn0evcm4_284e3de9"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T14:16:53.876Z",
+      "updatedAt": "2026-03-21T14:16:56.097Z"
+    },
+    {
+      "id": "media_mn0ew1v8_cedc9d8b",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "ready",
+      "threadId": "thread_mn0ev5i2_beb59ff0",
+      "presentationId": "pres_mn0evcm4_284e3de9",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "融资路演",
+        "visualFamily": "showcase",
+        "styleId": "bold-signal"
+      },
+      "result": {
+        "message": "封面与场景图生成 ready",
+        "previewUrl": "/presentations/pres_mn0evcm4_284e3de9"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T14:16:53.876Z",
+      "updatedAt": "2026-03-21T14:16:56.086Z"
+    },
+    {
+      "id": "media_mn0bpifg_2cb19250",
+      "kind": "tts_generation",
+      "label": "旁白音频生成",
+      "status": "running",
+      "threadId": "thread_mn0boxk7_9a67e7b4",
+      "presentationId": "pres_mn0bp49o_7eea6453",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "用 Claude Code 协调多个 Agent",
+        "locale": "zh-CN"
+      },
+      "result": {
+        "message": "旁白音频生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T12:47:49.900Z",
+      "updatedAt": "2026-03-21T12:47:50.814Z"
+    },
+    {
+      "id": "media_mn0bpifg_14f52201",
+      "kind": "image_generation",
+      "label": "封面与场景图生成",
+      "status": "running",
+      "threadId": "thread_mn0boxk7_9a67e7b4",
+      "presentationId": "pres_mn0bp49o_7eea6453",
+      "provider": "local",
+      "providerTaskId": "",
+      "payload": {
+        "topic": "用 Claude Code 协调多个 Agent",
+        "visualFamily": "showcase",
+        "styleId": "electric-studio"
+      },
+      "result": {
+        "message": "封面与场景图生成 is running"
+      },
+      "error": "",
+      "createdAt": "2026-03-21T12:47:49.900Z",
+      "updatedAt": "2026-03-21T12:47:50.806Z"
+    }
+  ]
+}

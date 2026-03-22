@@ -1,0 +1,198 @@
+{
+  "id": "thread_mn0mc6sw_907dc643",
+  "createdAt": "2026-03-21T17:45:32.120Z",
+  "updatedAt": "2026-03-21T17:45:49.586Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我来帮你制作一个关于 Claude Code 协调多 agent 的展示型教学演示。内容会偏展示风格，适合现场分享，节奏感强。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "如何用 Claude Code 协调多个 agent",
+    "purpose": "tech",
+    "length": "medium",
+    "audience": "现场分享观众",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "Claude Code",
+        "多个 agent",
+        "协调",
+        "教程",
+        "现场演示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，我来帮你制作一个关于 Claude Code 协调多 agent 的展示型教学演示。内容会偏展示风格，适合现场分享，节奏感强。",
+  "clarification": "",
+  "presentationId": "pres_mn0mcdfc_f1066eb9",
+  "activePresentationId": "pres_mn0mcdfc_f1066eb9",
+  "lastBuildArtifacts": [
+    {
+      "type": "presentation",
+      "label": "preview",
+      "url": "/presentations/pres_mn0mcdfc_f1066eb9",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "spec",
+      "label": "spec",
+      "url": "/api/presentations/pres_mn0mcdfc_f1066eb9/spec",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "html",
+      "label": "html",
+      "url": "/api/presentations/pres_mn0mcdfc_f1066eb9/html",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "pptx",
+      "label": "pptx",
+      "url": "/api/presentations/pres_mn0mcdfc_f1066eb9/export.pptx",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "image_generation",
+      "label": "封面与场景图生成",
+      "url": "",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "taskId": "media_mn0mcprt_9418eb77",
+      "status": "running",
+      "providerTaskId": ""
+    },
+    {
+      "type": "tts_generation",
+      "label": "旁白音频生成",
+      "url": "",
+      "presentationId": "pres_mn0mcdfc_f1066eb9",
+      "taskId": "media_mn0mcpru_958bbefe",
+      "status": "running",
+      "providerTaskId": ""
+    }
+  ],
+  "editIntent": null,
+  "pendingAction": "continue",
+  "agentSteps": [
+    {
+      "eventType": "intent_parsed",
+      "stepLabel": "已解析需求",
+      "message": "已解析需求，主题锁定为“如何用 Claude Code 协调多个 agent”。",
+      "status": "info",
+      "artifact": null
+    },
+    {
+      "eventType": "brief_locked",
+      "stepLabel": "已锁定 brief",
+      "message": "已锁定 tech / medium / showcase。",
+      "status": "ready",
+      "artifact": {
+        "type": "brief",
+        "label": "",
+        "url": "",
+        "presentationId": "",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "presentation_ready",
+      "stepLabel": "演示已就绪",
+      "message": "演示已生成完成，可以继续对话或直接预览。",
+      "status": "success",
+      "artifact": {
+        "type": "presentation",
+        "label": "preview",
+        "url": "/presentations/pres_mn0mcdfc_f1066eb9",
+        "presentationId": "pres_mn0mcdfc_f1066eb9",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "封面与场景图生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "",
+        "presentationId": "pres_mn0mcdfc_f1066eb9",
+        "taskId": "media_mn0mcprt_9418eb77",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "旁白音频生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "",
+        "presentationId": "pres_mn0mcdfc_f1066eb9",
+        "taskId": "media_mn0mcpru_958bbefe",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    }
+  ],
+  "reasoningMode": "thinking",
+  "webSearchEnabled": false,
+  "selectedModelId": "",
+  "uiRunState": {
+    "runId": "",
+    "lastEventType": "",
+    "lastSnapshotAt": ""
+  },
+  "meta": {
+    "topic": "如何用 Claude Code 协调多个 agent",
+    "purpose": "tech",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "plannedAt": "2026-03-21T17:45:32.120Z",
+    "lastEditIntent": "",
+    "buildStartedAt": "2026-03-21T17:45:32.665Z",
+    "buildCompletedAt": "2026-03-21T17:45:48.676Z",
+    "lastMediaTaskUpdateAt": "2026-03-21T17:45:49.586Z"
+  }
+}

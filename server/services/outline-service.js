@@ -91,6 +91,94 @@ Rules:
 - Return valid JSON only.`;
 }
 
+function resolveSlideCount(length) {
+    if (length === 'short') {
+        return 5;
+    }
+    if (length === 'long') {
+        return 11;
+    }
+    return 8;
+}
+
+function buildPurposeFlow(purpose) {
+    const flows = {
+        teaching: ['Opening', 'Goal', 'Core concept', 'How it works', 'Example', 'Practice', 'Summary', 'Next step'],
+        pitch: ['Opening', 'Problem', 'Opportunity', 'Solution', 'Product', 'Traction', 'Why now', 'Ask'],
+        product: ['Opening', 'Context', 'Problem', 'Core feature', 'Feature detail', 'User value', 'Roadmap', 'Next step'],
+        meeting: ['Opening', 'Agenda', 'Progress', 'Key update', 'Risk', 'Decision', 'Next step', 'Close'],
+        company: ['Opening', 'Company snapshot', 'Product', 'Business', 'Team', 'Traction', 'Vision', 'Close'],
+        tech: ['Opening', 'Background', 'Architecture', 'System flow', 'Implementation', 'Trade-offs', 'Lessons', 'Close'],
+        personal: ['Opening', 'Background', 'Experience', 'Strengths', 'Projects', 'Values', 'Future', 'Close'],
+        story: ['Opening', 'Setup', 'Tension', 'Shift', 'Proof', 'Takeaway', 'Resolution', 'Close'],
+        marketing: ['Opening', 'Audience', 'Message', 'Offer', 'Channel mix', 'Proof', 'CTA', 'Close'],
+        event: ['Opening', 'Overview', 'Highlights', 'Schedule', 'Experience', 'Logistics', 'CTA', 'Close']
+    };
+
+    return flows[purpose] || flows.product;
+}
+
+function buildFallbackBullets(topic, content, sectionTitle) {
+    const source = `${topic} ${content || ''}`
+        .split(/[，。、“”‘’：:；;,.!?！？\s]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    const keywords = Array.from(new Set(source)).slice(0, 6);
+
+    if (!keywords.length) {
+        return [
+            `${sectionTitle} overview`,
+            'Core point to highlight',
+            'Audience takeaway'
+        ];
+    }
+
+    return [
+        `${sectionTitle}: ${keywords[0]}`,
+        `${keywords[1] || keywords[0]} as supporting proof`,
+        `${keywords[2] || keywords[0]} as the next takeaway`
+    ];
+}
+
+function buildFallbackOutline({ topic, purpose = 'teaching', length = 'medium', content = '' }) {
+    const count = resolveSlideCount(length);
+    const flow = buildPurposeFlow(purpose);
+    const sections = flow.slice(0, count);
+
+    const slides = sections.map((sectionTitle, index) => {
+        if (index === 0) {
+            return {
+                type: 'title',
+                title: topic,
+                subtitle: getPurposeDescription(purpose),
+                content: []
+            };
+        }
+
+        if (index === sections.length - 1) {
+            return {
+                type: 'end',
+                title: sectionTitle,
+                subtitle: 'Closing',
+                content: buildFallbackBullets(topic, content, sectionTitle).slice(0, 2)
+            };
+        }
+
+        return {
+            type: index % 3 === 0 ? 'features' : 'content',
+            title: sectionTitle,
+            subtitle: `${topic} · ${sectionTitle}`,
+            content: buildFallbackBullets(topic, content, sectionTitle)
+        };
+    });
+
+    return normalizeOutline({
+        title: topic,
+        subtitle: getPurposeDescription(purpose),
+        slides
+    });
+}
+
 function normalizeRegeneratedSlide(rawSlide, fallbackOutlineTitle) {
     const normalizedDeck = normalizeOutline({
         title: fallbackOutlineTitle || rawSlide?.title || 'Untitled presentation',
@@ -119,7 +207,11 @@ function createOutlineService({ miniMaxClient }) {
             maxTokens: 4000
         });
 
-        return normalizeOutline(extractJSONObject(outlineResult));
+        try {
+            return normalizeOutline(extractJSONObject(outlineResult));
+        } catch (error) {
+            return buildFallbackOutline({ topic, purpose, length, content });
+        }
     }
 
     async function regenerateSlide({ slide, outline, prompt }) {

@@ -8,14 +8,18 @@
   },
   "scripts": {
     "start": "npm run build:client && node server.js",
-    "dev": "npm run build:client && node server.js",
+    "dev": "node server.js",
+    "dev:server": "node server.js",
     "dev:client": "vite --config client/vite.config.mjs --host 0.0.0.0 --port 5173",
     "build:client": "vite build --config client/vite.config.mjs",
+    "trigger:dev": "trigger.dev dev --config ./trigger.config.mjs",
+    "trigger:deploy": "trigger.dev deploy --config ./trigger.config.mjs",
     "mcp": "node mcp-server.js",
     "smoke:frontend": "npm run build:client && node scripts/frontend-smoke.js",
     "smoke:mvp": "npm run build:client && node scripts/mvp-smoke.js"
   },
   "dependencies": {
+    "@trigger.dev/sdk": "^4.4.3",
     "@langchain/core": "^1.1.34",
     "@langchain/langgraph": "^1.2.4",
     "@langchain/langgraph-checkpoint": "^1.0.1",
@@ -23,6 +27,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "langfuse": "^3.38.6",
     "lucide-react": "^0.547.0",
     "pptxgenjs": "^4.0.1",
     "react": "^19.1.1",
@@ -31,6 +36,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",
+    "trigger.dev": "^4.4.3",
     "vite": "^7.1.5"
   },
   "optionalDependencies": {

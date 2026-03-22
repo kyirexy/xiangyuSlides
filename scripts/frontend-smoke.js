@@ -164,6 +164,19 @@ async function runChecks() {
                     throw new Error('Styles API returned no styles.');
                 }
             }
+        },
+        {
+            label: 'Agent runtime API',
+            url: `${BASE_URL}/api/agent/runtime`,
+            validate: async (response) => {
+                const payload = await response.json();
+                if (payload.orchestration !== 'langgraph-js') {
+                    throw new Error(`Unexpected orchestration: ${payload.orchestration}`);
+                }
+                if (!payload.execution || !payload.observability || !Array.isArray(payload.media?.statuses)) {
+                    throw new Error('Agent runtime payload is incomplete.');
+                }
+            }
         }
     ];
 
@@ -175,6 +188,80 @@ async function runChecks() {
         await check.validate(response);
         console.log(`PASS ${check.label}`);
     }
+
+    const aguiResponse = await fetchWithTimeout(`${BASE_URL}/api/copilot/agui`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream'
+        },
+        body: JSON.stringify({
+            messages: [
+                {
+                    role: 'user',
+                    content: 'Create a concise English product demo for a live presentation.'
+                }
+            ],
+            locale: 'en',
+            uiLocale: 'en',
+            outputIntent: 'showcase',
+            visualPreference: 'showcase',
+            allowClarification: false,
+            reasoningMode: 'fast',
+            webSearchEnabled: false,
+            selectedModelId: 'nano-banana-pro'
+        })
+    });
+
+    if (!aguiResponse.ok || !aguiResponse.body) {
+        throw new Error(`Copilot AG-UI failed with status ${aguiResponse.status}`);
+    }
+
+    const reader = aguiResponse.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const seenEvents = new Set();
+    const wantedEvents = new Set(['RUN_STARTED', 'STEP_STARTED']);
+
+    const aguiDeadline = Date.now() + 12000;
+    while (wantedEvents.size > seenEvents.size && Date.now() < aguiDeadline) {
+        const { value, done } = await reader.read();
+        if (done) {
+            break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split(/\n\n+/);
+        buffer = parts.pop() || '';
+        parts
+            .map((chunk) => chunk
+                .split(/\n/)
+                .find((line) => line.startsWith('data: ')))
+            .filter(Boolean)
+            .forEach((line) => {
+                try {
+                    const payload = JSON.parse(line.slice(6));
+                    if (payload?.type) {
+                        seenEvents.add(payload.type);
+                    }
+                } catch (error) {
+                    // Ignore malformed chunks during smoke.
+                }
+            });
+
+        if ([...wantedEvents].every((type) => seenEvents.has(type))) {
+            break;
+        }
+    }
+
+    await reader.cancel();
+
+    for (const eventType of wantedEvents) {
+        if (!seenEvents.has(eventType)) {
+            throw new Error(`Copilot AG-UI stream missing ${eventType}`);
+        }
+    }
+    console.log('PASS Copilot AG-UI stream');
 }
 
 async function main() {
