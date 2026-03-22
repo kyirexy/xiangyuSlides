@@ -1,0 +1,245 @@
+{
+  "id": "thread_mn1p7cej_6ae575f7",
+  "createdAt": "2026-03-22T11:53:23.084Z",
+  "updatedAt": "2026-03-22T11:55:46.956Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "ready",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个融资路演，偏 Apple 发布会风格，8 页左右，中文现场展示。"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，我来帮你打造一份融资路演 PPT，采用 Apple 发布会风格，约 8 页，中文现场展示格式。"
+    },
+    {
+      "role": "user",
+      "content": "嗯整体我要亮色的那种"
+    },
+    {
+      "role": "assistant",
+      "content": "好的，采用 Apple 发布会风格 + 亮色视觉，约 8 页融资路演，现在开始生成。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "length": "medium",
+    "audience": "投资人",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "Apple keynote 风格，专业简洁、节奏明快、视觉冲击力强",
+      "sceneFlow": [
+        "opening-震撼开场",
+        "problem-市场痛点",
+        "solution-解决方案",
+        "product-产品展示",
+        "market-市场规模",
+        "team-团队介绍",
+        "traction-核心数据",
+        "closing-融资需求与��景"
+      ],
+      "keywords": [
+        "融资路演",
+        "Apple发布会风格",
+        "亮色设计",
+        "投资人",
+        "8页",
+        "现场展示"
+      ]
+    }
+  },
+  "lastAssistantMessage": "好的，采用 Apple 发布会风格 + 亮色视觉，约 8 页融资路演，现在开始生成。",
+  "clarification": "",
+  "presentationId": "pres_mn1p7i8i_8f037fa9",
+  "activePresentationId": "pres_mn1p7i8i_8f037fa9",
+  "lastBuildArtifacts": [
+    {
+      "type": "presentation",
+      "label": "preview",
+      "url": "/presentations/pres_mn1p7i8i_8f037fa9",
+      "presentationId": "pres_mn1p7i8i_8f037fa9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "spec",
+      "label": "spec",
+      "url": "/api/presentations/pres_mn1p7i8i_8f037fa9/spec",
+      "presentationId": "pres_mn1p7i8i_8f037fa9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "html",
+      "label": "html",
+      "url": "/api/presentations/pres_mn1p7i8i_8f037fa9/html",
+      "presentationId": "pres_mn1p7i8i_8f037fa9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "pptx",
+      "label": "pptx",
+      "url": "/api/presentations/pres_mn1p7i8i_8f037fa9/export.pptx",
+      "presentationId": "pres_mn1p7i8i_8f037fa9",
+      "taskId": "",
+      "status": "",
+      "providerTaskId": ""
+    },
+    {
+      "type": "image_generation",
+      "label": "封面与场景图生成",
+      "url": "/presentations/pres_mn1p7i8i_8f037fa9",
+      "presentationId": "pres_mn1p7i8i_8f037fa9",
+      "taskId": "media_mn1padpc_94c8f4f9",
+      "status": "ready",
+      "providerTaskId": ""
+    },
+    {
+      "type": "tts_generation",
+      "label": "旁白音频生成",
+      "url": "/presentations/pres_mn1p7i8i_8f037fa9",
+      "presentationId": "pres_mn1p7i8i_8f037fa9",
+      "taskId": "media_mn1padpd_be9f4107",
+      "status": "ready",
+      "providerTaskId": ""
+    }
+  ],
+  "editIntent": null,
+  "pendingAction": "continue",
+  "agentSteps": [
+    {
+      "eventType": "intent_parsed",
+      "stepLabel": "已解析需求",
+      "message": "已解析需求，主题锁定为“融资路演”。",
+      "status": "info",
+      "artifact": null
+    },
+    {
+      "eventType": "brief_locked",
+      "stepLabel": "已锁定 brief",
+      "message": "已锁定 pitch / medium / showcase。",
+      "status": "ready",
+      "artifact": {
+        "type": "brief",
+        "label": "",
+        "url": "",
+        "presentationId": "",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "presentation_ready",
+      "stepLabel": "演示已就绪",
+      "message": "演示已生成完成，可以继续对话或直接预览。",
+      "status": "success",
+      "artifact": {
+        "type": "presentation",
+        "label": "preview",
+        "url": "/presentations/pres_mn1p7i8i_8f037fa9",
+        "presentationId": "pres_mn1p7i8i_8f037fa9",
+        "taskId": "",
+        "status": "",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "封面与场景图生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "",
+        "presentationId": "pres_mn1p7i8i_8f037fa9",
+        "taskId": "media_mn1padpc_94c8f4f9",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_running",
+      "stepLabel": "媒体任务进行中",
+      "message": "旁白音频生成 正在执行。",
+      "status": "info",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "",
+        "presentationId": "pres_mn1p7i8i_8f037fa9",
+        "taskId": "media_mn1padpd_be9f4107",
+        "status": "running",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_ready",
+      "stepLabel": "媒体任务已完成",
+      "message": "封面与场景图生成 ready",
+      "status": "success",
+      "artifact": {
+        "type": "image_generation",
+        "label": "封面与场景图生成",
+        "url": "/presentations/pres_mn1p7i8i_8f037fa9",
+        "presentationId": "pres_mn1p7i8i_8f037fa9",
+        "taskId": "media_mn1padpc_94c8f4f9",
+        "status": "ready",
+        "providerTaskId": ""
+      }
+    },
+    {
+      "eventType": "media_task_ready",
+      "stepLabel": "媒体任务已完成",
+      "message": "旁白音频生成 ready",
+      "status": "success",
+      "artifact": {
+        "type": "tts_generation",
+        "label": "旁白音频生成",
+        "url": "/presentations/pres_mn1p7i8i_8f037fa9",
+        "presentationId": "pres_mn1p7i8i_8f037fa9",
+        "taskId": "media_mn1padpd_be9f4107",
+        "status": "ready",
+        "providerTaskId": ""
+      }
+    }
+  ],
+  "reasoningMode": "thinking",
+  "webSearchEnabled": false,
+  "selectedModelId": "balanced",
+  "uiRunState": {
+    "runId": "run_mn1p97l7_7c133ec6",
+    "lastEventType": "RUN_FINISHED",
+    "lastSnapshotAt": "2026-03-22T11:55:45.439Z"
+  },
+  "contextSummary": "Current topic: 融资路演\nCurrent brief: purpose=pitch, length=medium, visual=showcase, locale=zh-CN\nOutput plan: output=showcase, style=bold-signal\nActive presentation: pres_mn1p7i8i_8f037fa9\nPending action: continue\nLatest user input: 嗯整体我要亮色的那种\nRequested UI preferences: output=showcase, visual=showcase\nRun mode: thinking; webSearch=disabled; model=balanced",
+  "meta": {
+    "topic": "融资路演",
+    "purpose": "pitch",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "bold-signal",
+    "locale": "zh-CN",
+    "length": "medium",
+    "plannedAt": "2026-03-22T11:55:00.828Z",
+    "lastEditIntent": "",
+    "contextSummary": "Current topic: 融资路演\nCurrent brief: purpose=pitch, length=medium, visual=showcase, locale=zh-CN\nOutput plan: output=showcase, style=bold-signal\nActive presentation: pres_mn1p7i8i_8f037fa9\nPending action: continue\nLatest user input: 嗯整体我要亮色的那种\nRequested UI preferences: output=showcase, visual=showcase\nRun mode: thinking; webSearch=disabled; model=balanced",
+    "buildStartedAt": "2026-03-22T11:55:01.186Z",
+    "buildCompletedAt": "2026-03-22T11:55:44.751Z",
+    "lastMediaTaskUpdateAt": "2026-03-22T11:55:46.956Z"
+  }
+}

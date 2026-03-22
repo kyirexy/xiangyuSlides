@@ -1,0 +1,76 @@
+{
+  "id": "thread_mn1k9pgg_775f41e5",
+  "createdAt": "2026-03-22T09:35:24.526Z",
+  "updatedAt": "2026-03-22T09:35:24.526Z",
+  "locale": "zh-CN",
+  "uiLocale": "zh-CN",
+  "status": "planned",
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。"
+    },
+    {
+      "role": "assistant",
+      "content": "收到！我将为您创建一个展示型的中文教学演示，讲解 Claude Code 协调多 agent 的方法，适合现场分享。"
+    }
+  ],
+  "clarificationCount": 0,
+  "draftBrief": {
+    "topic": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。",
+    "purpose": "tech",
+    "length": "medium",
+    "audience": "现场演示观众",
+    "locale": "zh-CN",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "outputIntent": "showcase",
+    "voiceoverMode": "placeholder",
+    "mediaIntent": "balanced",
+    "outlineHints": {
+      "tone": "有展示感、节奏感强",
+      "sceneFlow": [
+        "opening",
+        "context",
+        "proof",
+        "closing"
+      ],
+      "keywords": [
+        "Claude Code",
+        "多 agent",
+        "协调",
+        "教学",
+        "现场分享"
+      ]
+    }
+  },
+  "lastAssistantMessage": "收到！我将为您创建一个展示型的中文教学演示，讲解 Claude Code 协调多 agent 的方法，适合现场分享。",
+  "clarification": "",
+  "presentationId": "",
+  "activePresentationId": "",
+  "lastBuildArtifacts": [],
+  "editIntent": null,
+  "pendingAction": "build",
+  "agentSteps": [],
+  "reasoningMode": "thinking",
+  "webSearchEnabled": false,
+  "selectedModelId": "",
+  "uiRunState": {
+    "runId": "",
+    "lastEventType": "",
+    "lastSnapshotAt": ""
+  },
+  "contextSummary": "Current topic: 帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。\nCurrent brief: purpose=tech, length=medium, visual=showcase, locale=zh-CN\nOutput plan: output=showcase, style=electric-studio\nLatest user input: 帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。\nRequested UI preferences: output=showcase, visual=showcase\nRun mode: thinking; webSearch=disabled; model=default",
+  "meta": {
+    "topic": "帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。",
+    "purpose": "tech",
+    "outputIntent": "showcase",
+    "visualFamily": "showcase",
+    "styleId": "electric-studio",
+    "locale": "zh-CN",
+    "length": "medium",
+    "plannedAt": "2026-03-22T09:35:24.525Z",
+    "lastEditIntent": "",
+    "contextSummary": "Current topic: 帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。\nCurrent brief: purpose=tech, length=medium, visual=showcase, locale=zh-CN\nOutput plan: output=showcase, style=electric-studio\nLatest user input: 帮我做一个中文教学演示，讲解如何用 Claude Code 协调多个 agent，偏展示型，适合现场分享。\nRequested UI preferences: output=showcase, visual=showcase\nRun mode: thinking; webSearch=disabled; model=default"
+  }
+}

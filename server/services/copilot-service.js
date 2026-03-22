@@ -24,6 +24,8 @@ const SUPPORTED_VISUAL_FAMILIES = new Set(['showcase', 'editorial', 'briefing'])
 const SUPPORTED_OUTPUT_INTENTS = new Set(['showcase', 'briefing', 'short-video']);
 const SUPPORTED_VOICEOVER_MODES = new Set(['placeholder', 'guided', 'off']);
 const SUPPORTED_MEDIA_INTENTS = new Set(['balanced', 'text-first', 'media-forward']);
+const MAX_PLAN_CONTEXT_MESSAGES = 6;
+const MAX_PLAN_CONTEXT_CHARS = 220;
 
 function asString(value, fallback = '') {
     if (value === null || value === undefined) {
@@ -137,6 +139,119 @@ function extractJSONObject(text) {
 
 function generatePresentationId() {
     return `pres_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+}
+
+function truncateText(value, maxLength = MAX_PLAN_CONTEXT_CHARS) {
+    const normalized = asString(value, '').replace(/\s+/g, ' ').trim();
+    if (!normalized || normalized.length <= maxLength) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+}
+
+function compactMessagesForPrompt(messages, limit = MAX_PLAN_CONTEXT_MESSAGES) {
+    return normalizeMessages(messages)
+        .slice(-limit)
+        .map((item) => ({
+            role: item.role,
+            content: truncateText(item.content)
+        }));
+}
+
+function summarizeOlderUserTurns(messages, limit = 3) {
+    const normalizedMessages = normalizeMessages(messages);
+    const olderMessages = normalizedMessages.slice(0, Math.max(0, normalizedMessages.length - MAX_PLAN_CONTEXT_MESSAGES));
+    return olderMessages
+        .filter((item) => item.role === 'user')
+        .map((item) => truncateText(item.content, 120))
+        .filter(Boolean)
+        .slice(-limit);
+}
+
+function buildContextSummary({
+    existingThread,
+    messages,
+    latestPrompt,
+    fallbackBrief,
+    draftBrief,
+    clarification,
+    editIntent,
+    reasoningMode,
+    webSearchEnabled,
+    selectedModelId,
+    outputIntent,
+    visualPreference
+}) {
+    const normalizedBrief = draftBrief && typeof draftBrief === 'object'
+        ? draftBrief
+        : (existingThread?.draftBrief && typeof existingThread.draftBrief === 'object'
+            ? existingThread.draftBrief
+            : (fallbackBrief && typeof fallbackBrief === 'object' ? fallbackBrief : {}));
+    const purpose = asString(normalizedBrief.purpose, '');
+    const length = asString(normalizedBrief.length, '');
+    const visualFamily = asString(normalizedBrief.visualFamily, '');
+    const briefLocale = asString(normalizedBrief.locale, '');
+    const summaryLines = [];
+
+    if (asString(normalizedBrief.topic, '')) {
+        summaryLines.push(`Current topic: ${truncateText(normalizedBrief.topic, 160)}`);
+    }
+
+    if (purpose || length || visualFamily || briefLocale) {
+        summaryLines.push(
+            `Current brief: purpose=${purpose || 'product'}, length=${length || 'medium'}, visual=${visualFamily || 'showcase'}, locale=${briefLocale || 'zh-CN'}`
+        );
+    }
+
+    if (asString(normalizedBrief.outputIntent, '') || asString(normalizedBrief.styleId, '')) {
+        summaryLines.push(
+            `Output plan: output=${asString(normalizedBrief.outputIntent, outputIntent || 'showcase')}, style=${asString(normalizedBrief.styleId, 'default')}`
+        );
+    }
+
+    const activePresentationId = asString(
+        existingThread?.activePresentationId || existingThread?.presentationId,
+        ''
+    );
+    if (activePresentationId) {
+        summaryLines.push(`Active presentation: ${activePresentationId}`);
+    }
+
+    const pendingAction = asString(existingThread?.pendingAction, '');
+    if (pendingAction) {
+        summaryLines.push(`Pending action: ${pendingAction}`);
+    }
+
+    const unresolvedClarification = asString(clarification || existingThread?.clarification, '');
+    if (unresolvedClarification) {
+        summaryLines.push(`Outstanding clarification: ${truncateText(unresolvedClarification, 180)}`);
+    }
+
+    if (editIntent?.summary) {
+        summaryLines.push(`Editing intent: ${truncateText(editIntent.summary, 180)}`);
+    }
+
+    const olderUserTurns = summarizeOlderUserTurns(
+        Array.isArray(messages) && messages.length ? messages : existingThread?.messages
+    );
+    if (olderUserTurns.length) {
+        summaryLines.push(`Earlier user requests: ${olderUserTurns.join(' | ')}`);
+    }
+
+    if (latestPrompt) {
+        summaryLines.push(`Latest user input: ${truncateText(latestPrompt, 180)}`);
+    }
+
+    if (outputIntent || visualPreference) {
+        summaryLines.push(`Requested UI preferences: output=${outputIntent || 'auto'}, visual=${visualPreference || 'auto'}`);
+    }
+
+    summaryLines.push(
+        `Run mode: ${reasoningMode === 'fast' ? 'fast' : 'thinking'}; webSearch=${webSearchEnabled ? 'enabled' : 'disabled'}; model=${selectedModelId || 'default'}`
+    );
+
+    return summaryLines.filter(Boolean).join('\n');
 }
 
 function inferPurposeFromText(text) {
@@ -346,9 +461,23 @@ function isVaguePrompt(prompt) {
     return /^(鍋氫釜ppt|鍋氫釜婕旂ず|presentation|slides?|deck)$/i.test(normalized);
 }
 
-function buildPlanPrompt({ messages, locale, uiLocale, outputIntent, visualPreference, allowClarification, fallbackBrief }) {
+function buildPlanPrompt({
+    messages,
+    recentMessages,
+    contextSummary,
+    locale,
+    uiLocale,
+    outputIntent,
+    visualPreference,
+    allowClarification,
+    fallbackBrief
+}) {
     const uiLanguageLabel = uiLocale === 'zh-CN' ? 'Chinese (Simplified)' : 'English';
     const deckLanguageLabel = locale === 'zh-CN' ? 'Chinese (Simplified)' : 'English';
+    const promptMessages = Array.isArray(recentMessages) && recentMessages.length
+        ? recentMessages
+        : compactMessagesForPrompt(messages);
+    const compressedContext = asString(contextSummary, '').trim() || 'No prior thread context.';
 
     return `You are the copilot planner for an AI presentation product.
 
@@ -386,9 +515,14 @@ Rules:
 - Respect requested output intent: ${outputIntent || 'auto'}.
 - Respect requested visual preference: ${visualPreference || 'auto'}.
 - Keep assistantMessage concise and helpful.
+- Use the context snapshot as compressed memory of earlier turns.
+- Prioritize the latest user input when it clearly updates the current deck.
 
-Conversation:
-${JSON.stringify(messages, null, 2)}`;
+Context snapshot:
+${compressedContext}
+
+Recent turns (most recent last):
+${JSON.stringify(promptMessages, null, 2)}`;
 }
 
 function buildAssistantAck(brief, uiLocale) {
@@ -784,7 +918,8 @@ function buildAguiThreadSnapshot(thread) {
         reasoningMode: thread.reasoningMode || 'thinking',
         webSearchEnabled: Boolean(thread.webSearchEnabled),
         selectedModelId: thread.selectedModelId || '',
-        uiRunState: thread.uiRunState || null
+        uiRunState: thread.uiRunState || null,
+        contextSummary: asString(thread.contextSummary || thread.meta?.contextSummary, '')
     };
 }
 
@@ -1023,8 +1158,15 @@ function detectEditIntent(prompt, existingThread, locale) {
     }
 
     const normalized = latestPrompt.toLowerCase();
-    const looksLikeEdit = /(改|调整|重新|优化|增加|新增|删掉|删除|更像|换成|改成|补充|再加|refine|revise|update|change|adjust|make it|add|remove|short video|reel)/i
+    const explicitEditSignal = /(改|调整|重新|优化|增加|新增|删掉|删除|更像|换成|改成|补充|再加|refine|revise|update|change|adjust|make it|add|remove|short video|reel)/i
         .test(latestPrompt);
+    const contextualEditSignal = /(继续|基于这个|在这个基础上|当前这个|这份|这一版|刚才那个|把它|让它|再来一版|继续完善|continue|based on this|current deck|same deck|keep this)/i
+        .test(latestPrompt);
+    const followUpEditSignal = /(然后|然后把|再把|顺便|另外|同时|那就|就按这个|就这样|改下|改一下|调下|调一下|帮我把|再补一个|补一页|补一段|再来个|顺手把|接着改|继续改|继续优化|继续完善)/i
+        .test(latestPrompt);
+    const newDeckSignal = /(重新做一个|重新生成一个|新做一个|新建一个|start over|new deck|new presentation)/i
+        .test(latestPrompt);
+    const looksLikeEdit = !newDeckSignal && (explicitEditSignal || contextualEditSignal || followUpEditSignal);
 
     if (!looksLikeEdit) {
         return null;
@@ -1071,6 +1213,136 @@ function detectEditIntent(prompt, existingThread, locale) {
         targetScene,
         summary: latestPrompt,
         directives
+    };
+}
+
+function resolveClarificationFollowUp(latestPrompt, existingThread, locale, uiLocale) {
+    if (!existingThread || existingThread.pendingAction !== 'clarification' || !existingThread.draftBrief) {
+        return null;
+    }
+
+    const prompt = asString(latestPrompt, '').trim();
+    if (!prompt) {
+        return null;
+    }
+
+    const normalized = prompt.toLowerCase();
+    const baseBrief = existingThread.draftBrief && typeof existingThread.draftBrief === 'object'
+        ? existingThread.draftBrief
+        : null;
+
+    if (!baseBrief) {
+        return null;
+    }
+
+    const nextBrief = {
+        ...baseBrief,
+        outlineHints: {
+            ...(baseBrief.outlineHints || {})
+        }
+    };
+
+    let matched = false;
+
+    if (/融资|路演|投资人|pitch|fundraising|investor/.test(normalized)) {
+        nextBrief.purpose = 'pitch';
+        nextBrief.outputIntent = 'showcase';
+        nextBrief.visualFamily = 'showcase';
+        matched = true;
+    } else if (/产品发布|产品演示|产品|launch|showcase|demo/.test(normalized)) {
+        nextBrief.purpose = 'product';
+        nextBrief.outputIntent = 'showcase';
+        nextBrief.visualFamily = 'showcase';
+        matched = true;
+    } else if (/内部汇报|内部|汇报|briefing|review|board|meeting/.test(normalized)) {
+        nextBrief.purpose = 'meeting';
+        nextBrief.outputIntent = 'briefing';
+        nextBrief.visualFamily = 'briefing';
+        matched = true;
+    } else if (/教学|培训|课程|teaching|lesson|workshop/.test(normalized)) {
+        nextBrief.purpose = 'teaching';
+        nextBrief.outputIntent = 'showcase';
+        nextBrief.visualFamily = 'editorial';
+        matched = true;
+    }
+
+    if (/apple|keynote/.test(normalized)) {
+        nextBrief.visualFamily = 'showcase';
+        matched = true;
+    } else if (/editorial|杂志|编辑感/.test(normalized)) {
+        nextBrief.visualFamily = 'editorial';
+        matched = true;
+    } else if (/briefing|board|商务|汇报风格/.test(normalized)) {
+        nextBrief.visualFamily = 'briefing';
+        matched = true;
+    }
+
+    if (/短视频|视频版|short video|reel/.test(normalized)) {
+        nextBrief.outputIntent = 'short-video';
+        nextBrief.mediaIntent = 'media-forward';
+        matched = true;
+    }
+
+    if (/中文|chinese/.test(normalized)) {
+        nextBrief.locale = 'zh-CN';
+        matched = true;
+    } else if (/英文|english/.test(normalized)) {
+        nextBrief.locale = 'en';
+        matched = true;
+    }
+
+    if (/简短|更短|shorter|short/.test(normalized)) {
+        nextBrief.length = 'short';
+        matched = true;
+    } else if (/详细|更完整|longer|long|deep dive|detailed/.test(normalized)) {
+        nextBrief.length = 'long';
+        matched = true;
+    }
+
+    if (!matched) {
+        const existingKeywords = Array.isArray(baseBrief.outlineHints?.keywords)
+            ? baseBrief.outlineHints.keywords
+            : [];
+        const promptKeywords = prompt
+            .split(/[，。！？、,.!?\s]+/)
+            .map((item) => asString(item, '').trim())
+            .filter(Boolean)
+            .slice(0, 8);
+
+        nextBrief.outlineHints.keywords = Array.from(new Set([
+            ...existingKeywords,
+            ...promptKeywords
+        ])).slice(0, 12);
+
+        if (prompt.length <= 120) {
+            nextBrief.outlineHints.tone = prompt;
+        }
+
+        matched = true;
+    }
+
+    nextBrief.styleId = pickStyleId(
+        nextBrief.visualFamily || baseBrief.visualFamily || 'showcase',
+        nextBrief.purpose || baseBrief.purpose || 'product',
+        nextBrief.locale || baseBrief.locale || locale
+    );
+
+    const sanitized = sanitizeDraftBrief(nextBrief, baseBrief, {
+        lockedLocale: nextBrief.locale || baseBrief.locale || locale,
+        lockedVisualFamily: nextBrief.visualFamily || baseBrief.visualFamily,
+        lockedOutputIntent: nextBrief.outputIntent || baseBrief.outputIntent,
+        lockedStyleId: nextBrief.styleId
+    });
+
+    const assistantMessage = uiLocale === 'zh-CN'
+        ? '好，我已经接上你的补充信息，接着在当前这份演示上继续生成。'
+        : 'Got it. I have folded that clarification into the current deck and will keep going.';
+
+    return {
+        assistantMessage,
+        readyToBuild: true,
+        clarification: '',
+        draftBrief: sanitized
     };
 }
 
@@ -1142,10 +1414,10 @@ function buildEditAssistantAck(editIntent, locale) {
 
     if (locale === 'zh-CN') {
         if (editIntent.scope === 'scene' && editIntent.targetScene) {
-            return `收到，我会基于当前演示继续调整第 ${editIntent.targetScene} 页，并沿用已有结构重新生成结果。`;
+            return `好，我会直接在当前这份演示里继续调整第 ${editIntent.targetScene} 页。`;
         }
 
-        return '收到，我会基于当前演示继续调整整体结构与风格，再为你生成更新版本。';
+        return '好，我会基于当前这份演示继续调整整体结构和风格。';
     }
 
     if (editIntent.scope === 'scene' && editIntent.targetScene) {
@@ -1156,41 +1428,14 @@ function buildEditAssistantAck(editIntent, locale) {
 }
 
 function buildPlanAgentSteps({ draftBrief, locale, shouldClarify, clarification, editIntent }) {
-    const steps = [];
-
-    steps.push(buildStepEvent({
-        eventType: 'intent_parsed',
-        locale,
-        message: editIntent
-            ? (locale === 'zh-CN'
-                ? `已识别为继续编辑当前演示：${editIntent.summary}`
-                : `Continuing from the current deck: ${editIntent.summary}`)
-            : (locale === 'zh-CN'
-                ? `已解析需求，主题锁定为“${asString(draftBrief?.topic, '新演示')}”。`
-                : `Request parsed. Topic locked as "${asString(draftBrief?.topic, 'New presentation')}".`)
-    }));
-
-    if (shouldClarify) {
-        steps.push(buildStepEvent({
-            eventType: 'clarification_requested',
-            locale,
-            message: clarification,
-            status: 'needs_input'
-        }));
-        return steps;
-    }
-
-    steps.push(buildStepEvent({
-        eventType: 'brief_locked',
+    return normalizeAgentSteps([buildStepEvent({
+        eventType: 'context_compacted',
         locale,
         message: locale === 'zh-CN'
-            ? `已锁定 ${asString(draftBrief?.purpose, 'product')} / ${asString(draftBrief?.length, 'medium')} / ${asString(draftBrief?.visualFamily, 'showcase')}。`
-            : `Brief locked as ${asString(draftBrief?.purpose, 'product')} / ${asString(draftBrief?.length, 'medium')} / ${asString(draftBrief?.visualFamily, 'showcase')}.`,
-        status: 'ready',
-        artifact: buildBriefArtifact(draftBrief)
-    }));
-
-    return normalizeAgentSteps(steps);
+            ? '系统已整理当前线程上下文，准备继续响应。'
+            : 'The system compacted the current thread context and is ready to continue.',
+        status: 'info'
+    })]);
 }
 
 function mapBuildEventPayload(payload, locale) {
@@ -1269,6 +1514,15 @@ function createFallbackThreadStore() {
                 editIntent: threadInput?.editIntent || previous.editIntent || null,
                 pendingAction: asString(threadInput?.pendingAction || previous.pendingAction, ''),
                 agentSteps: normalizeAgentSteps(threadInput?.agentSteps ?? previous.agentSteps),
+                reasoningMode: normalizeReasoningMode(threadInput?.reasoningMode ?? previous.reasoningMode),
+                webSearchEnabled: Boolean(threadInput?.webSearchEnabled ?? previous.webSearchEnabled),
+                selectedModelId: asString(threadInput?.selectedModelId || previous.selectedModelId, '').trim(),
+                uiRunState: {
+                    runId: asString(threadInput?.uiRunState?.runId || previous.uiRunState?.runId, '').trim(),
+                    lastEventType: asString(threadInput?.uiRunState?.lastEventType || previous.uiRunState?.lastEventType, '').trim(),
+                    lastSnapshotAt: asString(threadInput?.uiRunState?.lastSnapshotAt || previous.uiRunState?.lastSnapshotAt, '').trim()
+                },
+                contextSummary: asString(threadInput?.contextSummary || previous.contextSummary, ''),
                 meta: {
                     ...(previous.meta && typeof previous.meta === 'object' ? previous.meta : {}),
                     ...(threadInput?.meta && typeof threadInput.meta === 'object' ? threadInput.meta : {})
@@ -1307,6 +1561,8 @@ function buildThreadMeta(brief, overrides = {}) {
         outputIntent: asString(normalizedBrief.outputIntent, ''),
         visualFamily: asString(normalizedBrief.visualFamily, ''),
         styleId: asString(normalizedBrief.styleId, ''),
+        locale: asString(normalizedBrief.locale, ''),
+        length: asString(normalizedBrief.length, ''),
         ...overrides
     };
 }
@@ -1357,10 +1613,27 @@ function createCopilotService({
                 outputIntent: state.outputIntent,
                 visualPreference: state.visualPreference
             });
+            const latestPrompt = lastUserMessage(state.messages);
+            const contextSummary = buildContextSummary({
+                existingThread: state.existingThread,
+                messages: state.messages,
+                latestPrompt,
+                fallbackBrief,
+                draftBrief: state.existingThread?.draftBrief || null,
+                clarification: state.existingThread?.clarification || '',
+                editIntent: state.editIntent || null,
+                reasoningMode: state.reasoningMode,
+                webSearchEnabled: state.webSearchEnabled,
+                selectedModelId: state.selectedModelId,
+                outputIntent: state.outputIntent,
+                visualPreference: state.visualPreference
+            });
 
             return {
-                latestPrompt: lastUserMessage(state.messages),
-                fallbackBrief
+                latestPrompt,
+                fallbackBrief,
+                recentMessages: compactMessagesForPrompt(state.messages),
+                contextSummary
             };
         },
         async callModelPlan(state) {
@@ -1370,6 +1643,8 @@ function createCopilotService({
                         role: 'user',
                         content: buildPlanPrompt({
                             messages: state.messages,
+                            recentMessages: state.recentMessages,
+                            contextSummary: state.contextSummary,
                             locale: state.locale,
                             uiLocale: state.uiLocale,
                             outputIntent: state.outputIntent,
@@ -1665,21 +1940,31 @@ function createCopilotService({
         });
 
         try {
-            const planState = await planGraph.invoke({
+            const latestPrompt = lastUserMessage(normalizedMessages);
+            const clarificationResolution = resolveClarificationFollowUp(
+                latestPrompt,
+                existingThread,
+                deckLocale,
+                messageLocale
+            );
+            const planState = clarificationResolution || await planGraph.invoke({
                 threadId: resolvedThreadId,
                 messages: normalizedMessages,
                 locale: deckLocale,
                 uiLocale: messageLocale,
                 outputIntent,
                 visualPreference,
-                allowClarification
+                allowClarification,
+                existingThread,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId
             }, {
                 configurable: {
                     thread_id: resolvedThreadId
                 }
             });
 
-            const latestPrompt = lastUserMessage(normalizedMessages);
             const editIntent = detectEditIntent(latestPrompt, existingThread, deckLocale);
             const mergedDraftBrief = mergeBriefForEdit(
                 existingThread?.draftBrief || null,
@@ -1696,6 +1981,20 @@ function createCopilotService({
                 shouldClarify: planState.readyToBuild !== true,
                 clarification: planState.clarification || '',
                 editIntent
+            });
+            const contextSummary = buildContextSummary({
+                existingThread,
+                messages: appendAssistantMessage(normalizedMessages, assistantMessage),
+                latestPrompt,
+                fallbackBrief: existingThread?.draftBrief || planState.draftBrief || mergedDraftBrief,
+                draftBrief: mergedDraftBrief,
+                clarification: planState.clarification || '',
+                editIntent,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                outputIntent,
+                visualPreference
             });
 
             const savedThread = resolvedThreadStore.save({
@@ -1720,9 +2019,11 @@ function createCopilotService({
                 webSearchEnabled: resolvedWebSearchEnabled,
                 selectedModelId: resolvedSelectedModelId,
                 uiRunState: existingThread?.uiRunState || null,
+                contextSummary,
                 meta: buildThreadMeta(mergedDraftBrief, {
                     plannedAt: new Date().toISOString(),
-                    lastEditIntent: editIntent?.kind || ''
+                    lastEditIntent: editIntent?.kind || '',
+                    contextSummary
                 })
             });
 
@@ -1795,15 +2096,6 @@ function createCopilotService({
             onProgress?.(payload);
         };
 
-        writer({
-            eventType: 'planning_started',
-            stepLabel: buildStepLabel('planning_started', messageLocale),
-            message: messageLocale === 'zh-CN'
-                ? 'AI 正在理解你的需求并整理关键信息。'
-                : 'The agent is understanding your request and extracting the key intent.',
-            status: 'building'
-        });
-
         const result = await plan({
             messages,
             locale: deckLocale,
@@ -1818,16 +2110,30 @@ function createCopilotService({
         });
 
         const streamedSteps = Array.isArray(result.agentSteps) ? result.agentSteps : [];
-        for (const [index, step] of streamedSteps.entries()) {
-            await wait(index === 0 ? 120 : 160);
+        if (!streamedSteps.length) {
             writer({
                 threadId: result.threadId,
                 kind: 'step',
-                ...step
+                eventType: 'context_compacted',
+                stepLabel: messageLocale === 'zh-CN' ? '上下文已整理' : 'Context compacted',
+                message: messageLocale === 'zh-CN'
+                    ? '系统已整理当前线程上下文，准备继续响应。'
+                    : 'The system compacted the current thread context and is ready to continue.',
+                status: 'info'
             });
-        }
+            await wait(60);
+        } else {
+            for (const [index, step] of streamedSteps.entries()) {
+                await wait(index === 0 ? 120 : 160);
+                writer({
+                    threadId: result.threadId,
+                    kind: 'step',
+                    ...step
+                });
+            }
 
-        await wait(streamedSteps.length ? 120 : 60);
+            await wait(120);
+        }
 
         writer({
             threadId: result.threadId,
@@ -1885,6 +2191,20 @@ function createCopilotService({
                 webSearchEnabled: resolvedWebSearchEnabled,
                 selectedModelId: resolvedSelectedModelId
             }
+        });
+        const threadContextSummary = buildContextSummary({
+            existingThread,
+            messages: existingThread?.messages || [],
+            latestPrompt: lastUserMessage(existingThread?.messages || []),
+            fallbackBrief: draftBrief,
+            draftBrief,
+            clarification: '',
+            editIntent: existingThread?.editIntent || null,
+            reasoningMode: resolvedReasoningMode,
+            webSearchEnabled: resolvedWebSearchEnabled,
+            selectedModelId: resolvedSelectedModelId,
+            outputIntent: draftBrief?.outputIntent,
+            visualPreference: draftBrief?.visualFamily
         });
         const progressWriter = (payload) => {
             const event = mapBuildEventPayload(payload, buildUiLocale);
@@ -2022,8 +2342,10 @@ function createCopilotService({
             webSearchEnabled: resolvedWebSearchEnabled,
             selectedModelId: resolvedSelectedModelId,
             uiRunState: existingThread?.uiRunState || null,
+            contextSummary: threadContextSummary,
             meta: buildThreadMeta(draftBrief, {
-                buildStartedAt: new Date().toISOString()
+                buildStartedAt: new Date().toISOString(),
+                contextSummary: threadContextSummary
             })
         });
 
@@ -2049,6 +2371,25 @@ function createCopilotService({
                 threadId: resolvedThreadId,
                 locale: buildUiLocale
             });
+            const completedContextSummary = buildContextSummary({
+                existingThread: {
+                    ...existingThread,
+                    activePresentationId: resolvedPresentationId,
+                    presentationId: resolvedPresentationId,
+                    pendingAction: 'continue'
+                },
+                messages: existingThread?.messages || [],
+                latestPrompt: lastUserMessage(existingThread?.messages || []),
+                fallbackBrief: normalizedBrief,
+                draftBrief: normalizedBrief,
+                clarification: '',
+                editIntent: null,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                outputIntent: normalizedBrief?.outputIntent,
+                visualPreference: normalizedBrief?.visualFamily
+            });
 
             resolvedThreadStore.save({
                 id: resolvedThreadId,
@@ -2072,6 +2413,7 @@ function createCopilotService({
                 webSearchEnabled: resolvedWebSearchEnabled,
                 selectedModelId: resolvedSelectedModelId,
                 uiRunState: existingThread?.uiRunState || null,
+                contextSummary: completedContextSummary,
                 agentSteps: normalizeAgentSteps([
                     ...(existingThread?.agentSteps || []),
                     buildStepEvent({
@@ -2090,7 +2432,8 @@ function createCopilotService({
                     })
                 ]),
                 meta: buildThreadMeta(normalizedBrief, {
-                    buildCompletedAt: new Date().toISOString()
+                    buildCompletedAt: new Date().toISOString(),
+                    contextSummary: completedContextSummary
                 })
             });
 
@@ -2127,6 +2470,25 @@ function createCopilotService({
                 ...result
             };
         } catch (error) {
+            const failedContextSummary = buildContextSummary({
+                existingThread: {
+                    ...existingThread,
+                    activePresentationId: resolvedPresentationId,
+                    presentationId: resolvedPresentationId,
+                    pendingAction: 'retry'
+                },
+                messages: existingThread?.messages || [],
+                latestPrompt: lastUserMessage(existingThread?.messages || []),
+                fallbackBrief: draftBrief,
+                draftBrief,
+                clarification: '',
+                editIntent: existingThread?.editIntent || null,
+                reasoningMode: resolvedReasoningMode,
+                webSearchEnabled: resolvedWebSearchEnabled,
+                selectedModelId: resolvedSelectedModelId,
+                outputIntent: draftBrief?.outputIntent,
+                visualPreference: draftBrief?.visualFamily
+            });
             resolvedThreadStore.save({
                 id: resolvedThreadId,
                 locale: buildLocale,
@@ -2146,6 +2508,7 @@ function createCopilotService({
                 webSearchEnabled: resolvedWebSearchEnabled,
                 selectedModelId: resolvedSelectedModelId,
                 uiRunState: existingThread?.uiRunState || null,
+                contextSummary: failedContextSummary,
                 agentSteps: normalizeAgentSteps([
                     ...(existingThread?.agentSteps || []),
                     buildStepEvent({
@@ -2157,7 +2520,8 @@ function createCopilotService({
                 ]),
                 meta: buildThreadMeta(draftBrief, {
                     buildFailedAt: new Date().toISOString(),
-                    lastError: error.message
+                    lastError: error.message,
+                    contextSummary: failedContextSummary
                 })
             });
             buildTrace.fail(error, {
@@ -2265,26 +2629,6 @@ function createCopilotService({
                     }
                 });
             }
-
-            await emitAguiStep(writer, {
-                threadId: resolvedThreadId,
-                runId,
-                presentationId: existingThread?.activePresentationId || existingThread?.presentationId || '',
-                step: buildStepEvent({
-                    eventType: 'planning_started',
-                    locale: messageLocale,
-                    message: messageLocale === 'zh-CN'
-                        ? 'AI 正在理解你的需求并整理关键信息。'
-                        : 'The agent is understanding your request and extracting the key intent.',
-                    status: 'running'
-                })
-            });
-            aguiTrace.record('agui.planning_started', {
-                metadata: {
-                    runId,
-                    stepType: 'reasoning'
-                }
-            });
 
             const planResult = await plan({
                 messages: normalizedMessages,
@@ -2520,6 +2864,7 @@ function createCopilotService({
             ...thread,
             agentSteps: normalizeAgentSteps(thread.agentSteps),
             lastBuildArtifacts: normalizeArtifacts(thread.lastBuildArtifacts),
+            contextSummary: asString(thread.contextSummary || thread.meta?.contextSummary, ''),
             execution: resolvedExecution.describe(),
             mediaTaskSummary: thread.activePresentationId && mediaTaskStore?.listByPresentationId
                 ? mediaTaskStore.listByPresentationId(thread.activePresentationId)

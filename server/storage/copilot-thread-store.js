@@ -134,6 +134,7 @@ function mergeThread(existing, incoming) {
         webSearchEnabled: Boolean(next.webSearchEnabled ?? previous.webSearchEnabled),
         selectedModelId: asString(next.selectedModelId || previous.selectedModelId, '').trim(),
         uiRunState: normalizeUiRunState(next.uiRunState ?? previous.uiRunState),
+        contextSummary: asString(next.contextSummary || previous.contextSummary, '').trim(),
         meta: {
             ...(isPlainObject(previous.meta) ? previous.meta : {}),
             ...(isPlainObject(next.meta) ? next.meta : {})

@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import {
     ArrowUpRight,
     Box,
     Check,
+    ChevronRight,
     Lightbulb,
-    Sparkles,
     Zap
 } from 'lucide-react';
 
@@ -31,11 +32,34 @@ function shouldRenderLogEntry(entry) {
         return false;
     }
 
-    if (entry.eventType === 'run_started' || entry.eventType === 'planning_started') {
+    const hiddenEventTypes = new Set([
+        'run_started',
+        'planning_started',
+        'context_compacted',
+        'intent_parsed',
+        'brief_locked',
+        'clarification_requested',
+        'presentation_ready'
+    ]);
+
+    if (hiddenEventTypes.has(String(entry.eventType || '').trim())) {
         return false;
     }
 
     return true;
+}
+
+function shouldShowStepStatus(entry, kind) {
+    if (!entry?.stepStatus) {
+        return false;
+    }
+
+    const normalized = String(entry.stepStatus).trim().toLowerCase();
+    if (!normalized) {
+        return false;
+    }
+
+    return kind === 'error' || normalized === 'failed' || normalized === 'error';
 }
 
 function ArtifactCard({ entry, locale, buildArtifactTags, buildLocalePath, previewLabel, openLabel }) {
@@ -65,7 +89,7 @@ function ArtifactCard({ entry, locale, buildArtifactTags, buildLocalePath, previ
                     <strong>{artifact.label || artifact.type || 'artifact'}</strong>
                     {routeLabel ? <span>{routeLabel}</span> : null}
                 </div>
-                {artifact.status ? (
+                {artifact.status && ['failed', 'error'].includes(String(artifact.status).trim().toLowerCase()) ? (
                     <span className={`rail-artifact-status is-${String(artifact.status).toLowerCase()}`}>
                         {artifact.status}
                     </span>
@@ -92,12 +116,9 @@ function ArtifactCard({ entry, locale, buildArtifactTags, buildLocalePath, previ
     );
 }
 
-function UserBubble({ entry, locale, roleLabel }) {
+function UserBubble({ entry }) {
     return (
         <article className="rail-message rail-message-user" key={entry.id}>
-            <div className="rail-bubble-meta rail-bubble-meta-user">
-                <span>{roleLabel}</span>
-            </div>
             <div className="rail-bubble rail-bubble-user">
                 <p>{entry.content}</p>
             </div>
@@ -105,15 +126,9 @@ function UserBubble({ entry, locale, roleLabel }) {
     );
 }
 
-function AssistantBubble({ entry, locale, roleLabel }) {
+function AssistantBubble({ entry }) {
     return (
         <article className="rail-message rail-message-assistant" key={entry.id}>
-            <div className="rail-assistant-head">
-                <span className="rail-assistant-badge">
-                    <Sparkles size={13} />
-                    {roleLabel}
-                </span>
-            </div>
             <div className="rail-bubble rail-bubble-assistant rail-bubble-assistant-plain">
                 <p>{entry.content}</p>
             </div>
@@ -140,6 +155,7 @@ function StepEntry({
                 : Zap;
 
     const cardKind = kind === 'error' ? 'error' : kind;
+    const showStatusPill = shouldShowStepStatus(entry, cardKind);
 
     return (
         <article className={`rail-message rail-step-block rail-step-block-${cardKind} ${isLastStep ? 'is-last-step' : ''}`}>
@@ -149,7 +165,7 @@ function StepEntry({
                         <Icon size={12} />
                     </span>
                     <strong>{entry.stepLabel || (locale === 'zh-CN' ? '执行步骤' : 'Step')}</strong>
-                    {entry.stepStatus ? (
+                    {showStatusPill ? (
                         <span className={`rail-status-pill is-${entry.stepStatus}`}>
                             {entry.stepStatus}
                         </span>
@@ -173,12 +189,103 @@ function StepEntry({
     );
 }
 
-function ReasoningCard(props) {
-    return <StepEntry {...props} />;
+function ReasoningCard({
+    entry,
+    locale,
+    isLastStep,
+    buildArtifactTags,
+    buildLocalePath,
+    previewLabel,
+    openLabel
+}) {
+    const isStreaming = entry.stepStatus === 'running';
+    const [isOpen, setIsOpen] = useState(isStreaming);
+
+    useEffect(() => {
+        if (isStreaming) {
+            setIsOpen(true);
+        }
+    }, [isStreaming]);
+
+    return (
+        <article className={`rail-message rail-step-block rail-step-block-thinking ${isLastStep ? 'is-last-step' : ''}`}>
+            <button
+                type="button"
+                className="rail-reasoning-toggle"
+                onClick={() => setIsOpen((current) => !current)}
+                aria-expanded={isOpen}
+            >
+                <span className="rail-step-title-wrap">
+                    <span className="rail-step-node rail-step-node-thinking">
+                        <Lightbulb size={12} />
+                    </span>
+                    <strong>{entry.stepLabel || (locale === 'zh-CN' ? '思考过程' : 'Reasoning')}</strong>
+                    {isStreaming ? (
+                        <span className="rail-reasoning-live">
+                            <i />
+                            {locale === 'zh-CN' ? '进行中' : 'Live'}
+                        </span>
+                    ) : null}
+                </span>
+                <ChevronRight size={14} className={`rail-reasoning-chevron ${isOpen ? 'is-open' : ''}`} />
+            </button>
+            <div className={`rail-reasoning-panel ${isOpen ? 'is-open' : ''}`}>
+                <div className="rail-step-body">
+                    <p>{entry.content}</p>
+                </div>
+                {entry.artifact ? (
+                    <ArtifactCard
+                        entry={entry}
+                        locale={locale}
+                        buildArtifactTags={buildArtifactTags}
+                        buildLocalePath={buildLocalePath}
+                        previewLabel={previewLabel}
+                        openLabel={openLabel}
+                    />
+                ) : null}
+            </div>
+        </article>
+    );
 }
 
-function ToolResultCard(props) {
-    return <StepEntry {...props} />;
+function ToolResultCard({
+    entry,
+    locale,
+    kind,
+    isLastStep,
+    buildArtifactTags,
+    buildLocalePath,
+    previewLabel,
+    openLabel
+}) {
+    return (
+        <article className={`rail-message rail-step-block rail-step-block-${kind} ${isLastStep ? 'is-last-step' : ''}`}>
+            <div className="rail-tool-head">
+                <span className={`rail-step-node rail-step-node-${kind}`}>
+                    {kind === 'result' ? <Check size={12} /> : <Box size={12} />}
+                </span>
+                <div className="rail-tool-copy">
+                    <strong>{entry.stepLabel || (locale === 'zh-CN' ? '工具结果' : 'Tool result')}</strong>
+                    {shouldShowStepStatus(entry, kind) ? (
+                        <span className={`rail-status-pill is-${entry.stepStatus}`}>{entry.stepStatus}</span>
+                    ) : null}
+                </div>
+            </div>
+            <div className="rail-step-body">
+                <p>{entry.content}</p>
+            </div>
+            {entry.artifact ? (
+                <ArtifactCard
+                    entry={entry}
+                    locale={locale}
+                    buildArtifactTags={buildArtifactTags}
+                    buildLocalePath={buildLocalePath}
+                    previewLabel={previewLabel}
+                    openLabel={openLabel}
+                />
+            ) : null}
+        </article>
+    );
 }
 
 function isStepLike(kind) {
@@ -189,7 +296,6 @@ export function AgentRailMessages({
     logs,
     locale,
     getRailMessageKind,
-    getLogRoleLabel,
     buildArtifactTags,
     buildLocalePath,
     previewLabel,
@@ -199,17 +305,19 @@ export function AgentRailMessages({
 
     return visibleLogs.map((entry, index) => {
         const kind = getRailMessageKind(entry);
-        const roleLabel = getLogRoleLabel(entry, locale);
+        const previousEntry = visibleLogs[index - 1];
         const isLastStep = isStepLike(kind)
             ? !visibleLogs.slice(index + 1).some((next) => isStepLike(getRailMessageKind(next)))
             : false;
-        const showRoundDate = index === 0 || entry.role === 'user';
+        const showRoundDate = index === 0
+            || (entry.runId && previousEntry?.runId && entry.runId !== previousEntry.runId)
+            || (!entry.runId && previousEntry && formatRoundDate(entry.createdAt, locale) !== formatRoundDate(previousEntry.createdAt, locale));
 
         let content = null;
         if (kind === 'user') {
-            content = <UserBubble key={entry.id} entry={entry} locale={locale} roleLabel={roleLabel} />;
+            content = <UserBubble key={entry.id} entry={entry} />;
         } else if (kind === 'assistant') {
-            content = <AssistantBubble key={entry.id} entry={entry} locale={locale} roleLabel={roleLabel} />;
+            content = <AssistantBubble key={entry.id} entry={entry} />;
         } else if (kind === 'tool' || kind === 'result') {
             content = (
                 <ToolResultCard
@@ -224,9 +332,23 @@ export function AgentRailMessages({
                     openLabel={openLabel}
                 />
             );
-        } else {
+        } else if (kind === 'thinking') {
             content = (
                 <ReasoningCard
+                    key={entry.id}
+                    entry={entry}
+                    locale={locale}
+                    kind={kind}
+                    isLastStep={isLastStep}
+                    buildArtifactTags={buildArtifactTags}
+                    buildLocalePath={buildLocalePath}
+                    previewLabel={previewLabel}
+                    openLabel={openLabel}
+                />
+            );
+        } else {
+            content = (
+                <StepEntry
                     key={entry.id}
                     entry={entry}
                     locale={locale}

@@ -18,15 +18,11 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-    buildCopilotStream,
-    getPresentationRecord,
     getStyles,
-    planCopilot,
-    streamCopilotAgui
 } from '../lib/api';
 import { AgentRailMessages } from '../components/AgentRailMessages';
 import { buildLocalePath, formatDate, I18N, resolveLocale } from '../lib/locale';
-import { pushRecentPresentation } from '../lib/storage';
+import { createXiangyuRuntimeAgent } from '../lib/xiangyu-runtime-agent';
 
 function BrandMark() {
     return (
@@ -82,22 +78,6 @@ function createLogEntry(role, content, tone = 'default') {
         tone,
         createdAt: new Date().toISOString()
     };
-}
-
-function getLogRoleLabel(entry, locale) {
-    if (entry.role === 'user') {
-        return locale === 'zh-CN' ? '你' : 'You';
-    }
-
-    if (entry.tone === 'error') {
-        return locale === 'zh-CN' ? '错误' : 'Error';
-    }
-
-    if (entry.tone === 'trace' || entry.tone === 'system' || entry.tone === 'success') {
-        return locale === 'zh-CN' ? '执行步骤' : 'Execution';
-    }
-
-    return locale === 'zh-CN' ? 'AI 助手' : 'AI Agent';
 }
 
 function getRailMessageKind(entry) {
@@ -213,10 +193,13 @@ export default function CreatePage() {
     const initialThreadId = params.get('threadId') || '';
     const shouldAutoStart = params.get('autostart') === '1';
     const startedRef = useRef(false);
+    const restoredRef = useRef(false);
     const logListRef = useRef(null);
+    const promptInputRef = useRef(null);
     const modeMenuRef = useRef(null);
     const modelMenuRef = useRef(null);
     const recognitionRef = useRef(null);
+    const runtimeAgent = useMemo(() => createXiangyuRuntimeAgent(), []);
 
     const [prompt, setPrompt] = useState(initialPrompt);
     const [messages, setMessages] = useState([]);
@@ -237,6 +220,10 @@ export default function CreatePage() {
     const [switchingFamily, setSwitchingFamily] = useState('');
     const [activeStageView, setActiveStageView] = useState('live');
     const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+    const [contextSummary, setContextSummary] = useState('');
+    const [mediaTaskSummary, setMediaTaskSummary] = useState([]);
+    const [pendingAction, setPendingAction] = useState('');
+    const [currentRunId, setCurrentRunId] = useState('');
     const [sidebarWidth, setSidebarWidth] = useState(430);
     const [agentMode, setAgentMode] = useState('agent');
     const [modeMenuOpen, setModeMenuOpen] = useState(false);
@@ -285,6 +272,28 @@ export default function CreatePage() {
     const selectedMode = modeOptions.find((item) => item.id === agentMode) || modeOptions[0];
     const SelectedModeIcon = selectedMode.icon;
 
+    useEffect(() => runtimeAgent.subscribe((snapshot) => {
+        setMessages(Array.isArray(snapshot.messages) ? snapshot.messages : []);
+        setLogs(Array.isArray(snapshot.logs) ? snapshot.logs : []);
+        setDraftBrief(snapshot.draftBrief || null);
+        setThreadId(snapshot.threadId || '');
+        setPresentationId(snapshot.presentationId || '');
+        setClarification(snapshot.clarification || '');
+        setIsPlanning(Boolean(snapshot.isPlanning));
+        setIsBuilding(Boolean(snapshot.isBuilding));
+        setIsLoadingExisting(Boolean(snapshot.isLoadingExisting));
+        setBuildEvents(Array.isArray(snapshot.buildEvents) ? snapshot.buildEvents : []);
+        setResultRecord(snapshot.resultRecord || null);
+        setError(snapshot.error || '');
+        setContextSummary(snapshot.contextSummary || '');
+        setMediaTaskSummary(Array.isArray(snapshot.mediaTaskSummary) ? snapshot.mediaTaskSummary : []);
+        setPendingAction(snapshot.pendingAction || '');
+        setCurrentRunId(snapshot.currentRunId || '');
+        setReasoningMode(snapshot.reasoningMode || 'thinking');
+        setWebSearchEnabled(Boolean(snapshot.webSearchEnabled));
+        setSelectedModelId(snapshot.selectedModelId || 'balanced');
+    }), [runtimeAgent]);
+
     useEffect(() => {
         getStyles()
             .then((payload) => setStyles(Array.isArray(payload) ? payload : []))
@@ -307,12 +316,36 @@ export default function CreatePage() {
     }, [shouldAutoStart, initialPrompt]);
 
     useEffect(() => {
+        if (!initialThreadId || restoredRef.current) {
+            return;
+        }
+
+        restoredRef.current = true;
+        runtimeAgent.restoreThread(initialThreadId, {
+            locale,
+            fallbackPresentationId: initialPresentationId,
+            copy
+        }).catch(() => {});
+    }, [initialThreadId, initialPresentationId, locale, copy, runtimeAgent]);
+
+    useEffect(() => {
         if (!logListRef.current) {
             return;
         }
 
         logListRef.current.scrollTop = logListRef.current.scrollHeight;
     }, [logs, clarification, isPlanning, isBuilding, isLoadingExisting, resultRecord]);
+
+    useEffect(() => {
+        if (!promptInputRef.current) {
+            return;
+        }
+
+        const textarea = promptInputRef.current;
+        textarea.style.height = '0px';
+        const nextHeight = Math.max(76, Math.min(textarea.scrollHeight, 168));
+        textarea.style.height = `${nextHeight}px`;
+    }, [prompt, clarification]);
 
     useEffect(() => {
         function handlePointerDown(event) {
@@ -340,78 +373,29 @@ export default function CreatePage() {
     }, []);
 
     useEffect(() => {
-        if (!initialPresentationId || shouldAutoStart || resultRecord || isBuilding) {
+        if (!initialPresentationId || initialThreadId || shouldAutoStart || resultRecord || isBuilding) {
             return undefined;
         }
 
         let cancelled = false;
 
-        setIsLoadingExisting(true);
-        setError('');
-        setPresentationId(initialPresentationId);
-        setLogs((current) => [...current, createLogEntry(
-            'system',
-            copy.createLoadExistingStart.replace('{id}', initialPresentationId),
-            'system'
-        )]);
-
-        getPresentationRecord(initialPresentationId)
-            .then((record) => {
-                if (cancelled) {
-                    return;
-                }
-
-                setResultRecord(record);
-                setDraftBrief((current) => current || {
-                    topic: record.title || record.outline?.title || copy.createWelcomeTitle,
-                    locale: deckLocale,
-                    visualFamily: 'showcase',
-                    styleId: record.style?.id || '',
-                    outputIntent: outputIntent || '',
-                    outlineHints: {
-                        tone: record.outline?.subtitle || '',
-                        flow: Array.isArray(record.outline?.slides)
-                            ? record.outline.slides
-                                .map((slide) => slide?.title || slide?.subtitle || slide?.type)
-                                .filter(Boolean)
-                                .slice(0, 6)
-                            : [],
-                        keywords: []
-                    }
-                });
-                setLogs((current) => [...current, createLogEntry(
-                    'system',
-                    copy.createLoadExistingDone.replace('{title}', record.title || initialPresentationId),
-                    'success'
-                )]);
-            })
-            .catch((requestError) => {
-                if (cancelled) {
-                    return;
-                }
-
-                const message = requestError.message || String(requestError);
-                setError(message);
-                setLogs((current) => [...current, createLogEntry(
-                    'system',
-                    copy.createLoadExistingFailed.replace('{message}', message),
-                    'error'
-                )]);
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsLoadingExisting(false);
-                }
-            });
+        runtimeAgent.loadPresentation(initialPresentationId, {
+            copy,
+            deckLocale,
+            outputIntent
+        }).catch(() => {
+            if (cancelled) {
+                return;
+            }
+        });
 
         return () => {
             cancelled = true;
         };
-    }, [initialPresentationId, shouldAutoStart, resultRecord, isBuilding, copy, deckLocale, outputIntent]);
+    }, [initialPresentationId, initialThreadId, shouldAutoStart, resultRecord, isBuilding, copy, deckLocale, outputIntent, runtimeAgent]);
 
     function appendLog(role, content, tone = 'default') {
-        const entry = createLogEntry(role, content, tone);
-        setLogs((current) => [...current, entry]);
+        runtimeAgent.appendLog(role, content, tone);
     }
 
     function startSidebarResize(event) {
@@ -447,6 +431,22 @@ export default function CreatePage() {
         }
 
         await runCopilot(nextPrompt);
+    }
+
+    function handlePromptKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            if (prompt.trim() && !(isPlanning || isBuilding)) {
+                handleSend();
+            }
+        }
+    }
+
+    function handleComposerMouseDown(event) {
+        const target = event.target;
+        if (target instanceof HTMLElement && !target.closest('button') && !target.closest('.composer-popover')) {
+            promptInputRef.current?.focus();
+        }
     }
 
     function handlePrimaryComposerAction() {
@@ -501,291 +501,40 @@ export default function CreatePage() {
     }
 
     async function runCopilot(nextPrompt) {
-        setError('');
         setPrompt('');
-        setResultRecord(null);
-        setClarification('');
         setActiveStageView('live');
 
-        const userMessage = { role: 'user', content: nextPrompt };
-        const nextMessages = [...messages, userMessage];
-        setMessages(nextMessages);
-        appendLog('user', nextPrompt, 'user');
-        setIsPlanning(true);
-        setBuildEvents([]);
-
         try {
-            let aguiCompleted = false;
-
-            try {
-                await streamCopilotAgui({
-                    messages: nextMessages,
-                    locale: deckLocale,
-                    uiLocale: locale,
-                    outputIntent,
-                    visualPreference,
-                    allowClarification: true,
-                    threadId,
-                    reasoningMode,
-                    webSearchEnabled,
-                    selectedModelId
-                }, async (event) => {
-                    if (!event || typeof event !== 'object') {
-                        return;
-                    }
-
-                    if (event.threadId) {
-                        setThreadId(event.threadId);
-                    }
-
-                    if (event.presentationId) {
-                        setPresentationId(event.presentationId);
-                    }
-
-                    if (event.type === 'RUN_STARTED') {
-                        setIsPlanning(true);
-                        setIsBuilding(false);
-                        return;
-                    }
-
-                    if (event.type === 'STATE_SNAPSHOT' || event.type === 'STATE_DELTA') {
-                        const payload = event.payload || {};
-                        if (payload.draftBrief) {
-                            setDraftBrief(payload.draftBrief);
-                        }
-                        if (typeof payload.clarification === 'string') {
-                            setClarification(payload.clarification);
-                        }
-                        if (payload.activePresentationId) {
-                            setPresentationId(payload.activePresentationId);
-                        }
-                        if (payload.reasoningMode) {
-                            setReasoningMode(payload.reasoningMode);
-                        }
-                        if (typeof payload.webSearchEnabled === 'boolean') {
-                            setWebSearchEnabled(payload.webSearchEnabled);
-                        }
-                        if (typeof payload.selectedModelId === 'string' && payload.selectedModelId.trim()) {
-                            setSelectedModelId(payload.selectedModelId);
-                        }
-                        return;
-                    }
-
-                    if (event.type === 'TEXT_MESSAGE_START') {
-                        const messageId = String(event.payload?.messageId || `assistant_${Date.now()}`);
-                        setLogs((current) => mergeLogEntry(current, {
-                            id: messageId,
-                            role: 'assistant',
-                            tone: 'assistant',
-                            content: '',
-                            createdAt: event.timestamp || new Date().toISOString()
-                        }));
-                        setIsPlanning(false);
-                        return;
-                    }
-
-                    if (event.type === 'TEXT_MESSAGE_CONTENT') {
-                        const messageId = String(event.payload?.messageId || '');
-                        const delta = String(event.payload?.delta || '');
-                        if (!messageId) {
-                            return;
-                        }
-                        setLogs((current) => current.map((item) => (
-                            item.id === messageId
-                                ? { ...item, content: `${item.content || ''}${delta}` }
-                                : item
-                        )));
-                        return;
-                    }
-
-                    if (event.type === 'TEXT_MESSAGE_END') {
-                        const finalContent = String(event.payload?.content || '').trim();
-                        if (finalContent) {
-                            setMessages((current) => [...current, { role: 'assistant', content: finalContent }]);
-                        }
-                        return;
-                    }
-
-                    if (
-                        event.type === 'STEP_STARTED'
-                        || event.type === 'STEP_FINISHED'
-                        || event.type === 'TOOL_CALL_START'
-                        || event.type === 'TOOL_CALL_END'
-                    ) {
-                        const nextLog = buildAguiStepLog(event);
-                        setLogs((current) => mergeLogEntry(current, nextLog));
-
-                        if (nextLog.tone === 'execution' || nextLog.tone === 'tool' || nextLog.tone === 'result') {
-                            setIsPlanning(false);
-                            setIsBuilding(true);
-                        }
-                        return;
-                    }
-
-                    if (event.type === 'RUN_ERROR') {
-                        setIsPlanning(false);
-                        setIsBuilding(false);
-                        const message = String(event.payload?.message || 'Build failed');
-                        setError(message);
-                        setLogs((current) => mergeLogEntry(current, createLogEntry('system', message, 'error')));
-                        return;
-                    }
-
-                    if (event.type === 'RUN_FINISHED') {
-                        aguiCompleted = true;
-                        setIsPlanning(false);
-                        setIsBuilding(false);
-
-                        const payload = event.payload || {};
-                        if (payload.draftBrief) {
-                            setDraftBrief(payload.draftBrief);
-                        }
-
-                        if (payload.status === 'clarifying') {
-                            setClarification(String(payload.clarification || ''));
-                            return;
-                        }
-
-                        const finalPresentationId = String(
-                            payload.presentationId
-                            || event.presentationId
-                            || ''
-                        ).trim();
-
-                        if (!finalPresentationId) {
-                            return;
-                        }
-
-                        setPresentationId(finalPresentationId);
-                        const record = await getPresentationRecord(finalPresentationId);
-                        setResultRecord(record);
-                        setActiveStageView('live');
-                        pushRecentPresentation({
-                            id: finalPresentationId,
-                            title: record.title || payload.draftBrief?.topic || nextPrompt,
-                            styleName: record.style?.name || '',
-                            previewUrl: `/presentations/${finalPresentationId}`,
-                            workspaceUrl: buildLocalePath('/create', locale, {
-                                presentationId: finalPresentationId,
-                                threadId: event.threadId || threadId || ''
-                            }),
-                            threadId: event.threadId || threadId || '',
-                            updatedAt: record.updatedAt || new Date().toISOString()
-                        });
-                    }
-                });
-            } catch (aguiError) {
-                const message = aguiError?.message || String(aguiError);
-                if (!/404|AG-UI/i.test(message)) {
-                    throw aguiError;
-                }
-            }
-
-            if (aguiCompleted) {
-                return;
-            }
-
-            const plan = await planCopilot({
-                messages: nextMessages,
+            await runtimeAgent.sendMessage(nextPrompt, {
                 locale: deckLocale,
                 uiLocale: locale,
                 outputIntent,
                 visualPreference,
                 allowClarification: true,
-                threadId
+                reasoningMode,
+                webSearchEnabled,
+                selectedModelId,
+                buildAutoStartMessage: copy.createBuildAutoStart,
+                buildWorkspaceMessage: copy.createBuildWorkspaceBody
             });
-
-            if (plan.threadId) {
-                setThreadId(plan.threadId);
-            }
-
-            if (plan.assistantMessage) {
-                appendLog('assistant', plan.assistantMessage, 'assistant');
-                setMessages((current) => [...current, {
-                    role: 'assistant',
-                    content: plan.assistantMessage
-                }]);
-            }
-
-            setDraftBrief(plan.draftBrief || null);
-            setIsPlanning(false);
-
-            if (plan.draftBrief) {
-                setLogs((current) => mergeLogEntry(current, {
-                    id: `fallback_brief_${Date.now().toString(36)}`,
-                    role: 'system',
-                    tone: 'reasoning',
-                    content: locale === 'zh-CN'
-                        ? `已锁定 ${plan.draftBrief.purpose || 'product'} / ${plan.draftBrief.length || 'medium'} / ${plan.draftBrief.visualFamily || 'showcase'}。`
-                        : `Locked ${plan.draftBrief.purpose || 'product'} / ${plan.draftBrief.length || 'medium'} / ${plan.draftBrief.visualFamily || 'showcase'}.`,
-                    createdAt: new Date().toISOString(),
-                    eventType: 'brief_locked',
-                    stepLabel: locale === 'zh-CN' ? '已锁定 brief' : 'Brief locked',
-                    stepStatus: 'ready'
-                }));
-            }
-
-            if (plan.readyToBuild === false) {
-                setClarification(plan.clarification || plan.assistantMessage || '');
-                return;
-            }
-
-            appendLog('system', copy.createBuildAutoStart, 'trace');
-            await runBuild(plan.draftBrief || null, plan.threadId || threadId);
         } catch (requestError) {
-            setIsPlanning(false);
             setError(requestError.message || String(requestError));
-            appendLog('system', copy.createBuildFailure.replace('{message}', requestError.message || String(requestError)), 'error');
         }
     }
 
     async function runBuild(brief, nextThreadId = threadId) {
-        setIsBuilding(true);
-        setError('');
-        setClarification('');
-        setBuildEvents([]);
-        appendLog('system', copy.createBuildWorkspaceBody, 'trace');
-
         try {
-            await buildCopilotStream({
-                draftBrief: brief,
+            await runtimeAgent.buildDraft(brief, {
                 locale: deckLocale,
-                threadId: nextThreadId || ''
-            }, async (event) => {
-                if (event.threadId) {
-                    setThreadId(event.threadId);
-                }
-                setPresentationId(event.presentationId || '');
-                setBuildEvents((current) => uniqueByMessage([...current, event]));
-
-                if (event.message) {
-                    appendLog('system', event.message, event.status === 'failed' ? 'error' : 'trace');
-                }
-
-                if (event.status === 'ready' && event.presentationId) {
-                    const record = await getPresentationRecord(event.presentationId);
-                    setResultRecord(record);
-                    setDraftBrief((current) => current || brief);
-                    pushRecentPresentation({
-                        id: event.presentationId,
-                        title: record.title || brief.topic,
-                        styleName: record.style?.name || '',
-                        previewUrl: `/presentations/${event.presentationId}`,
-                        workspaceUrl: buildLocalePath('/create', locale, {
-                            presentationId: event.presentationId,
-                            threadId: event.threadId || nextThreadId || threadId || ''
-                        }),
-                        threadId: event.threadId || nextThreadId || threadId || '',
-                        updatedAt: record.updatedAt || new Date().toISOString()
-                    });
-                }
-
-                if (event.status === 'failed') {
-                    setError(event.error || event.message || 'Build failed');
-                }
+                threadId: nextThreadId || '',
+                reasoningMode,
+                webSearchEnabled,
+                selectedModelId,
+                recentLocale: locale,
+                buildWorkspaceMessage: copy.createBuildWorkspaceBody
             });
-        } finally {
-            setIsBuilding(false);
+        } catch (buildError) {
+            setError(buildError?.message || String(buildError));
         }
     }
 
@@ -825,6 +574,13 @@ export default function CreatePage() {
     const currentFamily = draftBrief?.visualFamily || visualPreference || 'showcase';
     const stagePreviewTitle = resultRecord?.title || draftBrief?.topic || copy.createWelcomeTitle;
     const stagePreviewBody = resultRecord?.outline?.subtitle || draftBrief?.outlineHints?.tone || copy.createWelcomeBody;
+    const activeMediaCount = mediaTaskSummary.filter((task) => ['queued', 'running'].includes(String(task?.status || '').trim().toLowerCase())).length;
+    const sidebarTitle = !messages.length && !logs.length && !draftBrief
+        ? (locale === 'zh-CN' ? '新对话' : 'New chat')
+        : (draftBrief?.topic || resultRecord?.title || copy.createTitle);
+    const railHeadSummary = pendingAction === 'clarification'
+        ? (locale === 'zh-CN' ? '继续补充一点信息，我就接着生成。' : 'Add one more detail and I will continue.')
+        : '';
     const buildProgress = resultRecord ? 100 : Math.max(
         8,
         (isLoadingExisting ? 26 : 0),
@@ -879,17 +635,6 @@ export default function CreatePage() {
                         : isPlanning
                             ? 'planning'
                             : 'idle';
-    const stagePrimaryMessage = error
-        || clarification
-        || (isLoadingExisting
-            ? copy.createStageLoadedBody
-            : isBuilding
-                ? latestEvent?.message || copy.createStageBuildingBody
-                : isPlanning
-                    ? copy.createStageAwaitingBody
-                    : draftBrief
-                        ? copy.createStageAwaitingBody
-                        : copy.createStageEmptyBody);
     const showStageDock = false;
     const showStageTrack = false;
     const showStageProgress = false;
@@ -1012,27 +757,11 @@ export default function CreatePage() {
                                                     srcDoc={resultRecord.html}
                                                 />
                                             ) : (
-                                                <div className="presentation-frame-placeholder">
-                                                    <div className={`presentation-stage-shell stage-mode-${stageMode}`}>
-                                                        <div className="presentation-stage-ambient">
-                                                            <div className="presentation-stage-glow" />
-                                                            <div className="presentation-stage-ring ring-one" />
-                                                            <div className="presentation-stage-ring ring-two" />
-                                                        </div>
-                                                        <div className="presentation-slide-sheet">
-                                                            <div className="presentation-stage-screen">
-                                                                <div className="presentation-stage-screen-frame">
-                                                                    <div className="presentation-slide-copy">
-                                                                        <span>{copy.createStageLabel}</span>
-                                                                        {(isPlanning || isBuilding || isLoadingExisting || clarification || error) ? (
-                                                                            <strong>{stageStatus}</strong>
-                                                                        ) : null}
-                                                                        <p>{stagePrimaryMessage}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                <div className="presentation-frame-placeholder presentation-frame-placeholder-empty">
+                                                    <div
+                                                        className={`presentation-stage-empty-surface stage-mode-${stageMode}`}
+                                                        aria-label={stageStatus}
+                                                    />
                                                 </div>
                                             )}
                                         </div>
@@ -1153,9 +882,9 @@ export default function CreatePage() {
                         onPointerDown={startSidebarResize}
                     />
                     <div className="sidebar-head">
-                        <div>
-                            <span>{copy.createLogTitle}</span>
-                            <strong>{draftBrief?.topic || copy.createTitle}</strong>
+                        <div className="sidebar-head-main">
+                            <strong>{sidebarTitle}</strong>
+                            {railHeadSummary ? <small>{railHeadSummary}</small> : null}
                         </div>
                         <div className="sidebar-head-actions">
                             <button type="button" className="icon-action" onClick={() => navigate(buildLocalePath('/', locale))}>
@@ -1167,13 +896,9 @@ export default function CreatePage() {
                         </div>
                     </div>
 
-                    <div className="sidebar-scroll">
-                        <section className="sidebar-block log-block">
-                            <div className="sidebar-block-head">
-                                <strong>{copy.createLogTitle}</strong>
-                                <span>{copy.createAgentRailHint}</span>
-                            </div>
-                            <div className="log-list log-list-chat agent-rail-list" ref={logListRef}>
+                    <div className="sidebar-scroll sidebar-scroll-chat-layout">
+                        <section className="sidebar-block log-block log-block-chat">
+                            <div className={`log-list log-list-chat agent-rail-list ${showPromptPresets ? 'is-empty-state' : ''}`} ref={logListRef}>
                                 {showPromptPresets ? (
                                     <div className="chat-quickstart-empty-state">
                                         <strong>{copy.createPresetTitle}</strong>
@@ -1197,7 +922,6 @@ export default function CreatePage() {
                                         logs={logs}
                                         locale={locale}
                                         getRailMessageKind={getRailMessageKind}
-                                        getLogRoleLabel={getLogRoleLabel}
                                         buildArtifactTags={buildArtifactTags}
                                         buildLocalePath={buildLocalePath}
                                         previewLabel={copy.createActionPreview}
@@ -1211,144 +935,157 @@ export default function CreatePage() {
                     </div>
 
                     <div className="sidebar-composer sidebar-composer-chat">
-                        <textarea
-                            value={prompt}
-                            onChange={(event) => setPrompt(event.target.value)}
-                            placeholder={clarification || copy.createPromptPlaceholder}
-                            disabled={isPlanning || isBuilding}
-                        />
-                        <div className="sidebar-composer-footer composer-toolbar-row">
-                            <button
-                                type="button"
-                                className="composer-tool-icon composer-tool-attach composer-tooltip-anchor"
-                                aria-label={copy.createAttach || 'Attach'}
-                                title={copy.createAttach || 'Attach'}
-                                data-tooltip={copy.createAttach || 'Attach'}
-                            >
-                                <Paperclip size={15} />
-                            </button>
-                            <div className="composer-mode-wrap" ref={modeMenuRef}>
-                                <button
-                                    type="button"
-                                    className={`composer-mode-pill composer-tooltip-anchor ${modeMenuOpen ? 'active' : ''}`}
-                                    onClick={() => setModeMenuOpen((current) => !current)}
-                                    aria-label={selectedMode.label}
-                                    title={selectedMode.label}
-                                    data-tooltip={selectedMode.label}
-                                >
-                                    <SelectedModeIcon size={15} />
-                                    <span>{selectedMode.label}</span>
-                                    <ChevronDown size={14} />
-                                </button>
-                                {modeMenuOpen ? (
-                                    <div className="composer-popover composer-mode-menu">
-                                        {modeOptions.map((option) => {
-                                            const Icon = option.icon;
-                                            return (
-                                                <button
-                                                    key={option.id}
-                                                    type="button"
-                                                    className={`composer-menu-item ${agentMode === option.id ? 'active' : ''}`}
-                                                    onClick={() => {
-                                                        setAgentMode(option.id);
-                                                        setModeMenuOpen(false);
-                                                    }}
-                                                >
-                                                    <div className="composer-menu-item-main">
-                                                        <Icon size={15} />
-                                                        <span>{option.label}</span>
-                                                    </div>
-                                                    {agentMode === option.id ? <Check size={14} /> : null}
-                                                </button>
-                                            );
-                                        })}
+                        <div
+                            className={`composer-shell ${prompt.trim() ? 'has-content' : ''}`}
+                            onMouseDown={handleComposerMouseDown}
+                        >
+                            <div className="composer-input-shell">
+                                <textarea
+                                    ref={promptInputRef}
+                                    value={prompt}
+                                    onChange={(event) => setPrompt(event.target.value)}
+                                    onKeyDown={handlePromptKeyDown}
+                                    placeholder={clarification || copy.createPromptPlaceholder}
+                                    disabled={isPlanning || isBuilding}
+                                />
+                            </div>
+                            <div className="sidebar-composer-footer composer-toolbar-row">
+                                <div className="composer-footer-left">
+                                    <button
+                                        type="button"
+                                        className="composer-tool-icon composer-tool-attach composer-tooltip-anchor"
+                                        aria-label={copy.createAttach || 'Attach'}
+                                        title={copy.createAttach || 'Attach'}
+                                        data-tooltip={copy.createAttach || 'Attach'}
+                                    >
+                                        <Paperclip size={15} />
+                                    </button>
+                                    <div className="composer-mode-wrap" ref={modeMenuRef}>
+                                        <button
+                                            type="button"
+                                            className={`composer-mode-pill composer-tooltip-anchor ${modeMenuOpen ? 'active' : ''}`}
+                                            onClick={() => setModeMenuOpen((current) => !current)}
+                                            aria-label={selectedMode.label}
+                                            title={selectedMode.label}
+                                            data-tooltip={selectedMode.label}
+                                        >
+                                            <SelectedModeIcon size={15} />
+                                            <span>{selectedMode.label}</span>
+                                            <ChevronDown size={14} />
+                                        </button>
+                                        {modeMenuOpen ? (
+                                            <div className="composer-popover composer-mode-menu">
+                                                {modeOptions.map((option) => {
+                                                    const Icon = option.icon;
+                                                    return (
+                                                        <button
+                                                            key={option.id}
+                                                            type="button"
+                                                            className={`composer-menu-item ${agentMode === option.id ? 'active' : ''}`}
+                                                            onClick={() => {
+                                                                setAgentMode(option.id);
+                                                                setModeMenuOpen(false);
+                                                            }}
+                                                        >
+                                                            <div className="composer-menu-item-main">
+                                                                <Icon size={15} />
+                                                                <span>{option.label}</span>
+                                                            </div>
+                                                            {agentMode === option.id ? <Check size={14} /> : null}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : null}
                                     </div>
-                                ) : null}
-                            </div>
-                            <div className="composer-tool-group">
-                                <div className="composer-reasoning-switch" role="group" aria-label={locale === 'zh-CN' ? '模式切换' : 'Mode switch'}>
-                                    <button
-                                        type="button"
-                                        className={`composer-reasoning-btn composer-tooltip-anchor ${reasoningMode === 'thinking' ? 'active' : ''}`}
-                                        onClick={() => setReasoningMode('thinking')}
-                                        aria-label={copy.createThinkingMode || 'Thinking'}
-                                        title={copy.createThinkingMode || 'Thinking'}
-                                        data-tooltip={copy.createThinkingMode || 'Thinking'}
-                                    >
-                                        <Lightbulb size={14} />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`composer-reasoning-btn composer-tooltip-anchor ${reasoningMode === 'fast' ? 'active' : ''}`}
-                                        onClick={() => setReasoningMode('fast')}
-                                        aria-label={copy.createFastMode || 'Fast'}
-                                        title={copy.createFastMode || 'Fast'}
-                                        data-tooltip={copy.createFastMode || 'Fast'}
-                                    >
-                                        <Zap size={14} />
-                                    </button>
                                 </div>
-                                <button
-                                    type="button"
-                                    className={`composer-tool-icon composer-tooltip-anchor ${webSearchEnabled ? 'active' : ''}`}
-                                    onClick={() => setWebSearchEnabled((current) => !current)}
-                                    aria-label={copy.createWebSearch || 'Web search'}
-                                    title={copy.createWebSearch || 'Web search'}
-                                    data-tooltip={copy.createWebSearch || 'Web search'}
-                                >
-                                    <Globe size={15} />
-                                </button>
-                                <div className="composer-model-wrap" ref={modelMenuRef}>
-                                    <button
-                                        type="button"
-                                        className={`composer-tool-icon composer-tooltip-anchor ${modelPickerEnabled ? 'active' : ''}`}
-                                        onClick={() => setModelPickerEnabled((current) => !current)}
-                                        aria-label={copy.createModelPicker || 'Model'}
-                                        title={copy.createModelPicker || 'Model'}
-                                        data-tooltip={copy.createModelPicker || 'Model'}
-                                    >
-                                        <Box size={15} />
-                                    </button>
-                                    {modelPickerEnabled ? (
-                                        <div className="composer-popover composer-model-menu composer-model-menu-compact">
-                                            <div className="composer-model-head">
-                                                <div>
-                                                    <strong>{copy.createModelPreference || '模型偏好'}</strong>
-                                                </div>
-                                            </div>
-                                            <div className="composer-model-list">
-                                                {modelOptions.map((model) => (
-                                                    <button
-                                                        key={model.id}
-                                                        type="button"
-                                                        className={`composer-model-card ${selectedModelId === model.id ? 'active' : ''}`}
-                                                        onClick={() => {
-                                                            setSelectedModelId(model.id);
-                                                            setModelPickerEnabled(false);
-                                                        }}
-                                                    >
-                                                        <div className="composer-model-card-main">
-                                                            <strong>{model.label}</strong>
-                                                            <p>{model.note}</p>
-                                                        </div>
-                                                        {selectedModelId === model.id ? <Check size={15} /> : null}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                <div className="composer-footer-right">
+                                    <div className="composer-tool-group">
+                                        <div className="composer-reasoning-switch" role="group" aria-label={locale === 'zh-CN' ? '模式切换' : 'Mode switch'}>
+                                            <button
+                                                type="button"
+                                                className={`composer-reasoning-btn composer-tooltip-anchor ${reasoningMode === 'thinking' ? 'active' : ''}`}
+                                                onClick={() => setReasoningMode('thinking')}
+                                                aria-label={copy.createThinkingMode || 'Thinking'}
+                                                title={copy.createThinkingMode || 'Thinking'}
+                                                data-tooltip={copy.createThinkingMode || 'Thinking'}
+                                            >
+                                                <Lightbulb size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`composer-reasoning-btn composer-tooltip-anchor ${reasoningMode === 'fast' ? 'active' : ''}`}
+                                                onClick={() => setReasoningMode('fast')}
+                                                aria-label={copy.createFastMode || 'Fast'}
+                                                title={copy.createFastMode || 'Fast'}
+                                                data-tooltip={copy.createFastMode || 'Fast'}
+                                            >
+                                                <Zap size={14} />
+                                            </button>
                                         </div>
-                                    ) : null}
+                                        <button
+                                            type="button"
+                                            className={`composer-tool-icon composer-tooltip-anchor ${webSearchEnabled ? 'active' : ''}`}
+                                            onClick={() => setWebSearchEnabled((current) => !current)}
+                                            aria-label={copy.createWebSearch || 'Web search'}
+                                            title={copy.createWebSearch || 'Web search'}
+                                            data-tooltip={copy.createWebSearch || 'Web search'}
+                                        >
+                                            <Globe size={15} />
+                                        </button>
+                                        <div className="composer-model-wrap" ref={modelMenuRef}>
+                                            <button
+                                                type="button"
+                                                className={`composer-tool-icon composer-tooltip-anchor ${modelPickerEnabled ? 'active' : ''}`}
+                                                onClick={() => setModelPickerEnabled((current) => !current)}
+                                                aria-label={copy.createModelPicker || 'Model'}
+                                                title={copy.createModelPicker || 'Model'}
+                                                data-tooltip={copy.createModelPicker || 'Model'}
+                                            >
+                                                <Box size={15} />
+                                            </button>
+                                            {modelPickerEnabled ? (
+                                                <div className="composer-popover composer-model-menu composer-model-menu-compact">
+                                                    <div className="composer-model-head">
+                                                        <div>
+                                                            <strong>{copy.createModelPreference || '模型偏好'}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div className="composer-model-list">
+                                                        {modelOptions.map((model) => (
+                                                            <button
+                                                                key={model.id}
+                                                                type="button"
+                                                                className={`composer-model-card ${selectedModelId === model.id ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    setSelectedModelId(model.id);
+                                                                    setModelPickerEnabled(false);
+                                                                }}
+                                                            >
+                                                                <div className="composer-model-card-main">
+                                                                    <strong>{model.label}</strong>
+                                                                    <p>{model.note}</p>
+                                                                </div>
+                                                                {selectedModelId === model.id ? <Check size={15} /> : null}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={`composer-submit composer-submit-icon composer-submit-dark ${isListening ? 'is-listening' : ''}`}
+                                        onClick={handlePrimaryComposerAction}
+                                        disabled={isPlanning || isBuilding}
+                                        aria-label={prompt.trim() ? (clarification ? copy.createContinue : copy.createSend) : (locale === 'zh-CN' ? '语音输入' : 'Voice input')}
+                                        title={prompt.trim() ? (clarification ? copy.createContinue : copy.createSend) : (locale === 'zh-CN' ? '语音输入' : 'Voice input')}
+                                    >
+                                        {prompt.trim() ? <ArrowUp size={16} /> : <Mic size={16} />}
+                                    </button>
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                className={`composer-submit composer-submit-icon composer-submit-dark ${isListening ? 'is-listening' : ''}`}
-                                onClick={handlePrimaryComposerAction}
-                                disabled={isPlanning || isBuilding}
-                                aria-label={prompt.trim() ? (clarification ? copy.createContinue : copy.createSend) : (locale === 'zh-CN' ? '语音输入' : 'Voice input')}
-                                title={prompt.trim() ? (clarification ? copy.createContinue : copy.createSend) : (locale === 'zh-CN' ? '语音输入' : 'Voice input')}
-                            >
-                                {prompt.trim() ? <ArrowUp size={16} /> : <Mic size={16} />}
-                            </button>
                         </div>
                     </div>
                 </aside>
